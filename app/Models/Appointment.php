@@ -13,7 +13,7 @@ class Appointment extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'company_id', 'branch_id', 'customer_id', 'treatment_plan_id',
+        'company_id', 'branch_id', 'patient_id', 'treatment_plan_id',
         'service_id', 'room_id', 'reason_id', 'assigned_staff_id', 'booked_by',
         'appointment_type', 'scheduled_at', 'duration_minutes', 'status',
         'session_number', 'reason_notes', 'outcome_notes', 'cancellation_reason',

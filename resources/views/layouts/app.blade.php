@@ -310,9 +310,33 @@ tr:hover td { background: rgba(37,99,235,0.015); }
       </div>
 
       <div class="sidebar-section">
+        <div class="sidebar-section-title">Workspaces</div>
+        <a href="{{ route('front-desk') }}" class="sidebar-item {{ request()->routeIs('front-desk') ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Front Desk
+        </a>
+        <a href="{{ route('my-queue') }}" class="sidebar-item {{ request()->routeIs('my-queue') ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          My Queue
+        </a>
+        <a href="{{ route('operations') }}" class="sidebar-item {{ request()->routeIs('operations') ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Operations
+        </a>
+        <a href="{{ route('review-queue') }}" class="sidebar-item {{ request()->routeIs('review-queue') ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Review Queue
+        </a>
+        <a href="{{ route('finance') }}" class="sidebar-item {{ request()->routeIs('finance') ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Finance
+        </a>
+      </div>
+
+      <div class="sidebar-section">
         <div class="sidebar-section-title">Operations</div>
         <a href="{{ route('leads.index') }}" class="sidebar-item {{ request()->routeIs('leads.*') ? 'active' : '' }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Leads
         </a>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
@@ -391,5 +415,6 @@ document.querySelectorAll('[data-toggle="dropdown"]').forEach(btn => {
 });
 document.addEventListener('click', () => document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open')));
 </script>
+@stack('scripts')
 </body>
 </html>

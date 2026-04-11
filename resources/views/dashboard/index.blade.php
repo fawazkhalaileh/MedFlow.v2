@@ -203,7 +203,7 @@
               </div>
             </div>
           </td>
-          <td><span style="font-family:monospace;font-size:.82rem;color:var(--text-secondary);">{{ $c->customer_code }}</span></td>
+          <td><span style="font-family:monospace;font-size:.82rem;color:var(--text-secondary);">{{ $c->patient_code }}</span></td>
           <td style="color:var(--text-secondary);">{{ $c->phone }}</td>
           <td style="color:var(--text-secondary);">{{ $c->branch?->name ?? '--' }}</td>
           <td><span class="badge {{ $c->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($c->status) }}</span></td>

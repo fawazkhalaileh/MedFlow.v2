@@ -7,7 +7,7 @@
 <div class="page-header animate-in">
   <div>
     <h1 class="page-title">Leads</h1>
-    <p class="page-subtitle">Track and convert new inquiries into customers</p>
+    <p class="page-subtitle">Track and convert new inquiries into patients</p>
   </div>
   <div style="display:flex;gap:8px;">
     <span class="badge badge-blue" style="padding:6px 14px;font-size:.82rem;">{{ $leads->total() }} total</span>

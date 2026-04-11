@@ -97,7 +97,12 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->employee_type === 'system_admin' || $this->role === 'admin';
+    }
+
+    public function isRole(string ...$types): bool
+    {
+        return in_array($this->employee_type, $types) || in_array($this->role, $types);
     }
 
     public function can($abilities, $arguments = []): bool
@@ -111,5 +116,36 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->employment_status === 'active';
+    }
+
+    /**
+     * Returns the branch ID this user is scoped to for data access.
+     * Null for super admin (sees all branches).
+     */
+    public function scopedBranchId(): ?int
+    {
+        if ($this->isSuperAdmin()) {
+            return null; // no scope — sees everything
+        }
+        return $this->primary_branch_id;
+    }
+
+    /**
+     * Navigation group for this user's role.
+     */
+    public function navGroup(): string
+    {
+        return match($this->employee_type) {
+            'system_admin'   => 'admin',
+            'branch_manager' => 'manager',
+            'secretary'      => 'secretary',
+            'technician'     => 'technician',
+            'doctor', 'nurse' => 'doctor',
+            'finance'        => 'finance',
+            default          => match($this->role) {
+                'admin'      => 'admin',
+                default      => 'admin',
+            },
+        };
     }
 }

@@ -60,7 +60,7 @@
       <thead>
         <tr>
           <th>Time</th>
-          <th>Customer</th>
+          <th>Patient</th>
           <th>Service</th>
           <th>Staff</th>
           <th>Branch</th>
