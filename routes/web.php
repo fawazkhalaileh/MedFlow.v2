@@ -4,7 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
@@ -30,10 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('employees', EmployeeController::class);
 
     // Clinical
-    Route::resource('customers',    CustomerController::class)->only(['index', 'show']);
+    Route::resource('patients',     PatientController::class)->only(['index', 'show']);
     Route::resource('appointments', AppointmentController::class)->only(['index']);
 
     // Operations
-    Route::get('/leads',       [LeadController::class,     'index'])->name('leads.index');
-    Route::get('/follow-ups',  [FollowUpController::class,  'index'])->name('followups.index');
+    Route::get('/leads',       [LeadController::class,    'index'])->name('leads.index');
+    Route::get('/follow-ups',  [FollowUpController::class, 'index'])->name('followups.index');
 });

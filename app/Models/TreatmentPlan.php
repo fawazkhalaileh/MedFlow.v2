@@ -13,7 +13,7 @@ class TreatmentPlan extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'company_id', 'branch_id', 'customer_id', 'service_id', 'name',
+        'company_id', 'branch_id', 'patient_id', 'service_id', 'name',
         'total_sessions', 'completed_sessions', 'start_date', 'end_date',
         'status', 'total_price', 'amount_paid', 'notes',
         'treatment_areas', 'session_settings', 'created_by',
@@ -28,9 +28,9 @@ class TreatmentPlan extends Model
         'amount_paid'      => 'decimal:2',
     ];
 
-    public function customer(): BelongsTo
+    public function patient(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Patient::class);
     }
 
     public function branch(): BelongsTo

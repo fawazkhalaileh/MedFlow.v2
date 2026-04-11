@@ -10,7 +10,7 @@ class Lead extends Model
     protected $fillable = [
         'company_id', 'branch_id', 'first_name', 'last_name',
         'phone', 'email', 'service_interest', 'source', 'status',
-        'notes', 'assigned_to', 'converted_to_customer_id',
+        'notes', 'assigned_to', 'converted_to_patient_id',
         'converted_at', 'created_by',
     ];
 
@@ -28,9 +28,9 @@ class Lead extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function convertedCustomer(): BelongsTo
+    public function convertedPatient(): BelongsTo
     {
-        return $this->belongsTo(Customer::class, 'converted_to_customer_id');
+        return $this->belongsTo(Patient::class, 'converted_to_patient_id');
     }
 
     public function getFullNameAttribute(): string

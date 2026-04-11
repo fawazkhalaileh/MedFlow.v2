@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
+        Schema::create('patients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('branch_id')->constrained()->cascadeOnDelete(); // primary/registration branch
-            $table->string('customer_code')->unique(); // MF-00001
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->string('patient_code')->unique(); // MF-00001
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->nullable();
@@ -44,9 +44,9 @@ return new class extends Migration
             $table->index(['branch_id', 'status']);
         });
 
-        Schema::create('customer_medical_info', function (Blueprint $table) {
+        Schema::create('patient_medical_info', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->unique()->constrained('patients')->cascadeOnDelete();
             // Physical
             $table->decimal('height_cm', 5, 1)->nullable();
             $table->decimal('weight_kg', 5, 1)->nullable();
@@ -74,7 +74,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('customer_medical_info');
-        Schema::dropIfExists('customers');
+        Schema::dropIfExists('patient_medical_info');
+        Schema::dropIfExists('patients');
     }
 };

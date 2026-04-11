@@ -6,8 +6,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentReason;
 use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Customer;
-use App\Models\CustomerMedicalInfo;
+use App\Models\Patient;
+use App\Models\PatientMedicalInfo;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\Note;
@@ -21,21 +21,21 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $company  = Company::first();
-        $branch1  = Branch::where('code', 'BR-001')->first();
-        $branch2  = Branch::where('code', 'BR-002')->first();
-        $tech1    = User::where('email', 'tech1.marina@medflow.local')->first();
-        $tech2    = User::where('email', 'tech2.marina@medflow.local')->first();
+        $company   = Company::first();
+        $branch1   = Branch::where('code', 'BR-001')->first();
+        $branch2   = Branch::where('code', 'BR-002')->first();
+        $tech1     = User::where('email', 'tech1.marina@medflow.local')->first();
+        $tech2     = User::where('email', 'tech2.marina@medflow.local')->first();
         $secretary = User::where('email', 'reception.marina@medflow.local')->first();
-        $reason   = AppointmentReason::where('name', 'Laser Hair Removal Session')->first();
-        $consult  = AppointmentReason::where('name', 'Initial Consultation')->first();
+        $reason    = AppointmentReason::where('name', 'Laser Hair Removal Session')->first();
+        $consult   = AppointmentReason::where('name', 'Initial Consultation')->first();
 
-        $lhrService   = Service::where('name', 'Full Legs')->first();
-        $faceService  = Service::where('name', 'Full Face')->first();
-        $bodyService  = Service::where('name', 'Cryolipolysis - Abdomen')->first();
+        $lhrService  = Service::where('name', 'Full Legs')->first();
+        $faceService = Service::where('name', 'Full Face')->first();
+        $bodyService = Service::where('name', 'Cryolipolysis - Abdomen')->first();
 
-        // --- Demo Customers ---
-        $customers = [
+        // --- Demo Patients ---
+        $patients = [
             [
                 'first_name' => 'Layla', 'last_name' => 'Al Mansouri',
                 'email' => 'layla@example.com', 'phone' => '+971 50 100 0001',
@@ -104,23 +104,23 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
-        foreach ($customers as $i => $data) {
+        foreach ($patients as $i => $data) {
             $medicalData = $data['medical'];
             $planData    = $data['plan'];
             unset($data['medical'], $data['plan']);
 
-            $customer = Customer::create(array_merge($data, [
-                'company_id'      => $company->id,
-                'branch_id'       => $i < 3 ? $branch1->id : $branch2->id,
+            $patient = Patient::create(array_merge($data, [
+                'company_id'        => $company->id,
+                'branch_id'         => $i < 3 ? $branch1->id : $branch2->id,
                 'assigned_staff_id' => $tech1->id,
                 'registration_date' => now()->subMonths(rand(2, 8))->format('Y-m-d'),
                 'consent_given_at'  => $data['consent_given'] ? now()->subMonths(rand(1, 6)) : null,
-                'last_visit_at'   => now()->subDays(rand(3, 30)),
+                'last_visit_at'     => now()->subDays(rand(3, 30)),
             ]));
 
             if ($medicalData) {
-                CustomerMedicalInfo::create(array_merge(
-                    ['customer_id' => $customer->id, 'updated_by' => $secretary->id],
+                PatientMedicalInfo::create(array_merge(
+                    ['patient_id' => $patient->id, 'updated_by' => $secretary->id],
                     $medicalData
                 ));
             }
@@ -128,8 +128,8 @@ class DemoDataSeeder extends Seeder
             if ($planData && $planData['service']) {
                 $plan = TreatmentPlan::create([
                     'company_id'         => $company->id,
-                    'branch_id'          => $customer->branch_id,
-                    'customer_id'        => $customer->id,
+                    'branch_id'          => $patient->branch_id,
+                    'patient_id'         => $patient->id,
                     'service_id'         => $planData['service']->id,
                     'name'               => $planData['name'],
                     'total_sessions'     => $planData['sessions'],
@@ -147,28 +147,28 @@ class DemoDataSeeder extends Seeder
                     $sessionDate = now()->subWeeks($planData['sessions'] - $s + 1);
 
                     $appointment = Appointment::create([
-                        'company_id'       => $company->id,
-                        'branch_id'        => $customer->branch_id,
-                        'customer_id'      => $customer->id,
+                        'company_id'        => $company->id,
+                        'branch_id'         => $patient->branch_id,
+                        'patient_id'        => $patient->id,
                         'treatment_plan_id' => $plan->id,
-                        'service_id'       => $planData['service']->id,
+                        'service_id'        => $planData['service']->id,
                         'assigned_staff_id' => $tech1->id,
-                        'booked_by'        => $secretary->id,
-                        'reason_id'        => $reason?->id,
-                        'appointment_type' => 'booked',
-                        'scheduled_at'     => $sessionDate,
-                        'duration_minutes' => $planData['service']->duration_minutes,
-                        'status'           => 'completed',
-                        'session_number'   => $s,
-                        'arrived_at'       => $sessionDate,
-                        'completed_at'     => $sessionDate->copy()->addMinutes($planData['service']->duration_minutes),
+                        'booked_by'         => $secretary->id,
+                        'reason_id'         => $reason?->id,
+                        'appointment_type'  => 'booked',
+                        'scheduled_at'      => $sessionDate,
+                        'duration_minutes'  => $planData['service']->duration_minutes,
+                        'status'            => 'completed',
+                        'session_number'    => $s,
+                        'arrived_at'        => $sessionDate,
+                        'completed_at'      => $sessionDate->copy()->addMinutes($planData['service']->duration_minutes),
                     ]);
 
                     TreatmentSession::create([
                         'appointment_id'    => $appointment->id,
                         'treatment_plan_id' => $plan->id,
-                        'customer_id'       => $customer->id,
-                        'branch_id'         => $customer->branch_id,
+                        'patient_id'        => $patient->id,
+                        'branch_id'         => $patient->branch_id,
                         'service_id'        => $planData['service']->id,
                         'technician_id'     => $tech1->id,
                         'session_number'    => $s,
@@ -185,10 +185,9 @@ class DemoDataSeeder extends Seeder
                         'created_by'          => $tech1->id,
                     ]);
 
-                    // Add technician note for each session
                     Note::create([
                         'company_id'   => $company->id,
-                        'branch_id'    => $customer->branch_id,
+                        'branch_id'    => $patient->branch_id,
                         'notable_type' => TreatmentSession::class,
                         'notable_id'   => TreatmentSession::latest()->first()->id,
                         'note_type'    => 'session',
@@ -200,43 +199,43 @@ class DemoDataSeeder extends Seeder
                 // Upcoming appointment for active plans
                 if ($planData['completed'] < $planData['sessions']) {
                     Appointment::create([
-                        'company_id'       => $company->id,
-                        'branch_id'        => $customer->branch_id,
-                        'customer_id'      => $customer->id,
+                        'company_id'        => $company->id,
+                        'branch_id'         => $patient->branch_id,
+                        'patient_id'        => $patient->id,
                         'treatment_plan_id' => $plan->id,
-                        'service_id'       => $planData['service']->id,
+                        'service_id'        => $planData['service']->id,
                         'assigned_staff_id' => $tech1->id,
-                        'booked_by'        => $secretary->id,
-                        'reason_id'        => $reason?->id,
-                        'appointment_type' => 'booked',
-                        'scheduled_at'     => now()->addDays(rand(3, 14))->setHour(rand(10, 17))->setMinute(0),
-                        'duration_minutes' => $planData['service']->duration_minutes,
-                        'status'           => 'confirmed',
-                        'session_number'   => $planData['completed'] + 1,
+                        'booked_by'         => $secretary->id,
+                        'reason_id'         => $reason?->id,
+                        'appointment_type'  => 'booked',
+                        'scheduled_at'      => now()->addDays(rand(3, 14))->setHour(rand(10, 17))->setMinute(0),
+                        'duration_minutes'  => $planData['service']->duration_minutes,
+                        'status'            => 'confirmed',
+                        'session_number'    => $planData['completed'] + 1,
                     ]);
                 }
             }
         }
 
-        // --- Reception note on a customer ---
-        $firstCustomer = Customer::first();
+        // --- Notes on first patient ---
+        $firstPatient = Patient::first();
         Note::create([
             'company_id'   => $company->id,
             'branch_id'    => $branch1->id,
-            'notable_type' => Customer::class,
-            'notable_id'   => $firstCustomer->id,
+            'notable_type' => Patient::class,
+            'notable_id'   => $firstPatient->id,
             'note_type'    => 'reception',
-            'content'      => 'Customer called to confirm tomorrow appointment. Requested to change room to Room B.',
+            'content'      => 'Patient called to confirm tomorrow appointment. Requested to change room to Room B.',
             'created_by'   => $secretary->id,
         ]);
 
         Note::create([
             'company_id'   => $company->id,
             'branch_id'    => $branch1->id,
-            'notable_type' => Customer::class,
-            'notable_id'   => $firstCustomer->id,
+            'notable_type' => Patient::class,
+            'notable_id'   => $firstPatient->id,
             'note_type'    => 'alert',
-            'content'      => 'Customer is allergic to certain topical numbing creams. Always use Emla alternative.',
+            'content'      => 'Patient is allergic to certain topical numbing creams. Always use Emla alternative.',
             'is_flagged'   => true,
             'created_by'   => $tech1->id,
         ]);
@@ -245,44 +244,44 @@ class DemoDataSeeder extends Seeder
         FollowUp::create([
             'company_id'  => $company->id,
             'branch_id'   => $branch1->id,
-            'customer_id' => $firstCustomer->id,
+            'patient_id'  => $firstPatient->id,
             'assigned_to' => $secretary->id,
             'type'        => 'call',
             'due_date'    => now()->addDays(2)->format('Y-m-d'),
             'status'      => 'pending',
-            'notes'       => 'Call customer to confirm next session and remind about pre-session care.',
+            'notes'       => 'Call patient to confirm next session and remind about pre-session care.',
             'created_by'  => $secretary->id,
         ]);
 
         // --- Leads ---
         Lead::create([
-            'company_id'      => $company->id,
-            'branch_id'       => $branch1->id,
-            'first_name'      => 'Hessa',
-            'last_name'       => 'Al Bloushi',
-            'phone'           => '+971 50 999 0001',
+            'company_id'       => $company->id,
+            'branch_id'        => $branch1->id,
+            'first_name'       => 'Hessa',
+            'last_name'        => 'Al Bloushi',
+            'phone'            => '+971 50 999 0001',
             'service_interest' => 'Laser Hair Removal - Full Body',
-            'source'          => 'instagram',
-            'status'          => 'new',
-            'notes'           => 'Inquired via DM. Wants pricing for full body package.',
-            'assigned_to'     => $secretary->id,
-            'created_by'      => $secretary->id,
+            'source'           => 'social',
+            'status'           => 'new',
+            'notes'            => 'Inquired via DM. Wants pricing for full body package.',
+            'assigned_to'      => $secretary->id,
+            'created_by'       => $secretary->id,
         ]);
 
         Lead::create([
-            'company_id'      => $company->id,
-            'branch_id'       => $branch1->id,
-            'first_name'      => 'Noura',
-            'last_name'       => 'Salem',
-            'phone'           => '+971 55 888 0002',
+            'company_id'       => $company->id,
+            'branch_id'        => $branch1->id,
+            'first_name'       => 'Noura',
+            'last_name'        => 'Salem',
+            'phone'            => '+971 55 888 0002',
             'service_interest' => 'Skin Rejuvenation',
-            'source'          => 'phone',
-            'status'          => 'appointment_booked',
-            'notes'           => 'Called asking about IPL. Booked for consultation next week.',
-            'assigned_to'     => $secretary->id,
-            'created_by'      => $secretary->id,
+            'source'           => 'phone',
+            'status'           => 'appointment_booked',
+            'notes'            => 'Called asking about IPL. Booked for consultation next week.',
+            'assigned_to'      => $secretary->id,
+            'created_by'       => $secretary->id,
         ]);
 
-        $this->command->info('Demo data created: 5 customers, treatment plans, sessions, notes, follow-ups, leads.');
+        $this->command->info('Demo data created: 5 patients, treatment plans, sessions, notes, follow-ups, leads.');
     }
 }

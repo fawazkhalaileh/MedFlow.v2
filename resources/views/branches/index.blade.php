@@ -86,8 +86,8 @@
     {{-- Stats --}}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;padding:16px 0;">
       <div>
-        <div style="font-size:1.2rem;font-weight:700;">{{ $branch->customers_count }}</div>
-        <div style="font-size:.72rem;color:var(--text-tertiary);">Clients</div>
+        <div style="font-size:1.2rem;font-weight:700;">{{ $branch->patients_count }}</div>
+        <div style="font-size:.72rem;color:var(--text-tertiary);">Patients</div>
       </div>
       <div style="border-left:1px solid var(--border-light);border-right:1px solid var(--border-light);">
         <div style="font-size:1.2rem;font-weight:700;">{{ $branch->staff_count }}</div>

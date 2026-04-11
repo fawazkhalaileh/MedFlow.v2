@@ -12,7 +12,7 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect($this->roleHome(Auth::user()));
         }
         return view('auth.login');
     }
@@ -26,7 +26,7 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+            return redirect($this->roleHome(Auth::user()));
         }
 
         throw ValidationException::withMessages([
@@ -40,5 +40,19 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+
+    private function roleHome($user): string
+    {
+        $type = $user->employee_type ?? $user->role ?? 'admin';
+
+        return match($type) {
+            'branch_manager' => route('operations'),
+            'secretary'      => route('front-desk'),
+            'technician'     => route('my-queue'),
+            'doctor', 'nurse'=> route('review-queue'),
+            'finance'        => route('finance'),
+            default          => route('dashboard'),
+        };
     }
 }

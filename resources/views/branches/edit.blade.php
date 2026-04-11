@@ -114,8 +114,8 @@
       <div class="card-title" style="margin-bottom:14px;">Branch Stats</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div style="text-align:center;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-md);">
-          <div style="font-size:1.5rem;font-weight:700;">{{ $branch->customers_count ?? 0 }}</div>
-          <div style="font-size:.72rem;color:var(--text-tertiary);">Clients</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ $branch->patients_count ?? 0 }}</div>
+          <div style="font-size:.72rem;color:var(--text-tertiary);">Patients</div>
         </div>
         <div style="text-align:center;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-md);">
           <div style="font-size:1.5rem;font-weight:700;">{{ $branch->staff_count ?? 0 }}</div>

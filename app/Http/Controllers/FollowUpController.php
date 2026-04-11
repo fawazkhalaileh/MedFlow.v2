@@ -13,7 +13,7 @@ class FollowUpController extends Controller
     {
         $company = Company::first();
 
-        $query = FollowUp::with(['customer', 'assignedTo', 'branch'])
+        $query = FollowUp::with(['patient', 'assignedTo', 'branch'])
             ->where('company_id', $company->id);
 
         if ($request->filled('status')) {

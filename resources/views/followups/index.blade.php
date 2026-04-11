@@ -60,8 +60,8 @@
         @php $overdue = $fu->due_date < today() && $fu->status === 'pending'; @endphp
         <tr style="{{ $overdue ? 'background:rgba(220,38,38,0.02);' : '' }}">
           <td>
-            <div style="font-weight:500;">{{ $fu->customer?->full_name ?? 'Unknown' }}</div>
-            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $fu->customer?->phone }}</div>
+            <div style="font-weight:500;">{{ $fu->patient?->full_name ?? 'Unknown' }}</div>
+            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $fu->patient?->phone }}</div>
           </td>
           <td>
             @php

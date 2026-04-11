@@ -23,9 +23,9 @@
     <div class="kpi-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </div>
-    <div class="kpi-label">Total Customers</div>
-    <div class="kpi-value">{{ number_format($kpi['total_customers']) }}</div>
-    <div class="kpi-change up">{{ $kpi['active_customers'] }} active</div>
+    <div class="kpi-label">Total Patients</div>
+    <div class="kpi-value">{{ number_format($kpi['total_patients']) }}</div>
+    <div class="kpi-change up">{{ $kpi['active_patients'] }} active</div>
   </div>
 
   <div class="kpi-card">
@@ -91,8 +91,8 @@
             <tr>
               <td style="font-weight:600;white-space:nowrap;">{{ \Carbon\Carbon::parse($appt->scheduled_at)->format('h:i A') }}</td>
               <td>
-                <div style="font-weight:500;">{{ $appt->customer?->full_name ?? 'Unknown' }}</div>
-                <div style="font-size:.76rem;color:var(--text-tertiary);">{{ $appt->customer?->customer_code }}</div>
+                <div style="font-weight:500;">{{ $appt->patient?->full_name ?? 'Unknown' }}</div>
+                <div style="font-size:.76rem;color:var(--text-tertiary);">{{ $appt->patient?->patient_code }}</div>
               </td>
               <td style="color:var(--text-secondary);font-size:.83rem;">{{ $appt->service?->name ?? '--' }}</td>
               <td style="color:var(--text-secondary);font-size:.83rem;">{{ $appt->assignedStaff?->first_name ?? '--' }}</td>
@@ -138,7 +138,7 @@
           </div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:.82rem;font-weight:600;">{{ $branch->customers_count }} <span style="color:var(--text-tertiary);font-weight:400;">clients</span></div>
+          <div style="font-size:.82rem;font-weight:600;">{{ $branch->patients_count }} <span style="color:var(--text-tertiary);font-weight:400;">clients</span></div>
           <div style="font-size:.72rem;color:var(--text-tertiary);">{{ $branch->staff_count }} staff</div>
         </div>
       </div>
@@ -155,7 +155,7 @@
       <div class="activity-item">
         <div class="activity-dot" style="background:{{ $fu->due_date < today() ? 'var(--danger)' : 'var(--warning)' }}"></div>
         <div class="activity-text">
-          <strong>{{ $fu->customer?->full_name }}</strong>
+          <strong>{{ $fu->patient?->full_name }}</strong>
           &mdash; {{ ucfirst($fu->type) }}
           <div class="activity-time">Due {{ \Carbon\Carbon::parse($fu->due_date)->diffForHumans() }}</div>
         </div>
@@ -168,14 +168,14 @@
   </div>
 </div>
 
-{{-- Recent Customers --}}
+{{-- Recent Patients --}}
 <div class="card animate-in" style="margin-top:18px;animation-delay:.15s">
   <div class="card-header">
     <div>
-      <div class="card-title">Recent Customers</div>
+      <div class="card-title">Recent Patients</div>
       <div class="card-subtitle">Latest registrations</div>
     </div>
-    <a href="{{ route('customers.index') }}" class="btn btn-secondary btn-sm">View all</a>
+    <a href="{{ route('patients.index') }}" class="btn btn-secondary btn-sm">View all</a>
   </div>
   <div class="table-wrap">
     <table>
@@ -190,7 +190,7 @@
         </tr>
       </thead>
       <tbody>
-        @foreach($recentCustomers as $c)
+        @foreach($recentPatients as $c)
         <tr>
           <td>
             <div style="display:flex;align-items:center;gap:9px;">

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FollowUp extends Model
 {
     protected $fillable = [
-        'company_id', 'branch_id', 'customer_id', 'assigned_to',
+        'company_id', 'branch_id', 'patient_id', 'assigned_to',
         'type', 'due_date', 'status', 'notes', 'outcome',
         'completed_at', 'completed_by', 'created_by',
     ];
@@ -18,9 +18,9 @@ class FollowUp extends Model
         'completed_at' => 'datetime',
     ];
 
-    public function customer(): BelongsTo
+    public function patient(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Patient::class);
     }
 
     public function branch(): BelongsTo

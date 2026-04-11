@@ -1,0 +1,1478 @@
+================================================================================
+  MEDFLOW CRM - ARCHITECTURE V2 DESIGN DOCUMENT
+  Role-Shaped Operational Workspaces for Multi-Branch Laser Clinic
+  Status: Implementation Blueprint
+  Version: 2.0
+================================================================================
+
+
+--------------------------------------------------------------------------------
+  1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+
+The current MedFlow build has a solid foundation: multi-tenant companies and
+branches, custom RBAC, patients, appointments, treatment plans, sessions, notes,
+follow-ups, leads, and activity logs. The problem with the current design is that
+every role navigates roughly the same screens with different permission masks. That
+produces a system that is technically correct but operationally poor. A secretary
+should not have to search through a clinical table to do a check-in. A technician
+should not look at a financial dashboard to find the next patient in queue.
+
+The goal of Version 2 is not to add features for their own sake. It is to reshape
+the interface and workflow logic so that each role walks into a workspace that
+shows exactly what that person needs to do their job today, with zero noise from
+modules that are irrelevant to them.
+
+The secondary goal is to make the appointment pipeline the operational spine of the
+system. Every patient visit generates a traceable chain of status changes, staff
+assignments, clinical notes, and financial events. That chain must be visible,
+auditable, and actionable by the right person at the right time.
+
+The third goal is to build this in a way that the core logic stays stable while the
+surface layer (columns, labels, forms, modules, thresholds) is configurable per
+clinic type and per tenant, so MedFlow can serve a laser clinic today and a dental
+clinic or aesthetics clinic tomorrow without rewriting the engine.
+
+Scope of this document: architecture, workflow, role workspaces, Kanban design,
+customization framework, smart behavior rules, database changes, and AI roadmap.
+What is not in scope: visual design pixels, marketing copy, mobile app.
+
+
+--------------------------------------------------------------------------------
+  2. ROLE-BASED WORKSPACE DESIGN
+--------------------------------------------------------------------------------
+
+PRINCIPLE: Each role gets a home screen, a navigation set, a set of daily actions,
+and a set of alerts that are specific to their operational responsibility. A role
+should never need to leave their workspace to do their daily job.
+
+----------------------------------------------------------------------
+  2.1 SUPER ADMIN
+----------------------------------------------------------------------
+
+WHO: Clinic owner, IT administrator, or system-level operations lead.
+SCOPE: All companies, all branches, all data.
+
+HOME SCREEN:
+  - System health panel: total patients, total appointments this month,
+    revenue this month across all branches, active staff count
+  - Branch performance grid: each branch as a row with today's bookings,
+    patient count, open follow-ups, last activity timestamp
+  - Recent activity feed: last 20 audit events across the system
+  - Pending alerts: any blocked system states (failed jobs, missing configs)
+
+DAILY ACTIONS:
+  - Manage companies and branches
+  - Create and modify roles and permission sets
+  - Create employees and assign to branches with roles
+  - View and export full audit logs
+  - Configure system-level settings
+  - Manage service catalog
+  - Manage clinic configuration (modules, features, statuses)
+
+NAVIGATION MENU:
+  - System Overview (home)
+  - Companies and Branches
+  - Employees
+  - Roles and Permissions
+  - Patients (read all)
+  - Appointments (read all branches)
+  - Services and Catalog
+  - Settings and Configuration
+  - Audit Logs
+  - Reports
+
+ALERTS SHOWN:
+  - Staff accounts with no branch assignment
+  - Patients with missing consent and upcoming appointments
+  - Appointments scheduled into a room that is not configured
+  - Any permission set that is empty (role with no permissions)
+  - Branches with no manager assigned
+
+KPI CARDS:
+  - Total patients system-wide
+  - Today's appointments across all branches
+  - Active treatment plans
+  - Pending follow-ups
+  - Open leads
+  - Overdue follow-ups
+
+AUDIT VISIBILITY: Full. Can see who did what, on which record, at what timestamp,
+from which IP, with old and new values.
+
+BRANCH VISIBILITY: All branches.
+PATIENT VISIBILITY: All patients.
+READ VS EDIT: Full edit on everything.
+
+----------------------------------------------------------------------
+  2.2 BRANCH MANAGER
+----------------------------------------------------------------------
+
+WHO: Operations manager responsible for one branch, possibly more than one.
+SCOPE: Their assigned branch(es) only.
+
+HOME SCREEN:
+  - Live operations board for today: appointments by status, rooms in use,
+    staff present, queue length, estimated wait times
+  - Staff workload panel: each active staff member today with their
+    appointment count, current status (free / in session / on break)
+  - Room utilization panel: each room with current occupancy
+  - Bottleneck alerts: any patient waiting more than a threshold,
+    any room idle while queue is non-empty, any staff with no assignments
+  - KPI row: today bookings, today completed, today no-shows, today revenue
+  - Pending follow-ups assigned to staff in their branch
+
+DAILY ACTIONS:
+  - Monitor the live appointment board
+  - Reassign staff or rooms if bottlenecks detected
+  - Approve or override appointment rescheduling
+  - Review and approve staff notes if escalated
+  - Check branch-level reports
+  - Manage walk-in priority
+  - Review and action overdue follow-ups for their branch
+
+NAVIGATION MENU:
+  - Operations Board (home)
+  - Appointments (today + upcoming)
+  - Patients (their branch)
+  - Staff Management
+  - Rooms
+  - Follow-ups
+  - Leads
+  - Reports (branch-level)
+  - Branch Settings
+
+ALERTS SHOWN:
+  - Patient waiting more than 20 minutes past scheduled time
+  - Room idle for more than 30 minutes while queue exists
+  - Staff member with no appointment in queue but patient waiting
+  - Appointment with missing intake form, 10 minutes after arrival
+  - No-show rate spike vs prior week
+  - Technician session queue exceeding branch WIP limit
+
+KPI CARDS:
+  - Today: booked, confirmed, arrived, completed, no-shows
+  - Revenue today (if finance module is enabled)
+  - Active treatment plans in branch
+  - Overdue follow-ups in branch
+
+AUDIT VISIBILITY: Their branch only. Can see what happened in their branch.
+BRANCH VISIBILITY: Their assigned branch(es).
+PATIENT VISIBILITY: Patients registered to their branch(es).
+READ VS EDIT: Can edit branch settings, staff assignments, rooms. Read-only on
+roles and permissions. Full edit on appointments within their branch.
+
+----------------------------------------------------------------------
+  2.3 SECRETARY / RECEPTIONIST
+----------------------------------------------------------------------
+
+WHO: Front desk staff responsible for bookings, check-ins, patient registration,
+lead capture, and follow-up coordination.
+SCOPE: Their assigned branch.
+
+HOME SCREEN:
+  - Front desk queue: today's appointments in arrival-time order, with
+    check-in status clearly visible (booked / confirmed / arrived / checked in)
+  - Quick actions bar: [New Patient] [Book Appointment] [Check In] [New Lead]
+  - Upcoming confirmations needed: appointments in the next 48 hours with
+    status still "booked" (not yet confirmed)
+  - My follow-up tasks: follow-ups assigned to me that are due today or overdue
+  - Recent arrivals: patients checked in who are waiting for intake or room
+
+DAILY ACTIONS:
+  - Register new patients
+  - Book appointments
+  - Confirm appointments by phone or message
+  - Check patients in when they arrive
+  - Record intake form completion
+  - Capture leads from walk-ins or calls
+  - Schedule follow-up calls
+  - Add reception notes to patient records
+  - Print or send appointment reminders
+
+NAVIGATION MENU:
+  - Front Desk (home)
+  - Appointments (today + calendar view)
+  - Patients
+  - Leads
+  - Follow-ups
+  - My Tasks
+
+ALERTS SHOWN:
+  - Appointments in 2 hours with no confirmation
+  - Patient arrived but intake not marked complete after 10 minutes
+  - Patient with missing consent booked for treatment (blocker)
+  - Overdue follow-up task assigned to me
+  - Lead with no activity in 3 days
+
+KPI CARDS:
+  - Today's total bookings
+  - Confirmed vs not yet confirmed
+  - Patients currently waiting
+  - My pending follow-ups
+
+AUDIT VISIBILITY: Their own actions only. Cannot see other staff audit entries.
+BRANCH VISIBILITY: Their branch only.
+PATIENT VISIBILITY: All patients in their branch. Read-only on clinical notes.
+Cannot see other staff's private notes.
+READ VS EDIT:
+  - Full edit: appointments, patient registration, leads, follow-ups
+  - Read-only: clinical session notes, laser parameters, medical escalations
+  - Hidden: financial data, audit logs, role management
+
+----------------------------------------------------------------------
+  2.4 TECHNICIAN
+----------------------------------------------------------------------
+
+WHO: Laser technician, aesthetician, or treatment delivery staff.
+SCOPE: Their branch. Only patients assigned to them or in their queue.
+
+HOME SCREEN:
+  - My treatment queue today: Kanban-style card list showing their
+    assigned patients in order of scheduled time
+  - Current patient card: patient name, service, session number, room,
+    skin type highlight, any flagged contraindications or alerts
+  - Next patient preview: upcoming patient with any preparation notes
+  - My session log: sessions I completed this week
+
+DAILY ACTIONS:
+  - Pick up next patient from queue
+  - Record pre-treatment observations
+  - Enter laser device settings and treatment areas
+  - Record skin reaction and post-treatment observations
+  - Mark session as complete
+  - Flag for doctor review if escalation needed
+  - Add technician note to patient record
+  - Mark follow-up required
+
+NAVIGATION MENU:
+  - My Queue (home)
+  - My Patients (patients they are assigned to)
+  - Session History
+  - My Schedule
+
+ALERTS SHOWN:
+  - Patient has unreviewed contraindication flag
+  - Patient has not provided consent (blocker for starting session)
+  - Doctor clearance required but not yet given
+  - Patient skin reaction from last session was moderate or severe
+
+KPI CARDS:
+  - My sessions today
+  - My sessions this week
+  - Sessions pending from my queue
+
+AUDIT VISIBILITY: Their own session entries only.
+BRANCH VISIBILITY: Their branch.
+PATIENT VISIBILITY: Patients assigned to them or scheduled with them.
+Cannot see financial data or other technician notes unless flagged.
+READ VS EDIT:
+  - Full edit: treatment session records, clinical notes on their patients
+  - Read-only: patient medical info, treatment plan overview, appointment history
+  - Hidden: financial data, staff management, roles, leads, follow-ups (unless assigned)
+
+----------------------------------------------------------------------
+  2.5 DOCTOR / CLINICAL REVIEWER
+----------------------------------------------------------------------
+
+WHO: Medical doctor or clinical lead responsible for reviewing cases,
+approving treatment plans, issuing clearances, and handling escalations.
+SCOPE: Their branch. All patients in that branch for clinical review purposes.
+
+HOME SCREEN:
+  - Review queue: patients awaiting doctor review, clearance, or escalation
+  - Escalations: sessions flagged by technicians that require clinical judgment
+  - Consent pending: patients with consent forms that need clinical countersignature
+  - Patients with contraindications: summary of patients with flagged conditions
+  - Recent reviews: my activity from the last 7 days
+
+DAILY ACTIONS:
+  - Review escalated cases from technicians
+  - Issue clearance for patients with contraindications
+  - Add clinical notes to patient record
+  - Review and approve treatment plans for complex cases
+  - Countersign consent forms where required
+  - Flag patients who require special protocols
+
+NAVIGATION MENU:
+  - Review Queue (home)
+  - All Patients (clinical view)
+  - Escalations
+  - Consent Management
+  - Clinical Notes
+  - My Schedule (if also doing consultations)
+
+ALERTS SHOWN:
+  - Unreviewed escalation waiting more than 2 hours
+  - Patient with active contraindication has appointment today
+  - Session with severe skin reaction logged but no review note added
+  - Treatment plan with doctor-required field left blank
+
+KPI CARDS:
+  - Pending reviews
+  - Escalations resolved this week
+  - Consent forms awaiting signature
+
+AUDIT VISIBILITY: Clinical record changes in their branch.
+BRANCH VISIBILITY: Their assigned branch.
+PATIENT VISIBILITY: All patients in their branch, full clinical access.
+READ VS EDIT:
+  - Full edit: clinical notes, treatment plan approvals, clearances, medical info
+  - Read-only: appointment scheduling, financial records
+  - Hidden: role management, staff management, system settings
+
+----------------------------------------------------------------------
+  2.6 FINANCE
+----------------------------------------------------------------------
+
+WHO: Finance officer or accounting staff.
+SCOPE: Their branch or all branches depending on company structure.
+
+HOME SCREEN:
+  - Revenue today: total invoiced, total collected, outstanding
+  - Payment pending queue: completed appointments with no payment recorded
+  - Package activity: packages sold today, packages expiring in 30 days,
+    packages with sessions remaining but no upcoming booking
+  - Refund requests: any logged refund requests awaiting action
+  - This month summary: bookings, revenue, discounts, refunds
+
+DAILY ACTIONS:
+  - Record payments against invoices
+  - Issue invoices for completed appointments
+  - Review package balances
+  - Process refunds
+  - Check financial reports
+  - Flag payment disputes
+
+NAVIGATION MENU:
+  - Finance Dashboard (home)
+  - Payments
+  - Invoices
+  - Packages
+  - Refunds
+  - Reports
+
+ALERTS SHOWN:
+  - Appointment completed more than 24 hours ago with no payment
+  - Package expiring in 7 days with sessions remaining
+  - Refund request open for more than 48 hours
+  - Patient with outstanding balance has upcoming appointment
+
+KPI CARDS:
+  - Revenue today and this month
+  - Outstanding payments
+  - Active packages
+  - Expiring packages (30 days)
+
+AUDIT VISIBILITY: Financial record changes only.
+BRANCH VISIBILITY: Assigned branch or all if company-level role.
+PATIENT VISIBILITY: Patient name and payment history only. No clinical notes.
+READ VS EDIT:
+  - Full edit: payments, invoices, packages, refunds
+  - Read-only: appointment records (for reconciliation), patient profiles (name/contact only)
+  - Hidden: clinical notes, treatment sessions, medical info, staff management, roles
+
+
+--------------------------------------------------------------------------------
+  3. DAILY APPOINTMENTS COMMAND CENTER
+--------------------------------------------------------------------------------
+
+The appointment center is the highest-traffic operational screen in the system.
+It must serve very different needs depending on who is looking at it.
+
+RECOMMENDED DESIGN: Role-specific hybrid views, not a single shared screen.
+
+The appointment pipeline must be defined as a formal state machine with explicit
+statuses, valid transitions, responsible roles per transition, and audit events
+on every change.
+
+UNIVERSAL STATUS BACKBONE (applies to all clinic types):
+  Booked -> Confirmed -> Arrived -> Checked In -> Intake Complete ->
+  Assigned -> In Room -> In Treatment -> Review Needed (optional) ->
+  Completed -> Follow-up Scheduled
+
+OPTIONAL STATUS EXTENSIONS (configurable per clinic type):
+  Patch Test Required      (laser, chemical peel clinics)
+  Consent Pending          (any clinic with regulatory requirements)
+  Doctor Clearance Required (any clinic with medical oversight)
+  Payment Pending           (any clinic with post-service billing)
+  Package Pending           (any clinic with session packages)
+  Rescheduled              (universal)
+  No Show                  (universal)
+  Cancelled                (universal)
+
+STATUS TRANSITION RULES (who can move what):
+  Booked -> Confirmed           : Secretary, Branch Manager
+  Confirmed -> Arrived          : Secretary (check-in trigger)
+  Arrived -> Checked In         : Secretary
+  Checked In -> Intake Complete : Secretary
+  Intake Complete -> Assigned   : Secretary, Branch Manager
+  Assigned -> In Room           : Technician, Branch Manager
+  In Room -> In Treatment       : Technician
+  In Treatment -> Review Needed : Technician (escalation)
+  In Treatment -> Completed     : Technician
+  Review Needed -> In Treatment : Doctor (clearance given)
+  Review Needed -> Completed    : Doctor
+  Completed -> Follow-up Scheduled: Secretary
+  Any -> Cancelled              : Secretary, Branch Manager
+  Any -> No Show                : Secretary, Branch Manager
+  Any -> Rescheduled            : Secretary, Branch Manager
+
+----------------------------------------------------------------------
+  3.1 SECRETARY VIEW - HYBRID CALENDAR + FRONT DESK QUEUE
+----------------------------------------------------------------------
+
+PRIMARY VIEW: Two-panel layout.
+
+Left panel: Day calendar grid (hourly slots, all rooms as columns).
+  - Each slot shows patient name, service abbreviation, assigned staff,
+    room number, and current status dot (color-coded).
+  - Clicking a slot opens the appointment action panel.
+  - Empty slots are clickable to open the booking form.
+
+Right panel: Arrival queue (list sorted by scheduled time).
+  - Each row: patient name, scheduled time, delay indicator,
+    confirmation status, check-in button, intake status.
+  - Color coding: green = on time, amber = 5-15 min delayed, red = 15+ min.
+  - Quick actions inline: [Check In] [Mark No Show] [Reschedule]
+
+Why this combination: The calendar gives the secretary the full picture of
+room and time availability for booking. The queue list is what they actually
+work through during the day. Neither view alone is sufficient.
+
+----------------------------------------------------------------------
+  3.2 TECHNICIAN VIEW - KANBAN TREATMENT QUEUE
+----------------------------------------------------------------------
+
+VIEW: Single-role Kanban board showing only the technician's own queue.
+
+Columns (left to right):
+  MY SCHEDULE TODAY | WAITING FOR ME | IN PREP | IN SESSION | DONE
+
+MY SCHEDULE TODAY:
+  All my appointments for today in time order. Cards are read-only here.
+
+WAITING FOR ME:
+  Patients who have checked in and been assigned to me, not yet in room.
+  Card shows: patient name, service, session number, skin type badge,
+  alert icons (contraindications, consent, doctor clearance).
+
+IN PREP:
+  Patient in my room, pre-treatment observations not yet recorded.
+  Card shows: room number, time in room, pre-treatment checklist status.
+
+IN SESSION:
+  Treatment in progress. One patient at a time per technician.
+  Card shows: session start time, elapsed time, device in use.
+
+DONE:
+  Completed sessions today. Post-treatment notes required before card closes.
+
+DRAG RULES:
+  - Waiting for Me -> In Prep: Technician only. Triggers "In Room" status.
+  - In Prep -> In Session: Technician only after pre-treatment form saved.
+  - In Session -> Done: Technician only after session form fully completed.
+  - In Session -> Review Needed: Technician. Creates escalation alert for doctor.
+  - WIP LIMIT on In Session: 1 card per technician (cannot have two active).
+
+CARD CONTENTS:
+  Patient name (bold), Service name, Session N of M
+  Scheduled time + delay indicator
+  Room badge, Staff badge
+  Consent icon (green tick or red X)
+  Contraindication icon (shows if medical flags exist)
+  Doctor clearance icon (shows if required)
+  Payment status icon (optional, configurable)
+
+----------------------------------------------------------------------
+  3.3 BRANCH MANAGER VIEW - LIVE OPERATIONS BOARD
+----------------------------------------------------------------------
+
+VIEW: Full-branch operational Kanban with all patients across all staff.
+
+Columns match universal status backbone plus optional statuses enabled for
+the branch. Manager can see all cards from all staff.
+
+Additional panels alongside the board:
+  - Room occupancy strip (top): each room as a box, green = in use, gray = empty
+  - Staff load strip (top): each staff member, their appointment count, current card
+  - Alert feed (right sidebar): bottleneck events, overdue waits, WIP limit breaches
+
+Manager can reassign a card to a different staff member or room by editing the card,
+not by drag. This creates an audit event: "Reassigned from [A] to [B] by [Manager]."
+
+----------------------------------------------------------------------
+  3.4 DOCTOR VIEW - REVIEW QUEUE
+----------------------------------------------------------------------
+
+VIEW: Simple prioritized list, not a Kanban. Kanban would be excessive for a queue
+that a doctor checks a few times per day.
+
+Sections:
+  - Escalations Pending: sessions flagged by technicians requiring review
+  - Consent Pending Review: patients whose consent needs clinical countersignature
+  - Today's Consultations: appointments where appointment_type is "consultation"
+  - Clearances Requested: patients with contraindications needing clearance before treatment
+
+Each row shows: patient name, reason for review, flagging technician, time waiting,
+brief note, and action buttons [Review] [Clear] [Flag for Follow-up].
+
+----------------------------------------------------------------------
+  3.5 FINANCE VIEW - BILLING QUEUE
+----------------------------------------------------------------------
+
+VIEW: Filtered table, not a Kanban. Finance is not operational moment-to-moment;
+it acts on completed events.
+
+Tabs:
+  - Payment Pending: appointments with status=completed and no linked payment
+  - Today's Invoices: invoices issued today
+  - Package Renewals: patients whose packages are expiring or exhausted
+  - Refunds: refund requests in progress
+
+Row actions: [Record Payment] [Issue Invoice] [View Patient] [Refund]
+
+
+--------------------------------------------------------------------------------
+  4. KANBAN VS CALENDAR VS TABLE RECOMMENDATION
+--------------------------------------------------------------------------------
+
+No single view type is optimal for all use cases. The recommendation is to deploy
+three view types and match them to roles, not make one universal view.
+
+KANBAN is best for:
+  - Real-time operational stage tracking
+  - Technician queues (my list, one column per state)
+  - Branch manager operational board
+  - Any scenario where bottlenecks are the problem to solve
+
+CALENDAR is best for:
+  - Booking new appointments (secretary)
+  - Viewing schedule density by room or staff
+  - Planning ahead (next week, next month)
+  - Identifying gaps that can be filled
+
+TABLE is best for:
+  - Reporting, exports, and audit
+  - Finance billing queues
+  - Follow-up task lists
+  - Patient search and history
+
+The system should implement all three and let the role workspace determine which
+is the default view for each entry point.
+
+HYBRID RECOMMENDATION BY USE CASE:
+
+  Secretary appointment screen:
+    Default: Calendar (left) + Queue list (right) for today
+    Toggle: Table view for search and reporting
+
+  Technician screen:
+    Default: Kanban (my queue, filtered to my patients)
+    No calendar view needed
+
+  Branch manager screen:
+    Default: Live operations Kanban (all staff, all rooms)
+    Toggle: Calendar view for planning, Table for reports
+
+  Doctor screen:
+    Default: Review queue list (table-like, sorted by urgency)
+    No Kanban, no calendar
+
+  Finance screen:
+    Default: Table (payment pending, invoices)
+    No Kanban, no calendar
+
+
+--------------------------------------------------------------------------------
+  5. END-TO-END OPERATIONAL WORKFLOW
+--------------------------------------------------------------------------------
+
+This is the full patient journey from first contact to ongoing treatment plan
+management. For each step: responsible role, required fields, blockers, status
+changes, notifications, and audit events.
+
+STEP 1: LEAD / INQUIRY
+  Responsible: Secretary, Branch Manager
+  Required: first_name, phone, source, branch_id
+  Optional: last_name, email, service_interest, notes
+  Status: leads.status = new
+  Trigger: Manual entry, or future web form integration
+  Audit: lead_created event
+
+STEP 2: LEAD CONTACTED
+  Responsible: Secretary
+  Required: outcome notes in lead.notes
+  Status: leads.status = contacted
+  Trigger: Secretary marks contact made
+  Notification: Remind if lead stays "new" for 24 hours without contact
+  Audit: lead_status_changed event
+
+STEP 3: APPOINTMENT BOOKED
+  Responsible: Secretary
+  Required: patient (existing or new registration), service, branch, scheduled_at,
+            assigned_staff_id, duration_minutes
+  Optional: room_id, reason_id, reason_notes, session_number if linked to plan
+  Status: appointments.status = booked
+  Blocker: patient must exist (convert lead to patient or use existing record)
+  Trigger: Lead status changes to appointment_booked if booked from lead
+  Notification: Send confirmation to patient (future: SMS/email integration)
+  Audit: appointment_created event
+
+STEP 4: APPOINTMENT CONFIRMED
+  Responsible: Secretary
+  Required: confirmation note or method logged
+  Status: appointments.status = confirmed
+  Trigger: Secretary calls or messages patient, marks confirmed
+  Notification: Appointment reminder sent flag updated
+  Audit: appointment_confirmed event
+
+STEP 5: PATIENT ARRIVES
+  Responsible: Secretary
+  Required: arrived_at timestamp set
+  Status: appointments.status = arrived
+  Trigger: Secretary clicks "Mark Arrived" at front desk
+  Audit: patient_arrived event
+
+STEP 6: CHECK-IN COMPLETE
+  Responsible: Secretary
+  Required: intake form confirmed (or noted as pending)
+  Status: appointments.status = checked_in
+  Blocker: If consent_given = false, cannot proceed. Secretary must resolve.
+  Trigger: Secretary marks check-in done
+  Smart Alert: If intake not complete after 10 minutes, amber flag appears on queue
+  Audit: patient_checked_in event
+
+STEP 7: INTAKE COMPLETE
+  Responsible: Secretary (administrative) or Technician (clinical intake)
+  Required: intake form fields filled (configurable per clinic)
+  Optional: pre-treatment photos, updated medical notes
+  Status: appointments.status = intake_complete
+  Blocker: If patient has contraindication flag and no doctor clearance on file,
+           system blocks progression and creates review request
+  Trigger: Staff marks intake done
+  Audit: intake_completed event
+
+STEP 8: ASSIGNED TO STAFF / ROOM
+  Responsible: Secretary, Branch Manager
+  Required: assigned_staff_id, room_id
+  Status: appointments.status = assigned
+  Trigger: Staff assignment confirmed, patient directed to room
+  Smart Alert: If assigned staff has no capacity, branch manager alerted
+  Audit: patient_assigned event (includes old and new assignee)
+
+STEP 9: PATIENT IN ROOM
+  Responsible: Technician
+  Required: technician confirms room entry
+  Status: appointments.status = in_room
+  Trigger: Technician picks up card from queue or marks start
+  Timestamp: in_room_at recorded
+  Audit: patient_in_room event
+
+STEP 10: IN TREATMENT
+  Responsible: Technician
+  Required (laser clinic): device_used, laser_settings (fluence, pulse, spot size),
+                           treatment_areas, observations_before
+  Status: appointments.status = in_treatment
+  Trigger: Technician starts session form
+  Blocker: Pre-treatment observations must be saved before this status is reachable
+  WIP Limit: Technician cannot have two cards in "In Treatment" simultaneously
+  Audit: session_started event
+
+STEP 11A: DOCTOR REVIEW NEEDED (CONDITIONAL)
+  Responsible: Technician triggers, Doctor resolves
+  Trigger: Technician flags escalation OR system detects contraindication
+  Required (technician): escalation reason note
+  Required (doctor): review note, decision (clear / do not treat / modified protocol)
+  Status: appointments.status = review_needed
+  Notification: Alert created in doctor workspace immediately
+  Blocker: Cannot return to in_treatment without doctor resolution
+  Audit: escalation_created, doctor_review_added events
+
+STEP 11B: TREATMENT COMPLETED
+  Responsible: Technician
+  Required: observations_after, skin_reaction, outcome, session_status = completed
+  Optional: next_session_notes, cooling_notes
+  Status: appointments.status = completed, arrived_at/completed_at both set
+          treatment_plan.completed_sessions incremented
+  Trigger: Technician saves completed session form
+  Smart Alert: If plan is now complete, alert to secretary to discuss next package
+              If plan has sessions remaining but no upcoming appointment,
+              blue flag on patient card
+  Audit: session_completed event, treatment_plan_updated event
+
+STEP 12: FOLLOW-UP SCHEDULED
+  Responsible: Secretary
+  Required: follow_up.type, follow_up.due_date, assigned_to
+  Status: appointments.status = follow_up_scheduled (terminal with follow-up)
+          follow_ups.status = pending
+  Trigger: Secretary schedules follow-up at end of visit
+  Smart Alert: If 48 hours pass after completed appointment with no follow-up
+              scheduled and plan has no next appointment, amber flag
+  Audit: follow_up_created event
+
+STEP 13: PAYMENT / FINANCE HANDOFF
+  Responsible: Finance
+  Trigger: Appointment reaches status = completed
+  Required: invoice created, payment recorded
+  Blocker (configurable): In strict mode, next appointment cannot be booked if
+            outstanding payment exists on current plan
+  Audit: invoice_created, payment_recorded events
+
+STEP 14: NEXT SESSION PLANNING
+  Responsible: Secretary, Branch Manager
+  Trigger: After treatment completion, plan shows sessions remaining
+  Required: New appointment booked within recommended interval
+  Smart Alert: If recommended interval passes with no booking, alert fires
+  Audit: appointment_created event with session_number incremented
+
+
+--------------------------------------------------------------------------------
+  6. LASER CLINIC SPECIFIC WORKFLOW DESIGN
+--------------------------------------------------------------------------------
+
+The laser clinic is the first production customer. The following structures apply
+specifically to laser and will be flagged in the database as clinic_type = laser.
+Other clinic types may ignore these fields or the admin may disable them.
+
+SKIN TYPE PROTOCOL:
+  - Fitzpatrick skin type recorded at registration: I, II, III, IV, V, VI
+  - Skin tone recorded: fair, medium, olive, dark, very dark
+  - System validates: if skin type is V or VI, warn technician to verify
+    laser device and fluence settings are appropriate
+  - Skin type shown prominently on technician Kanban card and session form
+
+CONTRAINDICATION MANAGEMENT:
+  - Contraindications stored in patient_medical_info.contraindications (text)
+  - Key boolean flags: is_pregnant, has_pacemaker, has_metal_implants
+  - If is_pregnant = true: system blocks scheduling for laser sessions and
+    displays red alert on any existing upcoming appointments
+  - If has_metal_implants = true: red warning shown to technician on session form
+  - If contraindications text is non-empty: yellow warning shown with text
+  - All contraindication flags require doctor clearance before first session
+
+LASER SESSION FIELDS (stored in treatment_sessions.laser_settings JSON):
+  - device_used (string): Candela GentleMax Pro, Alma Soprano, Lumenis LightSheer, etc.
+  - fluence (number, J/cm2)
+  - pulse_width (string, ms)
+  - spot_size (string, mm)
+  - frequency (number, Hz)
+  - cooling_setting (string)
+  - pass_count (number)
+  Additionally in session record:
+  - treatment_areas (JSON array): upper_lip, chin, underarms, full_legs, etc.
+  - skin_reaction: none, mild, moderate, severe
+  - cooling_reaction_notes (text)
+  - erythema_observed (boolean)
+  - post_treatment_applied (text): cooling gel, aloe, sunscreen applied
+
+TREATMENT INTERVAL ENFORCEMENT:
+  - Each service can define a recommended_interval_weeks field
+  - When a session is completed, system calculates the earliest next booking date
+  - If secretary tries to book next session earlier, system shows warning
+    (not a hard block by default, configurable per clinic)
+
+SESSION COUNT TRACKING:
+  - treatment_plans.total_sessions stores the contracted number
+  - treatment_plans.completed_sessions increments on each completed session
+  - treatment_sessions.session_number is the global session counter per plan
+  - System detects if session_number exceeds total_sessions and alerts secretary
+    that a package extension or new plan is needed
+
+PACKAGE TRACKING:
+  - A package is a treatment plan with a fixed number of sessions and a prepaid price
+  - packages table (new): links patient, service, sessions_purchased, sessions_used,
+    price_paid, expiry_date, status (active, exhausted, expired, refunded)
+  - Finance sees package status on their dashboard
+  - Secretary is alerted when a package is about to be exhausted or expire
+
+BEFORE AND AFTER NOTES:
+  - treatment_sessions.observations_before and observations_after are rich text
+  - Future phase: photo attachments linked to sessions
+  - Required fields per clinic config: if before_photo_required = true in
+    clinic_configs, system blocks session start until photo is acknowledged
+
+TECHNICIAN ASSIGNMENT RULES:
+  - Each patient can have a preferred_technician_id on the patient record
+  - System suggests preferred technician when booking
+  - If preferred technician unavailable, secretary sees next available
+  - Technician cannot be assigned to more appointments than their daily_capacity
+    field allows (configurable in employee_schedules or clinic_configs)
+
+ROOM ASSIGNMENT AND LASER DEVICE LINK:
+  - Rooms can be tagged with the devices they contain (rooms.devices JSON)
+  - When a service requires a specific device type, system can filter
+    available rooms to only those containing that device
+  - Prevents booking a laser session into a consultation room
+
+CONSENT MANAGEMENT FOR LASER:
+  - patients.consent_given boolean is the global consent flag
+  - For laser specifically: a signed treatment consent form is required per
+    treatment area, not just per patient
+  - consent_forms table (new): stores consent type, treatment_area, signed_at,
+    signed_by, document reference
+  - System blocks treatment if no valid consent form exists for the area being treated
+
+DOCTOR ESCALATION TRIGGERS (LASER SPECIFIC):
+  - Technician manually flags escalation (always available)
+  - Automatic escalation trigger: skin_reaction logged as severe
+  - Automatic escalation trigger: patient has_pacemaker or has_metal_implants
+    and doctor_clearance_given = false on the session
+  - Automatic escalation trigger: patient is_pregnant and appointment scheduled
+  - All escalations appear in doctor review queue immediately
+
+
+--------------------------------------------------------------------------------
+  7. CUSTOMIZATION ARCHITECTURE
+--------------------------------------------------------------------------------
+
+PRINCIPLE: The system must be customizable without code changes for the majority
+of operational variations. Code changes should only be needed for new feature types,
+not for clinic-specific variations of existing features.
+
+----------------------------------------------------------------------
+  7.1 WHAT IS CONFIGURABLE BY DATABASE TABLE
+----------------------------------------------------------------------
+
+These things are data, not configuration, and should be managed through
+admin UI as records:
+
+  Services and service categories
+    Tables: services, service_categories
+    Clinic admin can add, edit, disable services
+
+  Appointment reasons
+    Table: appointment_reasons
+    Clinic admin manages the pick list
+
+  Rooms and devices
+    Tables: rooms (with devices JSON column)
+    Branch admin manages rooms
+
+  Roles and permissions
+    Tables: roles, permissions, role_permissions, user_branch_roles
+    Super admin manages role templates and overrides
+
+  Branch-level service catalog
+    Table: branch_services (pivot with price_override, is_active)
+    Branch admin enables/disables services per branch, sets local pricing
+
+  Note templates
+    Table: note_templates (new)
+    Columns: name, note_type, content_template, clinic_type, is_default
+    Staff selects a template when adding a note
+
+  Follow-up types
+    Managed as a seeded or admin-managed list in a lookup table
+
+  Treatment areas catalog
+    Table: treatment_areas (new)
+    Columns: name, body_region, clinic_type, sort_order
+    Used in session forms and treatment plan configuration
+
+----------------------------------------------------------------------
+  7.2 WHAT IS CONFIGURABLE BY ADMIN SETTINGS
+----------------------------------------------------------------------
+
+These are on/off or threshold settings managed through a clinic_configs table
+or a branch_configs table. Each setting has a key, value, scope
+(company or branch), and type (boolean, integer, string, JSON).
+
+  MODULES:
+    module_leads_enabled (boolean)
+    module_finance_enabled (boolean)
+    module_doctor_review_enabled (boolean)
+    module_consent_forms_enabled (boolean)
+    module_packages_enabled (boolean)
+    module_intake_forms_enabled (boolean)
+
+  APPOINTMENT FLOW:
+    appointment_confirm_required (boolean)
+    appointment_intake_required (boolean)
+    appointment_consent_required_before_treatment (boolean)
+    appointment_payment_required_before_next_booking (boolean)
+    appointment_doctor_clearance_required_for_contraindications (boolean)
+
+  THRESHOLDS AND ALERTS:
+    wait_time_amber_minutes (integer, default 15)
+    wait_time_red_minutes (integer, default 30)
+    intake_overdue_minutes (integer, default 10)
+    room_idle_alert_minutes (integer, default 30)
+    follow_up_overdue_reminder_hours (integer, default 24)
+    technician_daily_session_limit (integer, default 8)
+    kanban_wip_limit_in_session (integer, default 1)
+
+  LASER-SPECIFIC:
+    laser_interval_warning_enabled (boolean)
+    laser_skin_type_required (boolean)
+    laser_before_photo_required (boolean)
+    laser_device_room_matching_enabled (boolean)
+    laser_doctor_escalation_on_severe_reaction (boolean)
+
+  CLINIC IDENTITY:
+    clinic_type (string: laser, dental, aesthetics, general)
+    currency (string: AED, SAR, KWD)
+    date_format
+    appointment_duration_default_minutes (integer)
+
+  KANBAN COLUMNS:
+    kanban_columns (JSON array of column definitions)
+    Each column: { key, label, status_values[], color, wip_limit, roles_visible[] }
+    Admin can add, remove, reorder, rename columns and map statuses to them
+
+----------------------------------------------------------------------
+  7.3 WHAT IS HARD-CODED
+----------------------------------------------------------------------
+
+These should not be configurable because changing them would break data integrity
+or core logic:
+
+  Status state machine transitions and their audit events
+  Foreign key relationships and cascade rules
+  Authentication and session logic
+  Role-level data scoping (branch manager cannot see other branches)
+  Soft delete behavior
+  Audit log write rules (append only)
+  Financial record immutability after invoice issued
+
+----------------------------------------------------------------------
+  7.4 CUSTOM INTAKE FORMS (V1.5)
+----------------------------------------------------------------------
+
+In version 1, intake forms are static fields on the patient and medical info record.
+In version 1.5, add a configurable intake form system:
+
+  Tables:
+    intake_form_templates: id, company_id, clinic_type, name, is_default
+    intake_form_fields: id, template_id, field_type, field_key, label, required,
+                        options (JSON for dropdowns), sort_order
+    intake_form_responses: id, appointment_id, patient_id, template_id, submitted_at
+    intake_form_answers: id, response_id, field_key, value
+
+  This allows admin to build clinic-specific intake forms without code changes.
+  For laser clinics, the default template includes skin type, contraindications,
+  medications, pregnancy status, and treatment area consent.
+
+----------------------------------------------------------------------
+  7.5 ROLE LABELS (CONFIGURABLE)
+----------------------------------------------------------------------
+
+The role name displayed in the UI should be configurable at the tenant level.
+A role named "technician" might be labeled "Laser Specialist" in one clinic
+and "Aesthetician" in another.
+
+  roles table: add display_name column (nullable, falls back to name)
+  Admin can set display_name per role per company
+
+
+--------------------------------------------------------------------------------
+  8. SMART SYSTEM BEHAVIOR WITHOUT AI
+--------------------------------------------------------------------------------
+
+These are deterministic rule-based behaviors that make the system operationally
+intelligent without requiring machine learning. All rules should be configurable
+(enable/disable, thresholds) via clinic_configs.
+
+All smart events should write to a system_alerts table with: alert_type, severity,
+entity_type, entity_id, message, resolved_at, resolved_by, branch_id.
+
+RULE 1: OVERDUE FOLLOW-UP WARNING
+  Condition: follow_ups.due_date < today AND status = pending
+  Severity: amber if 1-3 days overdue, red if 4+ days overdue
+  Visible to: Assigned user, Secretary, Branch Manager
+  Action available: Mark complete, Reschedule, Cancel
+
+RULE 2: WAIT TIME ALERT
+  Condition: Patient has arrived_at set, status is not yet in_room,
+             and (now - arrived_at) > wait_time_amber_minutes
+  Severity: amber at threshold, red at 2x threshold
+  Visible to: Secretary, Branch Manager
+  Action available: Reassign to different staff, Reassign to different room
+
+RULE 3: INCOMPLETE INTAKE WARNING
+  Condition: Patient status = arrived OR checked_in,
+             arrived_at set, intake not marked complete,
+             (now - arrived_at) > intake_overdue_minutes
+  Severity: amber
+  Visible to: Secretary
+  Action available: Open intake form, Mark complete
+
+RULE 4: MISSING CONSENT BLOCKER
+  Condition: appointment.status is being moved to in_treatment
+             AND patient.consent_given = false
+  Action: Hard block on status transition, error shown to technician
+  Visible to: Technician (blocker), Secretary (alert to resolve)
+  Severity: red blocker
+
+RULE 5: CONTRAINDICATION + NO CLEARANCE BLOCKER
+  Condition: appointment_type requires treatment AND
+             patient has active contraindications AND
+             doctor clearance not on file for this session
+  Action: Warn technician, prevent moving to in_treatment without override
+          Override requires doctor role, creates audit event
+  Severity: red
+
+RULE 6: PACKAGE EXHAUSTION ALERT
+  Condition: package.sessions_used >= package.sessions_purchased
+             OR package.sessions_used >= package.sessions_purchased - 1
+  Timing: Check after each session completion
+  Visible to: Secretary (to discuss renewal), Finance (for billing)
+  Severity: blue (information) for 1 remaining, amber for exhausted
+
+RULE 7: NO NEXT APPOINTMENT FLAG
+  Condition: Treatment plan is active (status = active),
+             last session completed more than X days ago (configurable),
+             no upcoming appointment linked to this plan
+  Severity: amber
+  Visible to: Secretary, Branch Manager
+  Action available: Book next appointment from alert
+
+RULE 8: NO-SHOW PATTERN FLAG
+  Condition: Patient has 2 or more no-show appointments in the last 90 days
+  Severity: amber warning on patient record and on any future appointment card
+  Visible to: Secretary (when confirming), Branch Manager
+  Action available: Note added to patient, flag persists until manually cleared
+
+RULE 9: ROOM IDLE WHILE QUEUE EXISTS
+  Condition: A room is not occupied (no appointment with status in_room
+             or in_treatment) for more than room_idle_alert_minutes,
+             AND there is a patient with status = assigned or intake_complete
+  Severity: amber
+  Visible to: Branch Manager
+  Action available: Assign waiting patient to idle room
+
+RULE 10: STAFF OVERLOAD INDICATOR
+  Condition: A technician has more assigned appointments in a day than
+             their technician_daily_session_limit setting
+  Severity: amber
+  Visible to: Branch Manager, Secretary
+  Timing: Shown when attempting to assign additional appointments
+
+RULE 11: TREATMENT INTERVAL WARNING
+  Condition: New appointment being booked for a service with
+             recommended_interval_weeks set, and last session date +
+             (interval_weeks * 7 days) > proposed appointment date
+  Severity: amber warning (not a block by default)
+  Visible to: Secretary at time of booking
+  Action available: Override with note, or select later date
+
+RULE 12: INACTIVE LEAD REMINDER
+  Condition: lead.status is new or contacted,
+             lead.updated_at was more than 3 days ago
+  Severity: amber
+  Visible to: Assigned secretary
+  Action available: Log contact attempt, Change status, Mark lost
+
+RULE 13: DUPLICATE PATIENT DETECTION
+  Condition: On patient registration, phone number or email matches
+             an existing patient in the same company
+  Timing: Real-time check during registration form entry
+  Action: Warning shown with matched patient details. Secretary must
+          confirm it is a different person or merge into existing record.
+  Visible to: Secretary at registration
+
+RULE 14: INCOMPLETE TREATMENT PLAN WARNING
+  Condition: treatment_plan.end_date is set AND end_date is approaching
+             (within 14 days) AND completed_sessions < total_sessions
+  Severity: amber
+  Visible to: Secretary, Branch Manager, Finance
+  Action available: Extend plan end date, Book remaining sessions urgently
+
+RULE 15: SEVERE SKIN REACTION ESCALATION
+  Condition: treatment_sessions.skin_reaction is recorded as severe
+             AND no doctor review note exists on the session
+  Timing: Triggers immediately when technician saves session
+  Severity: red
+  Visible to: Doctor (immediately in review queue), Branch Manager
+  Action available: Doctor adds review note, Doctor clears or escalates
+
+
+--------------------------------------------------------------------------------
+  9. AI PHASE 2 ROADMAP
+--------------------------------------------------------------------------------
+
+Phase 1 (current build): Deterministic rules, structured data, manual workflows.
+Phase 1.5: Smart rule engine (section 8 above), fully implemented.
+Phase 2: AI-augmented layer, added on top of the existing structure.
+
+The AI layer should not replace existing workflows. It should add suggestions,
+summaries, and predictions alongside existing human actions. Every AI output
+should be labeled as AI-generated, and the human should always take the final action.
+
+----------------------------------------------------------------------
+  9.1 NEAR-TERM AI (6-12 MONTHS)
+----------------------------------------------------------------------
+
+FOLLOW-UP DRAFT GENERATION:
+  What: When a follow-up task is due, AI generates a suggested message or script
+        for the secretary to use when calling the patient.
+  Input: Patient name, last session outcome, next session due, any open notes.
+  Output: 2-3 sentence draft shown alongside the follow-up task.
+  Implementation: Single prompt to OpenAI/Claude with structured context.
+  Risk: Low. It is a draft. Human sends or discards.
+
+NOTE SUMMARIZATION:
+  What: On the patient profile, show an AI-generated one-paragraph summary
+        of the patient's clinical history based on all session notes.
+  Input: All treatment session notes, technician observations, doctor notes.
+  Output: Summary paragraph shown in a "Clinical Summary" panel.
+  Implementation: Concatenate notes (respecting character limits), summarize.
+  Risk: Low if clearly labeled as AI summary. Should not replace individual notes.
+
+NO-SHOW RISK SCORE:
+  What: Before confirming an appointment, show a risk label (low/medium/high)
+        based on patient's historical no-show rate, appointment time, and
+        confirmation status.
+  Input: Patient appointment history, current confirmation status, time of day.
+  Output: Risk label with brief reasoning: "This patient has missed 2 of the
+          last 5 appointments. Consider double-confirming."
+  Implementation: Rule-based initially (see section 8 rule 8), then
+                  logistic regression or simple ML model in phase 2.
+  Risk: Low. It is advisory only.
+
+APPOINTMENT GAP FILLING SUGGESTION:
+  What: When a slot becomes available due to cancellation, system identifies
+        patients who have a pending follow-up or overdue next session and
+        suggests offering the slot to them.
+  Input: Freed slot (date, time, room, staff), patients with upcoming need.
+  Output: Ranked list of 3-5 patients to contact for the slot.
+  Implementation: Rule-based matching with scoring by urgency.
+  Risk: Very low. Purely informational.
+
+SESSION NEXT-ACTION SUGGESTION:
+  What: After a technician saves a session, suggest the recommended next
+        session interval and any parameter adjustments based on skin reaction.
+  Input: Current session data, skin reaction, prior session settings.
+  Output: Pre-filled suggestion in the next_session_notes field.
+  Implementation: Rule-based initially (fluence +10% if no reaction,
+                  maintain if mild, reduce if moderate).
+  Risk: Low if labeled as suggestion. Technician still enters final note.
+
+----------------------------------------------------------------------
+  9.2 ADVANCED AI (12-24 MONTHS)
+----------------------------------------------------------------------
+
+PATIENT TIMELINE SUMMARIZATION:
+  What: Generate a full narrative of the patient's journey from first contact
+        to current status, suitable for a new staff member to read and
+        understand the patient in 60 seconds.
+  Risk: Medium. Clinical data summarization requires careful prompt design
+        and QA processes. Should be reviewed by a clinician before reliance.
+
+ANOMALY DETECTION:
+  What: Detect unusual patterns in session data: fluence settings that deviate
+        significantly from branch norms for the same skin type, patients with
+        worsening skin reactions across sessions, or treatment plans progressing
+        significantly slower than typical.
+  Risk: Medium. False positives create noise. Requires calibration period.
+
+SCHEDULE OPTIMIZATION:
+  What: Given today's bookings, patient arrival patterns, and historical session
+        duration variance, suggest reordering or redistributing the schedule to
+        minimize idle time and patient wait times.
+  Risk: Medium. Recommendations must respect existing patient expectations.
+
+STAFF SCHEDULING SUGGESTIONS:
+  What: Given historical appointment volume by day of week and season,
+        suggest optimal shift coverage for each branch.
+  Risk: Low to medium. Advisory, not automatic.
+
+REVENUE FORECASTING:
+  What: Based on active treatment plans, scheduled appointments, package
+        expiry dates, and historical conversion rates, forecast monthly
+        revenue for each branch.
+  Risk: Low. Financial forecast is advisory.
+
+INTELLIGENT INTAKE PRE-FILL:
+  What: Based on patient history, pre-fill parts of the intake form with
+        previously recorded answers, flagging only changed fields.
+  Risk: Low. Patient or staff still reviews and confirms.
+
+
+--------------------------------------------------------------------------------
+  10. RECOMMENDED DATABASE CHANGES
+--------------------------------------------------------------------------------
+
+REQUIRED FOR V1 COMPLETION:
+
+  appointments table - add columns:
+    checked_in_at       TIMESTAMP NULL
+    intake_completed_at TIMESTAMP NULL
+    assigned_at         TIMESTAMP NULL
+    in_room_at          TIMESTAMP NULL
+    treatment_started_at TIMESTAMP NULL
+    needs_review_at     TIMESTAMP NULL
+    flow_status         VARCHAR (tracks Kanban column position separately from status)
+
+  treatment_sessions table - add columns:
+    cooling_reaction_notes  TEXT NULL
+    erythema_observed       BOOLEAN DEFAULT FALSE
+    post_treatment_applied  TEXT NULL
+    doctor_clearance_given  BOOLEAN DEFAULT FALSE
+    doctor_clearance_by     BIGINT UNSIGNED NULL
+    doctor_clearance_at     TIMESTAMP NULL
+    escalation_reason       TEXT NULL
+
+  patients table - rename from customers:
+    customer_code -> patient_code
+    All customer_id FK columns in other tables -> patient_id
+
+  patient_medical_info table - rename from customer_medical_info:
+    customer_id -> patient_id
+
+REQUIRED FOR V1.5:
+
+  New table: packages
+    id, company_id, branch_id, patient_id, service_id,
+    sessions_purchased, sessions_used, price_paid, amount_remaining,
+    sold_at, expiry_date, status (active, exhausted, expired, refunded),
+    sold_by, notes, timestamps
+
+  New table: payments
+    id, company_id, branch_id, patient_id, appointment_id, package_id,
+    amount, payment_method (cash, card, insurance, transfer),
+    reference_number, received_at, received_by, notes, timestamps
+
+  New table: invoices
+    id, company_id, branch_id, patient_id, invoice_number, subtotal,
+    discount_amount, discount_reason, tax_amount, total,
+    status (draft, issued, paid, partially_paid, void, refunded),
+    issued_at, due_date, paid_at, notes, timestamps
+
+  New table: consent_forms
+    id, company_id, branch_id, patient_id, form_type, treatment_area,
+    signed_at, signed_by (patient name/signature reference), witnessed_by,
+    document_path, is_valid, invalidated_at, timestamps
+
+  New table: system_alerts
+    id, company_id, branch_id, alert_type, severity (info, amber, red, blocker),
+    entity_type, entity_id, message, created_by (system), resolved_at,
+    resolved_by, timestamps, is_dismissed
+
+  New table: clinic_configs
+    id, company_id, branch_id (nullable - company-level if null),
+    config_key, config_value, config_type, updated_by, timestamps
+
+  New table: treatment_areas (lookup)
+    id, name, body_region, clinic_type, sort_order, is_active
+
+  New table: note_templates
+    id, company_id, name, note_type, content_template, is_default, timestamps
+
+  Modify table: rooms
+    Add: devices (JSON) - list of devices available in this room
+    Add: is_laser_room (BOOLEAN)
+    Add: status (available, maintenance, out_of_service)
+
+  Modify table: services
+    Add: recommended_interval_weeks (TINYINT UNSIGNED)
+    Add: requires_doctor_clearance (BOOLEAN)
+    Add: clinic_type (VARCHAR - used for filtering in multi-clinic setup)
+    Add: required_device_type (VARCHAR)
+
+  Modify table: roles
+    Add: display_name (VARCHAR) - shown in UI instead of name
+    Add: role_template (VARCHAR) - references standard role type
+
+FOR PHASE 2 (AI):
+
+  New table: ai_suggestions
+    id, company_id, entity_type, entity_id, suggestion_type,
+    content, model_used, generated_at, reviewed_by, reviewed_at,
+    review_action (accepted, dismissed, edited), timestamps
+
+  New table: no_show_risk_scores
+    id, appointment_id, patient_id, score, factors (JSON),
+    calculated_at, timestamps
+
+
+--------------------------------------------------------------------------------
+  11. RECOMMENDED UI MODULES AND PAGES
+--------------------------------------------------------------------------------
+
+VERSION 1 (complete now):
+  Dashboard (role-specific home) -- DONE (needs role-switching logic)
+  Branches index + create + edit -- DONE
+  Employees index + create + edit -- DONE
+  Patients index + show -- DONE (renamed from customers)
+  Appointments index (table view) -- DONE
+  Leads index -- DONE
+  Follow-ups index -- DONE
+
+VERSION 1.5 (next sprint):
+  Appointment Kanban board (technician view)
+  Appointment operations board (branch manager view)
+  Front desk queue panel (secretary view)
+  Doctor review queue
+  Patient intake form
+  Treatment session recording form (full laser fields)
+  Patient profile - enhanced with session timeline
+  Follow-up detail and completion flow
+  System alerts panel (smart rule outputs)
+  Clinic configuration admin panel
+  Role workspace selector (show correct home by role)
+
+VERSION 2:
+  Finance dashboard + payment recording
+  Invoice management
+  Package management
+  Consent form management
+  Audit log viewer (user-facing, not just developer table)
+  Branch analytics dashboard
+  Reporting and export module
+  AI suggestions panel on patient profile
+  Note template manager
+  Intake form builder (drag and drop fields)
+  Treatment area catalog manager
+  Kanban configuration admin (add/rename/reorder columns)
+
+
+--------------------------------------------------------------------------------
+  12. RECOMMENDED MVP CHANGES (PRIORITY ORDER)
+--------------------------------------------------------------------------------
+
+PRIORITY 1 - DO FIRST (unblock daily operations):
+
+  1a. Role-based routing on login
+      When user logs in, redirect to their role-specific home screen.
+      super_admin -> /dashboard (current)
+      branch_manager -> /operations
+      secretary -> /front-desk
+      technician -> /my-queue
+      doctor -> /review-queue
+      finance -> /finance
+
+  1b. Appointment status state machine
+      Add flow_status column to appointments.
+      Enforce valid transitions in controller.
+      Show colored status chip on every appointment card.
+
+  1c. Patient rename
+      Rename customers -> patients everywhere.
+      Already in progress in current session.
+
+  1d. Technician Kanban page
+      /my-queue route, filtered to logged-in technician's appointments.
+      Cards showing patient name, service, session number, alerts.
+      Drag or button to move through: Waiting / In Prep / In Session / Done.
+
+  1e. Secretary front desk page
+      /front-desk route.
+      Today's queue list (arrival order) + action buttons.
+      Mark Arrived, Check In, Assign to Room, No Show.
+
+PRIORITY 2 - DO NEXT (complete the daily loop):
+
+  2a. Treatment session form
+      When technician moves appointment to In Treatment, open a full session
+      recording form with all laser fields.
+
+  2b. Smart alerts sidebar
+      Simple alert list on dashboards showing rule violations.
+      Rules 1, 2, 4, 5, 6, 7, 8 from section 8.
+
+  2c. Patient profile - session timeline
+      On the patient show page, show a vertical timeline of all sessions,
+      notes, and status changes, not just tables.
+
+  2d. Doctor review queue page
+      /review-queue route, filtered to escalations and clearance requests.
+
+  2e. Appointment Kanban for branch manager
+      /operations route, all patients across the branch in Kanban columns.
+
+PRIORITY 3 - VERSION 1.5:
+  Finance module
+  Consent forms
+  Packages and invoices
+  Configurable intake forms
+  System alerts table and alert management
+
+
+--------------------------------------------------------------------------------
+  13. RISKS, TRADE-OFFS, AND DESIGN RECOMMENDATIONS
+--------------------------------------------------------------------------------
+
+RISK 1: ROLE SCOPE COMPLEXITY
+  Risk: As roles multiply and branch-scoped overrides are added, the scoping
+        logic in controllers becomes hard to maintain.
+  Recommendation: Create a single PatientScope and AppointmentScope service class
+        that resolves the correct query filter based on the authenticated user's
+        role and branch assignment. All controllers call this service instead of
+        writing raw where-clauses. Centralize the scoping logic in one place.
+
+RISK 2: STATUS STATE MACHINE DRIFT
+  Risk: If appointments.status is updated directly from anywhere in the code,
+        the state machine breaks and audit events are missed.
+  Recommendation: Create an AppointmentStatusService with a single transition()
+        method. All status changes must go through this service. The service
+        validates the transition, updates timestamps, fires audit events, and
+        triggers smart rule checks. Never allow direct $appointment->status = X.
+
+RISK 3: AUDIT LOG PERFORMANCE
+  Risk: Writing an audit event for every field change on every save will slow
+        down inserts and create a massive table quickly.
+  Recommendation: Use Laravel's queued jobs for audit writes. The audit event
+        is dispatched to a queue and written asynchronously. Audit table should
+        be partitioned by month in production MySQL. Only audit sensitive models
+        (patients, appointments, sessions, payments) - not every model.
+
+RISK 4: CUSTOMIZATION FRAMEWORK SCOPE CREEP
+  Risk: Adding too many configurable options creates a settings screen that
+        is harder to use than just editing code.
+  Recommendation: Start with the 20 most impactful settings (listed in section 7.2).
+        Add more only when a real customer requests them with a clear use case.
+        Every new config key must have a documented default value and description.
+
+RISK 5: KANBAN DATA CONSISTENCY
+  Risk: If the Kanban board is real-time but is built on page refresh, two users
+        moving cards simultaneously will produce stale state.
+  Recommendation: For version 1, use simple polling (refresh every 30 seconds)
+        rather than WebSockets. WebSockets (Laravel Reverb or Pusher) should be
+        added in version 1.5 only after the state machine is stable.
+
+RISK 6: MULTI-ROLE USERS
+  Risk: A doctor who also does consultations as a technician has two roles.
+        The system must decide which workspace to show them.
+  Recommendation: Add a primary_role field to users. Login redirects to the
+        primary role workspace. User can switch workspace from a top bar dropdown
+        without logging out. Each workspace switch is audited.
+
+RISK 7: CLINICAL DATA SENSITIVITY
+  Risk: Laser clinic data (skin type, medical history, contraindications,
+        session notes) is sensitive clinical data. Breaches create legal liability.
+  Recommendation: Implement field-level access control in version 1.5.
+        Finance role must never see clinical notes in any query or export.
+        Implement at the query level (select only non-clinical columns for
+        finance-scoped requests), not just at the view level.
+
+RISK 8: PATIENT DUPLICATE MANAGEMENT
+  Risk: Two reception staff register the same patient twice with slightly
+        different phone numbers or names. Creates split history.
+  Recommendation: Rule 13 from section 8 (duplicate detection) is essential.
+        Additionally, add a merge_patients admin action in version 1.5 that
+        merges all appointments, sessions, notes, and follow-ups from a
+        duplicate patient into the primary record and soft-deletes the duplicate.
+
+TRADE-OFF: BLADE VS SPA
+  Current: Blade-based Blade templates with PHP controllers.
+  Trade-off: Blade is simple, fast to develop, and reliable. It struggles with
+             real-time features like live Kanban updates and optimistic UI.
+  Recommendation: Stay on Blade for version 1. Add Alpine.js for lightweight
+        client-side interactions (tab switching, form validation, dropdown).
+        Add Livewire for real-time Kanban polling in version 1.5.
+        Full Vue/React SPA is not needed and would be premature.
+
+RECOMMENDATION: VERSION DISCIPLINE
+  The biggest risk to a project like this is scope expansion without delivery.
+  Version 1 should be defined as: a complete operational system that a secretary,
+  technician, and branch manager can use daily with no workarounds.
+  That means: patient registration, appointment booking, check-in, session
+  recording, follow-up scheduling, and smart alerts.
+  Everything else is version 1.5 or later. Do not start the AI layer before
+  version 1 is in daily use by real staff.
+
+
+================================================================================
+  END OF ARCHITECTURE DOCUMENT
+================================================================================

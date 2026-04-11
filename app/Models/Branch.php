@@ -39,9 +39,9 @@ class Branch extends Model
         return $this->hasMany(Room::class);
     }
 
-    public function customers(): HasMany
+    public function patients(): HasMany
     {
-        return $this->hasMany(Customer::class);
+        return $this->hasMany(Patient::class);
     }
 
     public function appointments(): HasMany

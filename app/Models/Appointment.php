@@ -39,9 +39,9 @@ class Appointment extends Model
     const STATUS_NO_SHOW    = 'no_show';
     const STATUS_RESCHEDULED = 'rescheduled';
 
-    public function customer(): BelongsTo
+    public function patient(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Patient::class);
     }
 
     public function branch(): BelongsTo

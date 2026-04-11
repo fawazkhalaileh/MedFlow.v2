@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('service_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');                         // e.g. "Full Leg Laser Hair Removal - 6 Sessions"
             $table->integer('total_sessions');

@@ -3,15 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
-use App\Models\Customer;
+use App\Models\Patient;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\TreatmentPlan;
-use App\Models\TreatmentSession;
 use App\Models\User;
 use App\Models\Branch;
 use App\Models\Company;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -22,8 +20,8 @@ class DashboardController extends Controller
         $today     = today();
 
         $kpi = [
-            'total_customers'    => Customer::where('company_id', $companyId)->count(),
-            'active_customers'   => Customer::where('company_id', $companyId)->where('status', 'active')->count(),
+            'total_patients'     => Patient::where('company_id', $companyId)->count(),
+            'active_patients'    => Patient::where('company_id', $companyId)->where('status', 'active')->count(),
             'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
             'today_completed'    => Appointment::whereDate('scheduled_at', $today)->where('status', 'completed')->count(),
             'active_plans'       => TreatmentPlan::where('company_id', $companyId)->where('status', 'active')->count(),
@@ -32,19 +30,19 @@ class DashboardController extends Controller
             'total_staff'        => User::where('company_id', $companyId)->where('employment_status', 'active')->count(),
         ];
 
-        $todayAppointments = Appointment::with(['customer', 'service', 'assignedStaff'])
+        $todayAppointments = Appointment::with(['patient', 'service', 'assignedStaff'])
             ->whereDate('scheduled_at', $today)
             ->orderBy('scheduled_at')
             ->limit(8)
             ->get();
 
-        $recentCustomers = Customer::with('branch')
+        $recentPatients = Patient::with('branch')
             ->where('company_id', $companyId)
             ->latest()
             ->limit(5)
             ->get();
 
-        $pendingFollowUps = FollowUp::with(['customer', 'assignedTo'])
+        $pendingFollowUps = FollowUp::with(['patient', 'assignedTo'])
             ->where('company_id', $companyId)
             ->where('status', 'pending')
             ->orderBy('due_date')
@@ -52,11 +50,11 @@ class DashboardController extends Controller
             ->get();
 
         $branches = Branch::where('company_id', $companyId)
-            ->withCount(['customers', 'appointments', 'staff'])
+            ->withCount(['patients', 'appointments', 'staff'])
             ->get();
 
         return view('dashboard.index', compact(
-            'kpi', 'todayAppointments', 'recentCustomers', 'pendingFollowUps', 'branches'
+            'kpi', 'todayAppointments', 'recentPatients', 'pendingFollowUps', 'branches'
         ));
     }
 }

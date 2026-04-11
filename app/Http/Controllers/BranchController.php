@@ -12,7 +12,7 @@ class BranchController extends Controller
     public function index()
     {
         $branches = Branch::with(['manager', 'rooms'])
-            ->withCount(['customers', 'appointments', 'staff'])
+            ->withCount(['patients', 'appointments', 'staff'])
             ->latest()
             ->get();
 

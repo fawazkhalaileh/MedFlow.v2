@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('treatment_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('service_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('room_id')->nullable()->constrained()->nullOnDelete();
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['branch_id', 'scheduled_at']);
-            $table->index(['customer_id', 'status']);
+            $table->index(['patient_id', 'status']);
             $table->index(['assigned_staff_id', 'scheduled_at']);
         });
     }

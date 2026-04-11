@@ -29,7 +29,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->unsignedBigInteger('assigned_to')->nullable();   // user_id responsible
             $table->string('type');                                   // call, appointment, check_in, email
             $table->date('due_date');
@@ -59,7 +59,7 @@ return new class extends Migration
             $table->string('status')->default('new');   // new, contacted, appointment_booked, converted, lost
             $table->text('notes')->nullable();
             $table->unsignedBigInteger('assigned_to')->nullable();
-            $table->unsignedBigInteger('converted_to_customer_id')->nullable();
+            $table->unsignedBigInteger('converted_to_patient_id')->nullable();
             $table->timestamp('converted_at')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();

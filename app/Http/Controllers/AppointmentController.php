@@ -14,8 +14,8 @@ class AppointmentController extends Controller
         $company = Company::first();
         $date    = $request->input('date', today()->format('Y-m-d'));
 
-        $query = Appointment::with(['customer', 'service', 'assignedStaff', 'branch'])
-            ->whereHas('customer', fn($q) => $q->where('company_id', $company->id));
+        $query = Appointment::with(['patient', 'service', 'assignedStaff', 'branch'])
+            ->whereHas('patient', fn($q) => $q->where('company_id', $company->id));
 
         if ($request->filled('date')) {
             $query->whereDate('scheduled_at', $date);
@@ -29,8 +29,7 @@ class AppointmentController extends Controller
 
         $appointments = $query->orderBy('scheduled_at')->paginate(25)->withQueryString();
         $branches     = Branch::orderBy('name')->get();
-
-        $statuses = ['scheduled', 'confirmed', 'arrived', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        $statuses     = ['scheduled', 'confirmed', 'arrived', 'in_progress', 'completed', 'cancelled', 'no_show'];
 
         return view('appointments.index', compact('appointments', 'branches', 'statuses', 'date'));
     }

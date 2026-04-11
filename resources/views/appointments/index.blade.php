@@ -75,8 +75,8 @@
             {{ \Carbon\Carbon::parse($appt->scheduled_at)->format('h:i A') }}
           </td>
           <td>
-            <div style="font-weight:500;">{{ $appt->customer?->full_name ?? 'Unknown' }}</div>
-            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $appt->customer?->phone }}</div>
+            <div style="font-weight:500;">{{ $appt->patient?->full_name ?? 'Unknown' }}</div>
+            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $appt->patient?->phone }}</div>
           </td>
           <td style="color:var(--text-secondary);font-size:.84rem;">{{ $appt->service?->name ?? '--' }}</td>
           <td style="color:var(--text-secondary);font-size:.84rem;">

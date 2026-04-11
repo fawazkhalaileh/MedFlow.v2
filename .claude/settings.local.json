@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Models\\\\Customer.php\")",
+      "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Models\\\\CustomerMedicalInfo.php\")",
+      "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Http\\\\Controllers\\\\CustomerController.php\")"
     ]
   }
 }
