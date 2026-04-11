@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -104,6 +105,13 @@ class Patient extends Model
     public function followUps(): HasMany
     {
         return $this->hasMany(FollowUp::class);
+    }
+
+    public function clinicalFlags(): BelongsToMany
+    {
+        return $this->belongsToMany(ClinicalFlag::class, 'patient_clinical_flags', 'patient_id', 'flag_id')
+                    ->withPivot('detail', 'added_by')
+                    ->withTimestamps();
     }
 
     // --- Scopes ---

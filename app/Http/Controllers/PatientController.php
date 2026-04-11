@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\ClinicalFlag;
 use App\Models\Company;
 use App\Models\Patient;
 use App\Models\PatientMedicalInfo;
@@ -141,13 +142,16 @@ class PatientController extends Controller
     {
         $patient->load([
             'branch', 'assignedStaff', 'medicalInfo',
+            'clinicalFlags',
             'treatmentPlans.service',
             'appointments' => fn($q) => $q->with(['service', 'assignedStaff'])->latest('scheduled_at')->limit(10),
-            'notes'        => fn($q) => $q->latest()->limit(20),
+            'notes'        => fn($q) => $q->with('createdBy')->latest()->limit(30),
             'followUps'    => fn($q) => $q->orderBy('due_date')->limit(10),
         ]);
 
-        return view('patients.show', compact('patient'));
+        $allFlags = ClinicalFlag::where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('patients.show', compact('patient', 'allFlags'));
     }
 
     public function edit(Patient $patient)

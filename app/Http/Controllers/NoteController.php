@@ -47,6 +47,8 @@ class NoteController extends Controller
 
     public function update(Request $request, Note $note)
     {
+        $this->authorizeNoteAction($note);
+
         $data = $request->validate([
             'note_type' => 'required|string',
             'content'   => 'required|string|max:3000',
@@ -67,7 +69,22 @@ class NoteController extends Controller
 
     public function destroy(Note $note)
     {
+        $this->authorizeNoteAction($note);
         $note->delete();
         return back()->with('success', 'Note deleted.');
+    }
+
+    /**
+     * Only the note author OR elevated roles (admin, manager, doctor, nurse) can edit/delete.
+     */
+    private function authorizeNoteAction(Note $note): void
+    {
+        $user = auth()->user();
+        $isOwner   = $note->created_by === $user->id;
+        $elevated  = $user->isSuperAdmin() || $user->isRole('branch_manager', 'doctor', 'nurse');
+
+        if (!$isOwner && !$elevated) {
+            abort(403, 'You can only edit or delete your own notes.');
+        }
     }
 }

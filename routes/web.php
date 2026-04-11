@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
+use App\Http\Controllers\ClinicalFlagController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +51,17 @@ Route::middleware('auth')->group(function () {
             Route::get('activity-logs', [AdminController::class,  'activityLogs'])->name('activity-logs');
             Route::resource('branches',  BranchController::class);
             Route::resource('employees', EmployeeController::class);
+
+            Route::prefix('import')->name('import.')->group(function () {
+                Route::get('/',                [ImportController::class, 'index'])->name('index');
+                Route::post('/upload',         [ImportController::class, 'upload'])->name('upload');
+                Route::get('/preview',         [ImportController::class, 'preview'])->name('preview');
+                Route::post('/validate',       [ImportController::class, 'validate_import'])->name('validate');
+                Route::get('/confirm',         [ImportController::class, 'confirm'])->name('confirm');
+                Route::post('/execute',        [ImportController::class, 'execute'])->name('execute');
+                Route::get('/logs/{log}',      [ImportController::class, 'show'])->name('show');
+                Route::get('/template/{type}', [ImportController::class, 'downloadTemplate'])->name('template');
+            });
         });
 
     // -------------------------------------------------------------------
@@ -93,6 +106,18 @@ Route::middleware('auth')->group(function () {
     // Operations
     Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('followups.index')->middleware($clinical);
     Route::get('/leads',       [LeadController::class,    'index'])->name('leads.index')->middleware($clinical);
+
+    // Clinical flags master list — system_admin + branch_manager can manage
+    Route::middleware('role:system_admin,branch_manager')->prefix('clinical-flags')->name('clinical-flags.')->group(function () {
+        Route::get('/',        [ClinicalFlagController::class, 'index'])->name('index');
+        Route::post('/',       [ClinicalFlagController::class, 'store'])->name('store');
+        Route::put('/{flag}',  [ClinicalFlagController::class, 'update'])->name('update');
+        Route::delete('/{flag}', [ClinicalFlagController::class, 'destroy'])->name('destroy');
+    });
+
+    // Assign / remove flags from patients — all clinical staff
+    Route::post('/patients/{patient}/flags',          [ClinicalFlagController::class, 'assignToPatient'])->name('patient-flags.assign')->middleware($clinical);
+    Route::delete('/patients/{patient}/flags/{flag}', [ClinicalFlagController::class, 'removeFromPatient'])->name('patient-flags.remove')->middleware($clinical);
 
     // -------------------------------------------------------------------
     // ROLE WORKSPACES
