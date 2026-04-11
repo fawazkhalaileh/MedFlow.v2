@@ -10,7 +10,8 @@
       "Read(//c/php/**)",
       "Read(//c/Program Files/PHP/**)",
       "Read(//c/Users/Fawwa/**)",
-      "Bash(/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan:*)"
+      "Bash(/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan:*)",
+      "Bash(/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe -r 'echo '\\\\''PHP OK'\\\\'';')"
     ]
   }
 }

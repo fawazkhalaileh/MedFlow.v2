@@ -250,14 +250,125 @@ tr:hover td { background: rgba(37,99,235,0.015); }
 @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .animate-in { animation: fadeSlideUp 0.3s ease-out both; }
 
-/* RESPONSIVE */
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+
+/* ── Tablet (1100px) ─────────────────────────────────────── */
 @media (max-width: 1100px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid    { grid-template-columns: repeat(2, 1fr); }
+  .grid-2-1    { grid-template-columns: 1fr; }
+  .grid-3      { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Sidebar overlay (mobile) ────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 299;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.sidebar-overlay.open { display: block; }
+
+/* ── Mobile hamburger button ─────────────────────────────── */
+.topbar-hamburger {
+  display: none;
+  width: 38px; height: 38px;
+  align-items: center; justify-content: center;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.topbar-hamburger:hover { border-color: var(--accent); color: var(--accent); }
+.topbar-hamburger svg  { width: 18px; height: 18px; }
+
+/* ── Small tablet / large phone (768px) ──────────────────── */
+@media (max-width: 768px) {
+
+  /* Sidebar slides in from left as drawer */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-xl);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Main content takes full width */
+  .main-content { width: 100%; }
+  body { overflow: hidden; }
+
+  /* Show hamburger, hide topbar search */
+  .topbar-hamburger { display: flex; }
+  .topbar-search    { display: none; }
+
+  /* Topbar padding */
+  .topbar { padding: 0 16px; gap: 10px; }
+
+  /* Page padding */
+  .page-container { padding: 18px 16px; }
+
+  /* Stack page header */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .header-actions { flex-wrap: wrap; width: 100%; }
+  .header-actions .btn { flex: 1; min-width: 140px; justify-content: center; }
+
+  /* Single-column grids */
+  .grid-2   { grid-template-columns: 1fr; }
+  .grid-3   { grid-template-columns: 1fr; }
   .grid-2-1 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Form rows collapse */
+  .form-row   { grid-template-columns: 1fr; }
+  .form-row-3 { grid-template-columns: 1fr; }
+
+  /* Topbar user — hide text labels */
+  .topbar-user-name,
+  .topbar-user-role { display: none; }
+  .topbar-user { padding: 5px; border: none; }
+
+  /* Cards */
+  .card { padding: 16px; }
+
+  /* Page title smaller */
+  .page-title { font-size: 1.5rem; }
+}
+
+/* ── Phone portrait (480px) ──────────────────────────────── */
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-value { font-size: 1.35rem; }
+  .kpi-card  { padding: 14px 16px; }
+  .page-container { padding: 14px 12px; }
+  .topbar { padding: 0 12px; height: 56px; }
+
+  /* Buttons — full tap target */
+  .btn { padding: 10px 14px; }
+  .btn-sm { padding: 7px 12px; }
+
+  /* Tables — allow horizontal scroll on mobile */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+
+  /* Filter bar wraps neatly */
+  .filter-bar { gap: 8px; }
+  .filter-select { font-size: 0.82rem; padding: 8px 10px; }
 }
 </style>
 </head>
 <body>
+{{-- Mobile sidebar overlay --}}
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
 <div class="app-layout">
 
   {{-- SIDEBAR --}}
@@ -548,6 +659,10 @@ tr:hover td { background: rgba(37,99,235,0.015); }
   <div class="main-content">
     {{-- TOPBAR --}}
     <header class="topbar">
+      {{-- Hamburger — mobile only --}}
+      <button class="topbar-hamburger" id="sidebar-toggle" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div class="topbar-breadcrumb">MedFlow / <strong>@yield('breadcrumb', 'Dashboard')</strong></div>
       <div class="topbar-search">
         <span class="topbar-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -591,7 +706,7 @@ tr:hover td { background: rgba(37,99,235,0.015); }
 </div>
 
 <script>
-// Dropdown toggle
+// ── Dropdown toggle ────────────────────────────────────────
 document.querySelectorAll('[data-toggle="dropdown"]').forEach(btn => {
   btn.addEventListener('click', e => {
     e.stopPropagation();
@@ -601,6 +716,39 @@ document.querySelectorAll('[data-toggle="dropdown"]').forEach(btn => {
   });
 });
 document.addEventListener('click', () => document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open')));
+
+// ── Mobile sidebar drawer ──────────────────────────────────
+(function () {
+  const toggle   = document.getElementById('sidebar-toggle');
+  const sidebar  = document.querySelector('.sidebar');
+  const overlay  = document.getElementById('sidebar-overlay');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (toggle)  toggle.addEventListener('click', openSidebar);
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a nav link is tapped on mobile
+  sidebar && sidebar.querySelectorAll('a.sidebar-item').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSidebar();
+  });
+})();
 </script>
 @stack('scripts')
 </body>
