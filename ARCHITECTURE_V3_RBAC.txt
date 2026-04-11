@@ -1,0 +1,1599 @@
+================================================================================
+MEDFLOW CRM — ROLE-BASED ACCESS CONTROL ARCHITECTURE V3
+CLINICAL MANAGEMENT SYSTEM FOR LASER CLINICS
+================================================================================
+
+Document Version: 3.0
+Prepared: 2026-04-11
+Stack: Laravel 12 / PHP 8.2 / SQLite (dev) / Blade UI
+Project: MedFlow CRM — Clinical Management System for Laser Clinics
+
+This document defines the complete RBAC architecture, workspace designs,
+navigation structures, permission matrices, and implementation approach for
+MedFlow CRM. It is intended as a direct implementation reference for
+developers working on the system.
+
+================================================================================
+SECTION 1: PROBLEM DIAGNOSIS
+================================================================================
+
+1.1 CURRENT STATE OF THE ROLE EXPERIENCE
+
+The application currently has no meaningful role separation at the UI level.
+Every authenticated user, regardless of their employee_type value, is redirected
+to the same /dashboard route upon login. The dashboard renders the same sidebar,
+the same KPI widgets, and the same action buttons whether the authenticated user
+is a system_admin or a secretary.
+
+The User model carries an employee_type field with the values:
+  system_admin, branch_manager, secretary, technician, doctor, nurse, finance
+
+This field exists in the database and is populated by the seeder. However, the
+application makes no use of it at the routing, middleware, controller, or view
+layer. The field is informationally present but functionally inert.
+
+1.2 SPECIFIC RISKS OF THE CURRENT STATE
+
+RISK 1 — DATA EXPOSURE
+A secretary can currently navigate to any admin route, view any patient across
+any branch, and access employee management if those routes exist. There is no
+enforcement preventing cross-branch data access. A secretary at Branch A can
+view Branch B patient records simply by manipulating the URL.
+
+RISK 2 — ACCIDENTAL DATA MODIFICATION
+Staff who should only view or only create records (technicians, nurses) can
+currently edit or delete records they have no business modifying. There is no
+create/edit/delete gate other than what Laravel's default middleware provides
+(authentication only).
+
+RISK 3 — AUDIT TRAIL GAPS
+Because all roles perform actions through the same unguarded routes, the activity
+log cannot distinguish between an admin intentionally changing a setting and a
+secretary accidentally clicking the same button. This makes compliance reporting
+and incident investigation unreliable.
+
+RISK 4 — OPERATIONAL CONFUSION
+A secretary's primary job is front-desk intake: booking appointments, registering
+patients, and managing the check-in queue. Showing them the company-wide KPI
+dashboard, branch management panels, and role permission editors creates cognitive
+overload and increases the likelihood of accidental actions.
+
+RISK 5 — PRIVILEGE ESCALATION PATH
+If an attacker compromises a low-privilege account (e.g., a secretary), the
+absence of server-side role checks means they gain equivalent access to the
+application as the system_admin. The only protection is the login form itself.
+
+1.3 TECHNICAL PATTERNS THAT ARE MISSING
+
+MISSING PATTERN 1 — ROLE-CHECK MIDDLEWARE
+No middleware class enforces employee_type on route access. There is no
+equivalent to a CheckRole or EnsureEmployeeType middleware registered in the
+application. Routes are only protected by the 'auth' middleware.
+
+MISSING PATTERN 2 — ROUTE GROUPING BY ROLE
+Routes are not grouped by role scope. There is no /admin/* group restricted to
+system_admin, no /secretary/* group, and no /clinical/* group. All routes exist
+in a flat namespace reachable by any authenticated user.
+
+MISSING PATTERN 3 — BRANCH SCOPING IN CONTROLLERS
+Controllers do not filter queries by the authenticated user's primary_branch_id.
+A query such as Patient::all() returns every patient in the database regardless
+of which branch the requesting user belongs to. Branch-scoped queries must be
+applied as a base filter for non-admin roles.
+
+MISSING PATTERN 4 — ROLE-AWARE VIEWS
+The Blade views use no role conditionals. The sidebar is a static partial
+rendered identically for all users. There are no @if(auth()->user()->employee_type
+=== 'secretary') guards in any view. View composers are not registered to inject
+role context.
+
+MISSING PATTERN 5 — POST-LOGIN REDIRECT BY ROLE
+The AuthenticatedSessionController redirects all users to /dashboard. There is
+no post-login branching that sends a secretary to /secretary/dashboard or an
+admin to /admin/dashboard based on employee_type.
+
+MISSING PATTERN 6 — PERMISSION MODEL ENFORCEMENT
+The Role and Permission models exist in the database but are not applied to gate
+checks, policy classes, or route middleware. The permission seeder runs but the
+permissions are never consulted at runtime.
+
+================================================================================
+SECTION 2: ROLE REDESIGN SUMMARY
+================================================================================
+
+2.1 ROLE OVERVIEW TABLE
+
+The following table defines each role's routing, purpose, scope, and edit access.
+
+ROLE             | LANDING PAGE               | PRIMARY PURPOSE               | BRANCH SCOPE         | EDIT ACCESS
+-----------------|----------------------------|-------------------------------|----------------------|---------------------------
+system_admin     | /admin/dashboard           | System governance, all config | All branches         | Full — all modules
+branch_manager   | /branch/dashboard          | Branch operations oversight   | Own branch only      | Staff schedules, reports
+secretary        | /secretary/dashboard       | Front-desk, booking, intake   | Own branch only      | Appointments, patients (create/edit)
+technician       | /clinical/queue            | Session execution             | Own branch only      | Session notes only
+doctor           | /clinical/review           | Medical review, plans         | Own branch only      | Treatment plans, notes
+nurse            | /clinical/queue            | Session support               | Own branch only      | Session notes only
+finance          | /finance/dashboard         | Billing, revenue reporting    | Own branch only      | Billing records only
+
+2.2 ROLE HIERARCHY NOTES
+
+system_admin is the only role that can:
+  - Create, edit, or delete branches
+  - Create, edit, or delete user accounts (employees)
+  - Manage roles and permissions
+  - View activity logs
+  - Access system settings
+  - View data across all branches simultaneously
+
+branch_manager can:
+  - View all patients and appointments within their branch
+  - Edit staff schedules within their branch
+  - View branch-level reports
+  - Cannot create or delete employees
+  - Cannot access other branches
+
+secretary can:
+  - Create and edit patient records
+  - Create, edit, and cancel appointments
+  - Move appointment cards through the front-desk Kanban stages
+  - Cannot access billing records
+  - Cannot view treatment details or clinical notes
+
+technician and nurse can:
+  - View their assigned appointment queue
+  - Add session notes to their assigned sessions
+  - Mark sessions as complete
+  - Cannot view other staff's queues
+  - Cannot create or cancel appointments
+
+doctor can:
+  - View all appointments and patients within their branch
+  - Create and edit treatment plans
+  - Write clinical notes
+  - Review session records
+  - Cannot access billing or admin panels
+
+finance can:
+  - View billing records and payment status for all branch patients
+  - Generate revenue reports
+  - Cannot view clinical notes or treatment details
+  - Cannot create or edit appointments
+
+================================================================================
+SECTION 3: SECRETARY WORKSPACE DESIGN
+================================================================================
+
+3.1 LANDING PAGE: /secretary/dashboard
+
+The secretary dashboard is designed for speed. Everything the secretary needs for
+a typical workday must be visible above the fold without scrolling.
+
+ABOVE THE FOLD LAYOUT (three columns):
+
+LEFT COLUMN — TODAY'S QUEUE SUMMARY
+  - Total appointments today (count badge)
+  - Breakdown by status: Booked, Confirmed, Arrived, Checked In, Waiting
+  - Alert count: No-shows from yesterday (requires follow-up)
+  - Quick link: "View Full Kanban" button
+
+CENTER COLUMN — QUICK ACTIONS
+  - Primary action button: "+ New Appointment" (routes to /appointments/create)
+  - Secondary button: "Register New Patient" (routes to /patients/create)
+  - Search bar: "Search Patient" — live search by name, phone, email, patient_code
+    (AJAX to /patients/search endpoint, results appear as dropdown below field)
+  - Upcoming reminder: next 3 appointments within 1 hour with patient name, time,
+    service name
+
+RIGHT COLUMN — BRANCH STATS (TODAY)
+  - Appointments scheduled vs completed
+  - Walk-in count (appointments with source = 'walk_in')
+  - Cancellations today
+  - Available time slots remaining (computed from staff schedules)
+
+BELOW THE FOLD:
+  - Compact Kanban view showing Booked, Confirmed, Arrived, Checked In columns
+    (the four columns the secretary acts on most)
+  - Recent patient registrations (last 5, with edit links)
+
+3.2 BRANCH SCOPING RULES FOR SECRETARY
+
+All data displayed to a secretary is filtered by their primary_branch_id. This
+is enforced at the controller level, not at the view level.
+
+Rule 1: Patient query base — Patient::where('branch_id', $user->primary_branch_id)
+Rule 2: Appointment query base — Appointment::where('branch_id', $user->primary_branch_id)
+Rule 3: Staff list for assignment — User::where('primary_branch_id', $user->primary_branch_id)
+Rule 4: Service list — Service::where('branch_id', $user->primary_branch_id)
+           OR Service::whereNull('branch_id') for company-wide services
+
+No query in any controller serving secretary routes should return records outside
+the secretary's primary_branch_id. A global scope or a trait (BranchScoped) can
+enforce this automatically if applied to the Eloquent model.
+
+3.3 WHAT SECRETARY CAN SEE, EDIT, AND NOT ACCESS
+
+CAN VIEW:
+  - All patients registered to their branch
+  - All appointments for their branch (all statuses)
+  - Patient contact information
+  - Appointment history per patient (dates, services, status)
+  - Staff list (name and role only — no salary or HR data)
+  - Available time slots per staff member
+  - Services offered at their branch
+  - Basic lead records (name, contact, source) for their branch
+
+CAN CREATE:
+  - New patient records
+  - New appointments
+  - Follow-up records attached to appointments
+  - Notes of type 'reception' on appointments
+
+CAN EDIT:
+  - Patient contact information (name, phone, email, address)
+  - Appointment status (within their allowed Kanban transitions)
+  - Appointment date, time, service, assigned staff (before session starts)
+  - Cancellation reason on cancelled appointments
+
+CANNOT ACCESS:
+  - Clinical notes (doctor/nurse notes)
+  - Treatment plans
+  - Treatment session clinical data
+  - Billing records or payment information
+  - Employee management
+  - Branch management
+  - Role or permission management
+  - System settings
+  - Activity logs
+  - Any data from other branches
+  - Patient medical history in clinical detail
+
+3.4 KANBAN COLUMN TRANSITIONS ALLOWED BY SECRETARY
+
+Secretary can move appointment cards through these transitions:
+  Booked -> Confirmed
+  Confirmed -> Arrived
+  Arrived -> Checked In
+  Checked In -> Waiting
+  Booked -> Cancelled (with required cancellation reason)
+  Confirmed -> Cancelled (with required cancellation reason)
+  Any status -> No Show (for same-day past appointments only)
+
+Secretary CANNOT move cards to:
+  Ready for Technician (technician or branch manager only)
+  In Session (technician only)
+  Completed (technician or doctor only)
+  Follow-up Needed (doctor only)
+
+================================================================================
+SECTION 4: SUPER ADMIN WORKSPACE DESIGN
+================================================================================
+
+4.1 LANDING PAGE: /admin/dashboard
+
+The Super Admin dashboard presents company-wide operational intelligence. It is
+designed for executive oversight, not day-to-day clinical operations.
+
+ABOVE THE FOLD — COMPANY-WIDE KPI STRIP:
+  - Total active patients (all branches)
+  - Total appointments today (all branches)
+  - Revenue this month (all branches combined)
+  - Total employees (active)
+  - Total branches (active)
+  - System alerts (failed jobs, error logs — count badge)
+
+BRANCH PERFORMANCE GRID (one card per branch):
+  Each branch card shows:
+  - Branch name and location
+  - Appointments today / this week
+  - Patients registered this month
+  - Staff on duty today
+  - Revenue this month (branch-level)
+  - Quick link to branch detail page
+
+ADMIN GOVERNANCE PANEL (below branch grid):
+  - Recent activity log entries (last 10 actions, with user, action, timestamp)
+  - Pending employee account requests (if any)
+  - New lead registrations across all branches (last 24 hours)
+  - System health: database size, storage used, queue status
+
+4.2 WHAT ONLY SUPER ADMIN CAN DO
+
+Super Admin exclusive capabilities:
+  1. Create, edit, deactivate, delete Branch records
+  2. Create employee accounts and assign employee_type
+  3. Reset any employee's password
+  4. Assign roles to employees
+  5. Create, edit, delete Role and Permission records
+  6. View full activity_logs for all users across all branches
+  7. Access /admin/settings for system configuration
+  8. View cross-branch reports and comparisons
+  9. Export data (patients, appointments, revenue) at company level
+  10. Manage the Service catalog globally
+  11. Impersonate other users for debugging (if implemented)
+  12. Purge or archive records
+
+4.3 ADMIN SECTION PAGES
+
+The /admin prefix contains the following pages, all behind 'role:system_admin':
+
+  /admin/dashboard        — Company overview (described above)
+  /admin/branches         — Branch list, create, edit, deactivate
+  /admin/branches/{id}    — Branch detail with staff list and metrics
+  /admin/employees        — All employees across all branches
+  /admin/employees/create — Create new employee account
+  /admin/employees/{id}   — Edit employee: name, email, type, branch, status
+  /admin/roles            — Role list
+  /admin/roles/{id}       — Role edit with permission checkboxes
+  /admin/permissions      — Permission list, create, edit
+  /admin/activity-logs    — Full audit trail, filterable by user/date/action
+  /admin/settings         — System configuration: clinic name, timezone, currency
+
+================================================================================
+SECTION 5: BRANCH MANAGER WORKSPACE DESIGN
+================================================================================
+
+5.1 LANDING PAGE: /branch/dashboard
+
+The branch manager sees an operations board scoped entirely to their branch.
+The primary_branch_id of the branch manager determines all data shown.
+
+ABOVE THE FOLD — TODAY'S OPERATIONS SUMMARY:
+  - Appointments today: total, completed, pending
+  - Staff on duty: list of employees scheduled today with their appointment counts
+  - Revenue today: sum of completed session billings
+  - Cancellation rate this week (percentage)
+
+OPERATIONS BOARD (below the fold):
+  - Mini Kanban showing all appointment statuses for today
+  - Staff utilization bar: each technician/doctor and their session load
+  - No-show tracker: appointments marked No Show in last 7 days
+  - Follow-up required: appointments with status follow_up_needed
+
+5.2 STAFF VISIBILITY
+
+The branch manager can see:
+  - Full name and employee_type of all staff in their branch
+  - Each staff member's appointment schedule for the day
+  - Session counts per staff member per week
+  - Staff availability (based on schedule records if implemented)
+
+The branch manager CANNOT see:
+  - Staff salary or HR compensation data
+  - Staff accounts in other branches
+  - Ability to create or delete employee accounts
+  - Password reset for employees
+
+5.3 WHAT BRANCH MANAGER CANNOT DO
+
+Branch managers are operationally powerful within their branch but are not
+system administrators. The following actions are blocked:
+
+  - Cannot access /admin/* routes
+  - Cannot create or delete employee accounts
+  - Cannot manage roles or permissions
+  - Cannot view other branches' data
+  - Cannot change system settings
+  - Cannot view company-wide revenue or patient totals
+  - Cannot access activity logs (only admin can)
+  - Cannot delete branches or modify branch configuration
+  - Cannot delete patient records
+
+5.4 BRANCH MANAGER AVAILABLE ROUTES
+
+  /branch/dashboard               — Operations overview
+  /branch/appointments            — All appointments for branch (all statuses)
+  /branch/appointments/kanban     — Full Kanban for branch
+  /branch/patients                — All patients for branch
+  /branch/patients/{id}           — Patient detail (all tabs including clinical)
+  /branch/staff                   — Staff list for branch (view only)
+  /branch/reports                 — Branch-level reports: revenue, appointments
+  /branch/reports/revenue         — Revenue breakdown by service and period
+  /branch/reports/appointments    — Appointment volume and outcome stats
+
+================================================================================
+SECTION 6: TECHNICIAN AND DOCTOR WORKSPACES
+================================================================================
+
+6.1 TECHNICIAN WORKSPACE: /clinical/queue
+
+The technician's primary interface is their personal session queue. They should
+see only appointments assigned to them that are in a state requiring action.
+
+LANDING PAGE LAYOUT:
+  Header bar: "My Queue — [Today's Date]" with appointment count badge
+
+  KANBAN COLUMNS (technician-specific):
+    Ready for Technician | In Session | Completed (today)
+
+  Each card shows:
+    - Patient name (first name + last name initial)
+    - Time slot
+    - Service name
+    - Room assignment (if applicable)
+    - Duration estimate
+    - Alert flag: first visit indicator (NEW badge)
+    - Alert flag: allergy or contraindication notes (if any exist in patient record)
+
+  SIDEBAR LINKS (technician):
+    - My Queue (current page)
+    - My Schedule (weekly calendar view of assigned appointments)
+    - Completed Sessions (history of sessions they performed)
+
+6.2 TECHNICIAN PERMISSIONS
+
+CAN DO:
+  - View their assigned appointment queue
+  - Move cards from Ready for Technician to In Session
+  - Move cards from In Session to Completed
+  - Add session notes to sessions they are assigned to
+  - View patient name, service, and appointment history for their assigned patients
+
+CANNOT DO:
+  - View appointments assigned to other staff
+  - Create appointments
+  - Cancel appointments
+  - View or edit patient contact information in detail
+  - View clinical notes written by doctors
+  - View billing information
+  - Access any /admin route
+  - View leads or marketing data
+
+6.3 DOCTOR WORKSPACE: /clinical/review
+
+The doctor's workspace emphasizes clinical review and treatment planning. Doctors
+need a broader view of patient history than technicians.
+
+LANDING PAGE LAYOUT:
+  TOP SECTION: Appointments requiring doctor review today
+    - Status: Follow-up Needed (awaiting doctor assessment)
+    - Status: In Session (doctor may need to attend)
+    - New treatment plan requests
+
+  PATIENT REVIEW PANEL:
+    - Patient name and photo (if available)
+    - Appointment details and service
+    - Previous session notes
+    - Current treatment plan
+    - Input field: new note or review note
+    - Action buttons: Approve, Request Follow-up, Mark Complete
+
+6.4 DOCTOR PERMISSIONS
+
+CAN DO:
+  - View all patients in their branch (full clinical record)
+  - View all appointments in their branch
+  - Create and edit treatment plans
+  - Write clinical notes on any patient in their branch
+  - Move appointment cards to Follow-up Needed and Completed
+  - View session notes written by technicians and nurses
+
+CANNOT DO:
+  - Create or cancel appointments (doctors are clinical, not front-desk)
+  - Edit patient contact information
+  - Access billing records
+  - Access /admin routes
+  - View other branches
+
+6.5 NURSE WORKSPACE
+
+Nurses share the /clinical/queue landing page with technicians. Their permission
+set is identical to technicians in this MVP. The only distinction is their
+employee_type value ('nurse' vs 'technician'), which is displayed on their profile
+and used for filtering the staff assignment dropdown in the booking form.
+
+================================================================================
+SECTION 7: FINANCE WORKSPACE
+================================================================================
+
+7.1 LANDING PAGE: /finance/dashboard
+
+The finance role is read-heavy. Finance staff need visibility into revenue and
+billing status but must have no access to clinical data.
+
+ABOVE THE FOLD — REVENUE SUMMARY:
+  - Revenue today (completed sessions with billing records)
+  - Revenue this month (current calendar month)
+  - Revenue this month vs last month (delta badge: up/down)
+  - Outstanding balances (unpaid or partially paid billing records)
+  - Top 5 services by revenue this month
+
+BILLING QUEUE:
+  - List of completed appointments with billing status
+  - Columns: Patient Name, Date, Service, Staff, Amount, Payment Status, Action
+  - Payment statuses: Pending, Paid, Partial, Waived, Refunded
+  - Action: "Mark as Paid" button, "View Invoice" link
+
+7.2 WHAT FINANCE CAN SEE
+
+  - Patient name and contact (for billing purposes)
+  - Appointment dates, services rendered, and assigned staff
+  - Billing records for all patients in their branch
+  - Payment status and payment history
+  - Revenue reports: daily, weekly, monthly, by service, by staff
+  - Outstanding balances
+
+7.3 WHAT FINANCE CANNOT SEE
+
+  - Clinical notes
+  - Treatment plans and session clinical data
+  - Lead records
+  - Employee HR data
+  - System settings
+  - Activity logs
+  - Any /admin routes
+  - Patient medical history in clinical detail
+
+7.4 FINANCE AVAILABLE ROUTES
+
+  /finance/dashboard                — Revenue overview
+  /finance/billing                  — Billing queue (all branch appointments)
+  /finance/billing/{appointment}    — Single billing record detail
+  /finance/reports                  — Revenue reports with filters
+  /finance/reports/by-service       — Revenue grouped by service
+  /finance/reports/by-period        — Revenue by day/week/month
+
+================================================================================
+SECTION 8: ADMIN SECTION DESIGN
+================================================================================
+
+8.1 ROUTE PREFIX AND MIDDLEWARE
+
+All admin routes use the /admin prefix and the route name prefix admin.*.
+All admin routes are protected by two middleware layers:
+  1. 'auth' — must be authenticated
+  2. 'role:system_admin' — employee_type must equal 'system_admin'
+
+Any request to /admin/* from a non-system_admin user returns a 403 response
+rendered by the resources/views/errors/403.blade.php view. The 403 view should
+display a friendly message and a link back to the user's appropriate dashboard.
+
+8.2 ADMIN ROUTES SPECIFICATION
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:system_admin'])
+->group(function () {
+
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])
+         ->name('dashboard');
+
+    Route::resource('branches', AdminBranchController::class);
+    Route::get('branches/{branch}/staff', [AdminBranchController::class, 'staff'])
+         ->name('branches.staff');
+
+    Route::resource('employees', AdminEmployeeController::class);
+    Route::post('employees/{employee}/reset-password',
+         [AdminEmployeeController::class, 'resetPassword'])
+         ->name('employees.reset-password');
+
+    Route::resource('roles', AdminRoleController::class);
+    Route::post('roles/{role}/sync-permissions',
+         [AdminRoleController::class, 'syncPermissions'])
+         ->name('roles.sync-permissions');
+
+    Route::resource('permissions', AdminPermissionController::class);
+
+    Route::get('activity-logs', [AdminActivityLogController::class, 'index'])
+         ->name('activity-logs.index');
+    Route::get('activity-logs/{log}', [AdminActivityLogController::class, 'show'])
+         ->name('activity-logs.show');
+
+    Route::get('settings', [AdminSettingsController::class, 'index'])
+         ->name('settings.index');
+    Route::put('settings', [AdminSettingsController::class, 'update'])
+         ->name('settings.update');
+});
+
+8.3 ADMIN DASHBOARD PAGE LAYOUT
+
+URL: /admin/dashboard
+Controller: AdminController@dashboard
+View: resources/views/admin/dashboard.blade.php
+
+PAGE STRUCTURE:
+  Top navigation bar:
+    Left: MedFlow CRM logo
+    Center: "Admin Dashboard" page title
+    Right: logged-in user name, notification bell, logout
+
+  KPI STRIP (horizontal, 5 cards across):
+    [Total Branches] [Total Employees] [Total Patients] [Appts Today] [Revenue MTD]
+    Each card: large number, label, trend arrow vs prior period
+
+  BRANCH PERFORMANCE GRID (responsive grid, 2-3 columns):
+    Card per branch:
+      - Branch name (bold)
+      - Manager name
+      - Today: X appointments
+      - This month: $X revenue
+      - Patients: X total
+      - Status badge: Active / Inactive
+      - "Manage" button -> /admin/branches/{id}/edit
+
+  QUICK ACTIONS PANEL (right sidebar):
+    - "+ Add Branch" button
+    - "+ Add Employee" button
+    - "View Activity Logs" button
+    - "System Settings" button
+    - "Manage Roles" button
+
+  RECENT ACTIVITY FEED:
+    Last 20 activity log entries
+    Each row: [timestamp] [user name] [action] [target]
+    "View All" link to /admin/activity-logs
+
+8.4 ADMIN EMPLOYEE MANAGEMENT PAGE
+
+URL: /admin/employees
+Controller: AdminEmployeeController@index
+
+TABLE COLUMNS:
+  Name | Email | Employee Type | Branch | Status | Created | Actions
+
+  Actions: Edit | Reset Password | Deactivate
+
+FILTERS (above table):
+  - Filter by branch (select dropdown)
+  - Filter by employee_type (select dropdown)
+  - Filter by status (active / inactive)
+  - Search by name or email
+
+CREATE EMPLOYEE FORM:
+  Fields: First Name, Last Name, Email, Password, Employee Type (select),
+          Primary Branch (select), Status (active/inactive)
+  Validation rules:
+    email: required|email|unique:users,email
+    employee_type: required|in:system_admin,branch_manager,secretary,
+                   technician,doctor,nurse,finance
+    primary_branch_id: required_unless:employee_type,system_admin|exists:branches,id
+
+================================================================================
+SECTION 9: APPOINTMENT BOOKING REDESIGN (SECRETARY FLOW)
+================================================================================
+
+9.1 BOOKING FORM URL AND CONTROLLER
+
+URL: /appointments/create
+Controller: AppointmentController@create
+View: resources/views/appointments/create.blade.php
+Route middleware: ['auth', 'role:secretary,branch_manager,system_admin']
+
+9.2 STEP-BY-STEP BOOKING FLOW
+
+The booking form is a single-page multi-step form. Each step is a distinct
+visual section. The form does not use separate page loads between steps — steps
+are toggled by JavaScript. On submission, the entire form POSTs to
+/appointments (AppointmentController@store).
+
+STEP 1 — PATIENT LOOKUP
+
+  Display: Large search bar labeled "Search Patient (name, phone, email, or code)"
+
+  Behavior:
+    - User types 2 or more characters
+    - JavaScript sends AJAX GET to /patients/search?q={query}
+    - Controller returns JSON array of matching patients (max 10 results)
+    - Results render below the search bar as a dropdown list
+    - Each result row shows: patient_code | full name | phone | date of birth
+    - User clicks a result to select the patient
+    - On selection: patient card appears showing name, code, phone, date of birth,
+      last visit date, total visits, any active treatment plan
+    - Hidden input: patient_id is populated with the selected patient's ID
+
+  No Match Found:
+    - If the search returns zero results, a "No patient found — Register New"
+      button appears below the search bar
+    - Clicking this button expands an inline patient registration sub-form
+      (see Section 9.3)
+
+  Return Patient Indicator:
+    - If selected patient has prior appointments: show "Returning Patient" badge
+    - If selected patient has no prior appointments: show "New Patient" badge
+
+STEP 2 — SERVICE SELECTION
+
+  Display: Grid of available services as selectable cards
+
+  Services loaded from: Service::where('branch_id', $user->primary_branch_id)
+                         ->orWhereNull('branch_id')->get()
+
+  Each service card shows:
+    - Service name
+    - Duration (e.g., 45 min)
+    - Price
+    - Category label (e.g., Laser, Skin, Consultation)
+
+  User clicks a card to select it. Selected card gets a highlight border.
+  Multiple services can be selected if the branch supports multi-service booking.
+  Hidden input: service_id (or service_ids array) populated on selection.
+
+STEP 3 — DATE AND TIME SELECTION
+
+  Display: Calendar date picker + time slot grid
+
+  Date picker:
+    - Default: today's date
+    - Available dates: today and future (past dates disabled)
+    - On date selection: time slot grid refreshes via AJAX
+
+  Time slot grid:
+    - Load available slots from /appointments/available-slots?
+      date={date}&staff_id={staff_id}&service_id={service_id}&branch_id={branch_id}
+    - Slots shown as 30-minute or 60-minute blocks depending on service duration
+    - Taken slots rendered as greyed-out and unclickable
+    - Available slots rendered as clickable buttons
+
+  User selects a time slot. Hidden input: appointment_date, appointment_time.
+
+STEP 4 — STAFF ASSIGNMENT
+
+  Display: Dropdown or card grid of available staff
+
+  Staff loaded from: User::where('primary_branch_id', $user->primary_branch_id)
+                     ->whereIn('employee_type', ['technician', 'doctor', 'nurse'])
+                     ->get()
+
+  Optional: if no specific staff preference, "Any Available" option appears
+  which will leave assigned_staff_id null until the branch manager assigns it.
+
+  Staff card shows: name, employee_type label, photo placeholder.
+
+STEP 5 — NOTES AND SOURCE
+
+  Display: Two fields
+
+  - Appointment Notes (textarea, optional): internal front-desk note
+  - Booking Source (select): phone, walk_in, website, referral, social_media
+  - First Visit checkbox (auto-checked if patient has no prior appointments)
+
+STEP 6 — REVIEW AND CONFIRM
+
+  Display: Summary card showing all selections:
+    - Patient: [name] ([patient_code])
+    - Service: [service name]
+    - Date: [formatted date]
+    - Time: [time]
+    - Staff: [staff name or "Any Available"]
+    - Notes: [notes or "None"]
+    - Source: [source]
+
+  Two buttons:
+    - "Back" — returns to previous step
+    - "Book Appointment" — submits the form
+
+9.3 INLINE PATIENT CREATION SUB-FORM
+
+Triggered when: search returns no results and user clicks "Register New Patient"
+
+Fields revealed inline (no page redirect):
+  - First Name (required)
+  - Last Name (required)
+  - Phone (required)
+  - Email (optional)
+  - Date of Birth (optional)
+  - Gender (select: male, female, prefer_not_to_say)
+  - Address (optional)
+
+On clicking "Save & Continue":
+  - AJAX POST to /patients/quick-create
+  - Controller creates Patient record with branch_id = $user->primary_branch_id
+  - Response returns new patient_id, patient_code, full name
+  - Form auto-populates Step 1 patient card with the new patient
+  - Sub-form collapses
+  - Form continues to Step 2
+
+9.4 VALIDATION RULES (AppointmentController@store)
+
+  patient_id:        required|exists:patients,id
+  service_id:        required|exists:services,id
+  appointment_date:  required|date|after_or_equal:today
+  appointment_time:  required|date_format:H:i
+  branch_id:         required|exists:branches,id
+  assigned_staff_id: nullable|exists:users,id
+  notes:             nullable|string|max:1000
+  source:            nullable|in:phone,walk_in,website,referral,social_media
+
+Branch enforcement in store method:
+  The branch_id posted must equal $request->user()->primary_branch_id
+  unless the user is system_admin. Any mismatch returns a 403.
+
+9.5 POST-BOOKING REDIRECT AND CONFIRMATION
+
+On successful store:
+  - Flash message: "Appointment booked successfully for [Patient Name]"
+  - Redirect to: /appointments/kanban (the Kanban board for the branch)
+  - The newly created appointment card appears in the "Booked" column
+  - The card is visually highlighted (e.g., pulsing border) for 3 seconds
+
+================================================================================
+SECTION 10: APPOINTMENT KANBAN REDESIGN
+================================================================================
+
+10.1 KANBAN COLUMNS
+
+The Kanban board at /appointments/kanban displays all of today's appointments
+for the authenticated user's branch. The board has 11 columns:
+
+  1. Booked
+  2. Confirmed
+  3. Arrived
+  4. Checked In
+  5. Waiting
+  6. Ready for Technician
+  7. In Session
+  8. Completed
+  9. Follow-up Needed
+  10. No Show
+  11. Cancelled
+
+Columns 10 and 11 (No Show, Cancelled) are collapsed by default and expand
+on click. This keeps the active working area uncluttered.
+
+10.2 APPOINTMENT CARD DESIGN
+
+Each card on the Kanban board contains:
+
+  TOP ROW:
+    - Patient name (bold, truncated at 20 characters)
+    - NEW badge (green) if first visit, RETURN badge (blue) if returning
+
+  SECOND ROW:
+    - Time: HH:MM format
+    - Service name (truncated)
+
+  THIRD ROW:
+    - Staff name or "Unassigned"
+    - Status badge (color-coded, matches column color)
+
+  ALERT FLAGS (appear as small icon badges on the card):
+    - Red clock icon: appointment is overdue (past scheduled time and not checked in)
+    - Orange warning icon: allergy or contraindication note on patient record
+    - Yellow flag: patient requested specific staff but staff is not assigned
+    - Blue phone icon: appointment was booked via phone (source = 'phone')
+
+  CARD FOOTER:
+    - "View" link: opens appointment detail slide-over panel
+    - Quick action button: context-sensitive based on current status
+      (e.g., "Check In" button when status is Arrived, "Start Session" when Waiting)
+
+10.3 CARD COLOR CODING BY STATUS
+
+  Booked:              Light grey border
+  Confirmed:           Blue border
+  Arrived:             Teal border
+  Checked In:          Indigo border
+  Waiting:             Amber border
+  Ready for Tech:      Orange border
+  In Session:          Purple border
+  Completed:           Green border
+  Follow-up Needed:    Pink border
+  No Show:             Red border
+  Cancelled:           Dark grey border, reduced opacity
+
+10.4 ROLE PERMISSIONS ON KANBAN
+
+CARD MOVEMENT PERMISSIONS (who can drag/move cards to which columns):
+
+  system_admin:
+    Can move cards between any columns
+
+  branch_manager:
+    Can move cards between any columns within their branch
+
+  secretary:
+    From Booked: to Confirmed, Cancelled, No Show
+    From Confirmed: to Arrived, Cancelled, No Show
+    From Arrived: to Checked In, No Show
+    From Checked In: to Waiting
+    BLOCKED: cannot move to Ready for Technician, In Session, Completed,
+             Follow-up Needed
+
+  technician / nurse:
+    From Ready for Technician: to In Session
+    From In Session: to Completed
+    BLOCKED: cannot move to or from any other columns
+
+  doctor:
+    From Completed: to Follow-up Needed
+    From Follow-up Needed: to Completed
+    Can also move to Completed from In Session (clinical override)
+    BLOCKED: cannot move to Cancelled, No Show, or front-desk columns
+
+  finance:
+    VIEW ONLY — cannot move any cards
+
+10.5 DRAG AND DROP IMPLEMENTATION NOTE
+
+MVP Phase 1 uses button-based status changes (a dropdown or quick action button
+on each card). Drag-and-drop is a Phase 2 enhancement using a JavaScript library
+such as SortableJS or Dragula. The server-side permission logic for transitions
+is identical regardless of whether the UI uses drag-and-drop or buttons.
+
+Status change endpoint:
+  PATCH /appointments/{appointment}/status
+  Body: { status: 'confirmed' }
+  Controller: AppointmentController@updateStatus
+  Middleware: ['auth', 'role:secretary,technician,doctor,nurse,branch_manager,system_admin']
+
+The controller checks the transition against the role's allowed transitions before
+updating the record. Invalid transitions return a 422 with an error message.
+
+10.6 KANBAN BOARD FILTERS
+
+Above the Kanban board, a filter bar allows narrowing the cards displayed:
+
+  - Filter by Staff: dropdown of all branch staff (shows only their cards)
+  - Filter by Service: dropdown of services
+  - Filter by Source: phone, walk_in, website, etc.
+  - Date selector: defaults to today, can view other dates (branch manager and above)
+  - Search: patient name search (live filter, no AJAX needed — filters in-DOM)
+
+================================================================================
+SECTION 11: SIDEBAR AND NAVIGATION BY ROLE
+================================================================================
+
+11.1 NAVIGATION ARCHITECTURE
+
+The sidebar is rendered by a shared Blade partial:
+  resources/views/partials/sidebar.blade.php
+
+The partial receives the authenticated user's employee_type via a View Composer
+registered in AppServiceProvider. The sidebar uses @if conditionals to show or
+hide navigation items based on employee_type.
+
+View Composer registration (in AppServiceProvider@boot):
+
+  View::composer('partials.sidebar', function ($view) {
+      $view->with('currentUser', auth()->user());
+  });
+
+11.2 SIDEBAR ITEMS BY ROLE
+
+SYSTEM_ADMIN sidebar:
+  - Dashboard            /admin/dashboard          admin.dashboard
+  - Branches             /admin/branches            admin.branches.index
+  - Employees            /admin/employees           admin.employees.index
+  - Roles                /admin/roles               admin.roles.index
+  - Permissions          /admin/permissions         admin.permissions.index
+  - Activity Logs        /admin/activity-logs       admin.activity-logs.index
+  - System Settings      /admin/settings            admin.settings.index
+  --- DIVIDER ---
+  - All Appointments     /appointments/kanban       appointments.kanban
+  - All Patients         /patients                  patients.index
+  - Leads                /leads                     leads.index
+  - Reports              /reports                   reports.index
+
+BRANCH_MANAGER sidebar:
+  - Dashboard            /branch/dashboard          branch.dashboard
+  - Appointments         /branch/appointments       branch.appointments.index
+  - Kanban Board         /appointments/kanban       appointments.kanban
+  - Patients             /branch/patients           branch.patients.index
+  - Staff                /branch/staff              branch.staff.index
+  - Reports              /branch/reports            branch.reports.index
+
+SECRETARY sidebar:
+  - Dashboard            /secretary/dashboard       secretary.dashboard
+  - Kanban Board         /appointments/kanban       appointments.kanban
+  - New Appointment      /appointments/create       appointments.create
+  - Patients             /patients                  patients.index
+  - New Patient          /patients/create           patients.create
+  - Leads                /leads                     leads.index
+
+TECHNICIAN sidebar:
+  - My Queue             /clinical/queue            clinical.queue
+  - My Schedule          /clinical/schedule         clinical.schedule
+  - Completed Sessions   /clinical/sessions         clinical.sessions.index
+
+DOCTOR sidebar:
+  - Review Queue         /clinical/review           clinical.review
+  - All Appointments     /appointments              appointments.index
+  - Patients             /patients                  patients.index
+  - Treatment Plans      /treatment-plans           treatment-plans.index
+
+NURSE sidebar:
+  - My Queue             /clinical/queue            clinical.queue
+  - My Schedule          /clinical/schedule         clinical.schedule
+
+FINANCE sidebar:
+  - Finance Dashboard    /finance/dashboard         finance.dashboard
+  - Billing              /finance/billing           finance.billing.index
+  - Reports              /finance/reports           finance.reports.index
+
+11.3 BLADE CONDITIONAL EXAMPLE (sidebar.blade.php)
+
+@if($currentUser->employee_type === 'system_admin')
+    <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+    <a href="{{ route('admin.branches.index') }}">Branches</a>
+    <a href="{{ route('admin.employees.index') }}">Employees</a>
+    <a href="{{ route('admin.roles.index') }}">Roles</a>
+    <a href="{{ route('admin.permissions.index') }}">Permissions</a>
+    <a href="{{ route('admin.activity-logs.index') }}">Activity Logs</a>
+    <a href="{{ route('admin.settings.index') }}">Settings</a>
+@elseif($currentUser->employee_type === 'branch_manager')
+    <a href="{{ route('branch.dashboard') }}">Dashboard</a>
+    <a href="{{ route('branch.appointments.index') }}">Appointments</a>
+    ...
+@elseif($currentUser->employee_type === 'secretary')
+    <a href="{{ route('secretary.dashboard') }}">Dashboard</a>
+    <a href="{{ route('appointments.kanban') }}">Kanban Board</a>
+    ...
+@elseif(in_array($currentUser->employee_type, ['technician', 'nurse']))
+    <a href="{{ route('clinical.queue') }}">My Queue</a>
+    ...
+@elseif($currentUser->employee_type === 'doctor')
+    <a href="{{ route('clinical.review') }}">Review Queue</a>
+    ...
+@elseif($currentUser->employee_type === 'finance')
+    <a href="{{ route('finance.dashboard') }}">Finance</a>
+    ...
+@endif
+
+================================================================================
+SECTION 12: PERMISSION MATRIX
+================================================================================
+
+12.1 MODULE PERMISSION DEFINITIONS
+
+Permission levels used in this matrix:
+  full    = view + create + edit + delete
+  manage  = view + create + edit (no delete)
+  edit    = view + edit only
+  create  = view + create only
+  view    = read-only access
+  own     = only records assigned to self
+  none    = no access at all
+
+12.2 PERMISSION MATRIX TABLE
+
+MODULE          | system_admin | branch_mgr | secretary | technician | doctor | nurse  | finance
+----------------|--------------|------------|-----------|------------|--------|--------|--------
+patients        | full         | manage     | manage    | view (own) | manage | view   | view
+appointments    | full         | full       | manage    | own        | edit   | own    | view
+branches        | full         | view (own) | none      | none       | none   | none   | none
+employees       | full         | view       | none      | none       | none   | none   | none
+roles           | full         | none       | none      | none       | none   | none   | none
+permissions     | full         | none       | none      | none       | none   | none   | none
+notes           | full         | manage     | create    | own        | manage | own    | none
+follow_ups      | full         | manage     | create    | none       | manage | none   | none
+leads           | full         | manage     | manage    | none       | none   | none   | none
+billing         | full         | view       | none      | none       | none   | none   | manage
+reports         | full         | view       | none      | none       | none   | none   | view
+settings        | full         | none       | none      | none       | none   | none   | none
+activity_logs   | full         | none       | none      | none       | none   | none   | none
+treatment_plans | full         | view       | none      | none       | manage | view   | none
+services        | full         | view       | view      | view       | view   | view   | view
+
+12.3 NOTES ON OWN-SCOPED ACCESS
+
+For cells marked "own", the access is further scoped:
+  technician/nurse — only records where assigned_staff_id = auth()->id()
+  appointments (own) — only appointment records assigned to the user
+  notes (own) — only notes authored by the user
+  sessions (own) — only sessions assigned to the user
+
+================================================================================
+SECTION 13: LARAVEL IMPLEMENTATION APPROACH
+================================================================================
+
+13.1 CHECKROLE MIDDLEWARE
+
+Create the file: app/Http/Middleware/CheckRole.php
+
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class CheckRole
+{
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        if (!$request->user()) {
+            return redirect()->route('login');
+        }
+
+        $userType = $request->user()->employee_type;
+
+        // Map legacy 'admin' role field to system_admin employee_type
+        if ($request->user()->role === 'admin' && empty($userType)) {
+            $userType = 'system_admin';
+        }
+
+        if (!in_array($userType, $roles)) {
+            abort(403, 'Access denied. You do not have permission to view this page.');
+        }
+
+        return $next($request);
+    }
+}
+
+13.2 REGISTER MIDDLEWARE ALIAS IN BOOTSTRAP/APP.PHP
+
+In bootstrap/app.php, within the withMiddleware callback:
+
+$app->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'role' => \App\Http\Middleware\CheckRole::class,
+    ]);
+});
+
+Usage on routes:
+  ->middleware('role:system_admin')
+  ->middleware('role:secretary,branch_manager,system_admin')
+  ->middleware(['auth', 'role:technician,nurse'])
+
+13.3 ROUTE GROUPING BY ROLE
+
+File: routes/web.php
+
+// --- Authentication routes (no change needed) ---
+require __DIR__.'/auth.php';
+
+// --- Admin Routes ---
+Route::prefix('admin')
+     ->name('admin.')
+     ->middleware(['auth', 'role:system_admin'])
+     ->group(base_path('routes/admin.php'));
+
+// --- Branch Manager Routes ---
+Route::prefix('branch')
+     ->name('branch.')
+     ->middleware(['auth', 'role:branch_manager,system_admin'])
+     ->group(base_path('routes/branch.php'));
+
+// --- Secretary Routes ---
+Route::prefix('secretary')
+     ->name('secretary.')
+     ->middleware(['auth', 'role:secretary,system_admin'])
+     ->group(base_path('routes/secretary.php'));
+
+// --- Clinical Routes (Technician, Doctor, Nurse) ---
+Route::prefix('clinical')
+     ->name('clinical.')
+     ->middleware(['auth', 'role:technician,doctor,nurse,system_admin'])
+     ->group(base_path('routes/clinical.php'));
+
+// --- Finance Routes ---
+Route::prefix('finance')
+     ->name('finance.')
+     ->middleware(['auth', 'role:finance,system_admin'])
+     ->group(base_path('routes/finance.php'));
+
+// --- Shared Routes (accessible to multiple roles with different views) ---
+Route::middleware(['auth'])->group(function () {
+    Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])
+         ->name('appointments.kanban');
+    Route::patch('/appointments/{appointment}/status',
+         [AppointmentController::class, 'updateStatus'])
+         ->name('appointments.updateStatus');
+    Route::get('/appointments/create', [AppointmentController::class, 'create'])
+         ->middleware('role:secretary,branch_manager,system_admin')
+         ->name('appointments.create');
+    Route::post('/appointments', [AppointmentController::class, 'store'])
+         ->middleware('role:secretary,branch_manager,system_admin')
+         ->name('appointments.store');
+    Route::get('/patients/search', [PatientController::class, 'search'])
+         ->middleware('role:secretary,branch_manager,system_admin')
+         ->name('patients.search');
+    Route::post('/patients/quick-create', [PatientController::class, 'quickCreate'])
+         ->middleware('role:secretary,branch_manager,system_admin')
+         ->name('patients.quickCreate');
+});
+
+13.4 BRANCH SCOPING IN CONTROLLERS
+
+Create a trait: app/Traits/BranchScoped.php
+
+<?php
+
+namespace App\Traits;
+
+trait BranchScoped
+{
+    protected function branchId(): int
+    {
+        $user = auth()->user();
+        if ($user->employee_type === 'system_admin') {
+            return request()->input('branch_id', 0); // admin can query any branch
+        }
+        return (int) $user->primary_branch_id;
+    }
+
+    protected function scopeToUserBranch($query)
+    {
+        $user = auth()->user();
+        if ($user->employee_type !== 'system_admin') {
+            $query->where('branch_id', $user->primary_branch_id);
+        }
+        return $query;
+    }
+}
+
+Usage in AppointmentController:
+
+use App\Traits\BranchScoped;
+
+class AppointmentController extends Controller
+{
+    use BranchScoped;
+
+    public function index()
+    {
+        $appointments = $this->scopeToUserBranch(Appointment::query())
+            ->with(['patient', 'service', 'staff'])
+            ->get();
+        return view('appointments.index', compact('appointments'));
+    }
+}
+
+Usage in PatientController@search:
+
+public function search(Request $request)
+{
+    $q = $request->input('q', '');
+    if (strlen($q) < 2) {
+        return response()->json([]);
+    }
+
+    $query = Patient::query();
+
+    if (auth()->user()->employee_type !== 'system_admin') {
+        $query->where('branch_id', auth()->user()->primary_branch_id);
+    }
+
+    $results = $query->where(function ($q2) use ($q) {
+            $q2->where('first_name', 'like', "%{$q}%")
+               ->orWhere('last_name', 'like', "%{$q}%")
+               ->orWhere('phone', 'like', "%{$q}%")
+               ->orWhere('email', 'like', "%{$q}%")
+               ->orWhere('patient_code', 'like', "%{$q}%");
+        })
+        ->select(['id', 'patient_code', 'first_name', 'last_name', 'phone', 'email',
+                  'date_of_birth'])
+        ->limit(10)
+        ->get();
+
+    return response()->json($results);
+}
+
+13.5 VIEW COMPOSERS FOR ROLE-AWARE SIDEBAR
+
+In app/Providers/AppServiceProvider.php:
+
+use Illuminate\Support\Facades\View;
+
+public function boot(): void
+{
+    View::composer('partials.sidebar', function ($view) {
+        if (auth()->check()) {
+            $view->with('currentUser', auth()->user());
+        }
+    });
+
+    View::composer('*', function ($view) {
+        if (auth()->check()) {
+            $view->with('authUser', auth()->user());
+        }
+    });
+}
+
+13.6 POST-LOGIN REDIRECT BY ROLE
+
+Override the redirectTo logic in the authenticated session controller.
+
+In app/Http/Controllers/Auth/AuthenticatedSessionController.php (or a custom
+LoginResponse class if using Fortify):
+
+private function redirectBasedOnRole($user): string
+{
+    return match($user->employee_type) {
+        'system_admin'   => route('admin.dashboard'),
+        'branch_manager' => route('branch.dashboard'),
+        'secretary'      => route('secretary.dashboard'),
+        'technician',
+        'nurse'          => route('clinical.queue'),
+        'doctor'         => route('clinical.review'),
+        'finance'        => route('finance.dashboard'),
+        default          => route('dashboard'),
+    };
+}
+
+public function store(LoginRequest $request): RedirectResponse
+{
+    $request->authenticate();
+    $request->session()->regenerate();
+    return redirect()->to($this->redirectBasedOnRole($request->user()));
+}
+
+13.7 PROTECTING EXISTING CONTROLLERS
+
+BranchController: Add middleware in the constructor or route definition.
+
+  Route::resource('branches', BranchController::class)
+       ->middleware(['auth', 'role:system_admin']);
+
+EmployeeController (if it exists separately from AdminEmployeeController):
+
+  Route::resource('employees', EmployeeController::class)
+       ->middleware(['auth', 'role:system_admin']);
+
+Any existing controller that currently has no role middleware should be audited.
+The audit process: list all routes with php artisan route:list, then verify each
+route has appropriate middleware. Routes without 'role:*' middleware that expose
+sensitive data must be updated.
+
+================================================================================
+SECTION 14: DATABASE AND ROUTE CHANGES
+================================================================================
+
+14.1 NO NEW MIGRATIONS NEEDED
+
+The following columns already exist in the users table and require no migration:
+  - employee_type (string, nullable — should be populated for all users)
+  - primary_branch_id (foreign key to branches table)
+  - role (legacy field — maps 'admin' to system_admin behavior)
+
+Verify the employee_type field is not nullable or has a default. If it is
+nullable, add a not-null constraint via migration:
+
+  // Only needed if employee_type currently allows null
+  Schema::table('users', function (Blueprint $table) {
+      $table->string('employee_type')->default('secretary')->change();
+  });
+
+14.2 NEW ROUTES REQUIRED
+
+The following routes do not yet exist and must be added:
+
+  GET  /admin/dashboard                         admin.dashboard
+  GET  /admin/branches                          admin.branches.index
+  GET  /admin/branches/create                   admin.branches.create
+  POST /admin/branches                          admin.branches.store
+  GET  /admin/branches/{branch}/edit            admin.branches.edit
+  PUT  /admin/branches/{branch}                 admin.branches.update
+  DELETE /admin/branches/{branch}               admin.branches.destroy
+  GET  /admin/employees                         admin.employees.index
+  GET  /admin/employees/create                  admin.employees.create
+  POST /admin/employees                         admin.employees.store
+  GET  /admin/employees/{employee}/edit         admin.employees.edit
+  PUT  /admin/employees/{employee}              admin.employees.update
+  GET  /admin/roles                             admin.roles.index
+  GET  /admin/permissions                       admin.permissions.index
+  GET  /admin/activity-logs                     admin.activity-logs.index
+  GET  /admin/settings                          admin.settings.index
+  PUT  /admin/settings                          admin.settings.update
+
+  GET  /branch/dashboard                        branch.dashboard
+  GET  /branch/appointments                     branch.appointments.index
+  GET  /branch/patients                         branch.patients.index
+  GET  /branch/staff                            branch.staff.index
+  GET  /branch/reports                          branch.reports.index
+
+  GET  /secretary/dashboard                     secretary.dashboard
+
+  GET  /clinical/queue                          clinical.queue
+  GET  /clinical/review                         clinical.review
+  GET  /clinical/schedule                       clinical.schedule
+  GET  /clinical/sessions                       clinical.sessions.index
+
+  GET  /finance/dashboard                       finance.dashboard
+  GET  /finance/billing                         finance.billing.index
+  GET  /finance/reports                         finance.reports.index
+
+  GET  /patients/search                         patients.search        (JSON)
+  POST /patients/quick-create                   patients.quickCreate   (JSON)
+  GET  /appointments/kanban                     appointments.kanban
+  PATCH /appointments/{appointment}/status      appointments.updateStatus
+  GET  /appointments/available-slots            appointments.availableSlots (JSON)
+
+14.3 UPDATE EXISTING ROUTES TO ADD MIDDLEWARE
+
+The existing Route::resource definitions for patients, appointments, etc. must be
+updated to add the 'role:*' middleware. Example:
+
+Before:
+  Route::resource('patients', PatientController::class)->middleware('auth');
+
+After:
+  Route::resource('patients', PatientController::class)
+       ->middleware(['auth', 'role:secretary,branch_manager,doctor,nurse,system_admin']);
+
+Routes that only admin should access (branches, employees) must be updated to:
+  ->middleware(['auth', 'role:system_admin'])
+
+14.4 SEEDER UPDATE — PERMISSIONS MODULE NAME
+
+The permissions seeder currently lists the patient-related module as 'customers'.
+This should be updated to 'patients' to align with the Patient model and the
+permission matrix in Section 12.
+
+In database/seeders/PermissionSeeder.php:
+  Change: ['name' => 'customers.view', 'module' => 'customers']
+  To:     ['name' => 'patients.view', 'module' => 'patients']
+
+Similarly update: patients.create, patients.edit, patients.delete
+
+After updating the seeder, run:
+  php artisan db:seed --class=PermissionSeeder
+
+If existing permission records in the database reference 'customers', update them:
+  Permission::where('module', 'customers')->update(['module' => 'patients']);
+  Permission::where('name', 'like', 'customers.%')
+            ->get()->each(function($p) {
+                $p->update(['name' => str_replace('customers.', 'patients.', $p->name)]);
+            });
+
+================================================================================
+SECTION 15: MVP PRIORITY ORDER
+================================================================================
+
+15.1 PRIORITY 1 — THIS UPDATE (IMMEDIATE IMPLEMENTATION)
+
+The following items must be completed in this development cycle:
+
+  1. CheckRole Middleware
+     File: app/Http/Middleware/CheckRole.php
+     Register alias 'role' in bootstrap/app.php
+     Verify middleware activates correctly with a test route
+
+  2. Route Protection
+     Add 'role:system_admin' to all /admin/* routes
+     Add 'role:secretary,branch_manager,system_admin' to appointment create/store
+     Add 'role:finance,system_admin' to /finance/* routes
+     Add 'role:technician,doctor,nurse,system_admin' to /clinical/* routes
+     Verify 403 response for unauthorized access attempts
+
+  3. Role-Aware Sidebar
+     Create resources/views/partials/sidebar.blade.php
+     Register View Composer in AppServiceProvider
+     Implement @if conditionals per employee_type (see Section 11.3)
+     Test each role sees correct sidebar items
+
+  4. Post-Login Redirect by Role
+     Update AuthenticatedSessionController@store with role-based redirect logic
+     Test each seeded credential redirects to correct landing page
+
+  5. Appointment Create and Store
+     Build resources/views/appointments/create.blade.php (multi-step form)
+     Implement /patients/search JSON endpoint
+     Implement AppointmentController@store with branch scoping and validation
+     Test full booking flow with secretary credential
+
+  6. Front-Desk Kanban Redesign
+     Build resources/views/appointments/kanban.blade.php
+     Implement AppointmentController@kanban (today's appointments, branch-scoped)
+     Implement AppointmentController@updateStatus with role-based transition check
+     Display 11 columns with card design per Section 10.2
+
+  7. Admin Dashboard
+     Build resources/views/admin/dashboard.blade.php
+     Implement AdminController@dashboard with company-wide KPIs
+     Test with admin@medflow.local credential
+
+  8. Secretary Dashboard
+     Build resources/views/secretary/dashboard.blade.php
+     Implement SecretaryController@dashboard with branch-scoped data
+     Test with reception.marina@medflow.local credential
+
+15.2 PRIORITY 2 — NEXT CYCLE
+
+  1. Inline patient creation during booking (AJAX sub-form in appointment create)
+  2. Advanced Kanban with drag-and-drop (SortableJS integration)
+  3. Branch Manager reports page with revenue and appointment charts
+  4. Branch Manager dashboard with staff utilization view
+  5. Clinical queue for technician with session note entry
+  6. Doctor review queue with treatment plan editor
+  7. Finance dashboard with billing queue and revenue charts
+  8. Admin employee management (create/edit employee accounts)
+  9. Admin branch management (create/edit branches)
+  10. Admin activity logs viewer
+
+15.3 PRIORITY 3 — FUTURE CYCLE
+
+  1. AI-assisted features (suggested appointment times, treatment recommendations)
+  2. SMS notifications for appointment confirmations and reminders
+  3. Full audit trail UI with export to CSV/PDF
+  4. Multi-branch assignment for employees (secondary branches)
+  5. Patient portal (self-service booking)
+  6. Revenue forecasting and trend analytics
+  7. Staff performance reports
+  8. Automated follow-up scheduling
+
+================================================================================
+SECTION 16: CREDENTIAL REFERENCE
+================================================================================
+
+16.1 SEEDED TEST ACCOUNTS
+
+All accounts below are created by the database seeder. Use these for testing
+each role's workspace and permission boundaries.
+
+ACCOUNT 1 — Super Admin
+  Email:    admin@medflow.local
+  Password: Admin@MedFlow2024!
+  Type:     system_admin
+  Branch:   All (no primary_branch_id restriction)
+  Landing:  /admin/dashboard
+  Can do:   Everything
+
+ACCOUNT 2 — Branch Manager
+  Email:    manager.marina@medflow.local
+  Password: Manager@123!
+  Type:     branch_manager
+  Branch:   Marina Branch (primary_branch_id points to Marina branch record)
+  Landing:  /branch/dashboard
+  Can do:   View/edit all Marina Branch data, reports, staff view
+
+ACCOUNT 3 — Secretary
+  Email:    reception.marina@medflow.local
+  Password: Secretary@123!
+  Type:     secretary
+  Branch:   Marina Branch
+  Landing:  /secretary/dashboard
+  Can do:   Book appointments, register patients, manage Kanban (front-desk columns)
+
+ACCOUNT 4 — Technician 1
+  Email:    tech1.marina@medflow.local
+  Password: Tech@123!
+  Type:     technician
+  Branch:   Marina Branch
+  Landing:  /clinical/queue
+  Can do:   View own queue, update session status, add session notes
+
+ACCOUNT 5 — Technician 2
+  Email:    tech2.marina@medflow.local
+  Password: Tech@123!
+  Type:     technician
+  Branch:   Marina Branch
+  Landing:  /clinical/queue
+  Can do:   View own queue, update session status, add session notes
+
+16.2 TESTING PROTOCOL
+
+For each credential above, the following tests should be run after implementing
+Priority 1 items:
+
+TEST A — Login and Redirect
+  Action: Log in with each credential
+  Expected: Each account lands on its role-specific dashboard URL
+
+TEST B — Unauthorized Route Access
+  Action: While logged in as secretary, attempt to navigate to /admin/dashboard
+  Expected: HTTP 403 response with friendly error message
+
+TEST C — Sidebar Visibility
+  Action: Log in as each role, inspect sidebar links
+  Expected: Only role-appropriate links appear, no admin links visible to secretary
+
+TEST D — Kanban Card Movement
+  Action: Log in as secretary, attempt to move a card from Waiting to In Session
+  Expected: Action is blocked (button not shown or 403 if URL is guessed)
+
+TEST E — Branch Data Isolation
+  Action: Log in as secretary at Marina Branch, attempt to search patients
+  Expected: Only Marina Branch patients appear in search results
+
+TEST F — Appointment Booking
+  Action: Log in as secretary, create a new appointment using the multi-step form
+  Expected: Appointment created successfully, redirects to Kanban, card appears
+            in Booked column
+
+16.3 ADMIN CREDENTIAL SECURITY NOTE
+
+The admin password Admin@MedFlow2024! is used only in the development/seeded
+environment. Before deploying to any staging or production environment:
+  1. Change the admin account password via the admin settings UI
+  2. Rotate all seeded account passwords
+  3. Remove the default seeder passwords from any documentation committed to git
+  4. Consider using environment variables to provide seeder passwords
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+
+Document: ARCHITECTURE_V3_RBAC.txt
+Version: 3.0
+System: MedFlow CRM — Clinical Management System for Laser Clinics
+Prepared: 2026-04-11
+Total Sections: 16

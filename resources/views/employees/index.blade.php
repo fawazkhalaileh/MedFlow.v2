@@ -9,14 +9,14 @@
     <h1 class="page-title">Employees</h1>
     <p class="page-subtitle">Manage all staff accounts and their branch assignments</p>
   </div>
-  <a href="{{ route('employees.create') }}" class="btn btn-primary">
+  <a href="{{ route('admin.employees.create') }}" class="btn btn-primary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Employee
   </a>
 </div>
 
 {{-- Filters --}}
-<form method="GET" action="{{ route('employees.index') }}">
+<form method="GET" action="{{ route('admin.employees.index') }}">
 <div class="filter-bar animate-in" style="animation-delay:.05s">
   <div class="filter-search-wrap" style="max-width:320px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -42,7 +42,7 @@
     <option value="terminated"  {{ request('status') === 'terminated'  ? 'selected' : '' }}>Terminated</option>
   </select>
   @if(request()->anyFilled(['q','branch','type','status']))
-  <a href="{{ route('employees.index') }}" class="btn btn-ghost btn-sm">Clear</a>
+  <a href="{{ route('admin.employees.index') }}" class="btn btn-ghost btn-sm">Clear</a>
   @endif
   <button type="submit" class="btn btn-secondary btn-sm">Search</button>
 </div>
@@ -115,13 +115,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
               <div class="dropdown-menu">
-                <a href="{{ route('employees.edit', $emp) }}" class="dropdown-item">
+                <a href="{{ route('admin.employees.edit', $emp) }}" class="dropdown-item">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   Edit
                 </a>
                 @if($emp->employment_status !== 'terminated')
                 <div class="dropdown-divider"></div>
-                <form method="POST" action="{{ route('employees.destroy', $emp) }}" onsubmit="return confirm('Terminate {{ addslashes($emp->first_name) }}?')">
+                <form method="POST" action="{{ route('admin.employees.destroy', $emp) }}" onsubmit="return confirm('Terminate {{ addslashes($emp->first_name) }}?')">
                   @csrf @method('DELETE')
                   <button type="submit" class="dropdown-item danger" style="width:100%;border:none;background:none;text-align:left;cursor:pointer;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

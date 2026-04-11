@@ -4,7 +4,13 @@
       "Bash(php artisan:*)",
       "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Models\\\\Customer.php\")",
       "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Models\\\\CustomerMedicalInfo.php\")",
-      "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Http\\\\Controllers\\\\CustomerController.php\")"
+      "Bash(del \"C:\\\\Users\\\\Fawwa\\\\OneDrive\\\\Documentos\\\\Projects\\\\Clinical\\\\app\\\\Http\\\\Controllers\\\\CustomerController.php\")",
+      "Bash(where php:*)",
+      "Read(//c/xampp/php/**)",
+      "Read(//c/php/**)",
+      "Read(//c/Program Files/PHP/**)",
+      "Read(//c/Users/Fawwa/**)",
+      "Bash(/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan:*)"
     ]
   }
 }

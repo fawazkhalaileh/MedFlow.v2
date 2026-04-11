@@ -9,13 +9,13 @@
     <h1 class="page-title">{{ $employee->first_name }} {{ $employee->last_name }}</h1>
     <p class="page-subtitle">{{ $employee->employee_id }} &mdash; {{ ucfirst(str_replace('_',' ',$employee->employee_type ?? '')) }}</p>
   </div>
-  <a href="{{ route('employees.index') }}" class="btn btn-secondary">
+  <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     Back
   </a>
 </div>
 
-<form method="POST" action="{{ route('employees.update', $employee) }}" class="animate-in" style="animation-delay:.05s">
+<form method="POST" action="{{ route('admin.employees.update', $employee) }}" class="animate-in" style="animation-delay:.05s">
   @csrf @method('PUT')
   <div class="grid-2-1" style="align-items:start;">
 
@@ -119,7 +119,7 @@
 
       <div style="display:flex;gap:10px;">
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{{ route('employees.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">Cancel</a>
       </div>
     </div>
 

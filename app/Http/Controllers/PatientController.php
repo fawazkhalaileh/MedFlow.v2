@@ -8,17 +8,61 @@ use App\Models\Patient;
 use App\Models\PatientMedicalInfo;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PatientController extends Controller
 {
+    /**
+     * JSON search endpoint — used by appointment booking autocomplete.
+     */
+    public function search(Request $request)
+    {
+        $user = Auth::user();
+        $q    = $request->get('q', '');
+
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $query = Patient::where(function ($sub) use ($q) {
+            $sub->where('first_name',    'like', "%{$q}%")
+                ->orWhere('last_name',   'like', "%{$q}%")
+                ->orWhere('phone',       'like', "%{$q}%")
+                ->orWhere('patient_code','like', "%{$q}%")
+                ->orWhere('email',       'like', "%{$q}%");
+        });
+
+        if ($branchId = $user->scopedBranchId()) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $patients = $query->orderBy('first_name')
+            ->limit(8)
+            ->get(['id', 'first_name', 'last_name', 'phone', 'patient_code', 'status']);
+
+        return response()->json($patients->map(fn($p) => [
+            'id'           => $p->id,
+            'full_name'    => $p->full_name,
+            'phone'        => $p->phone,
+            'patient_code' => $p->patient_code,
+            'status'       => $p->status,
+        ]));
+    }
+
     public function index(Request $request)
     {
+        $user    = Auth::user();
         $company = Company::first();
 
         $query = Patient::with(['branch', 'assignedStaff'])
             ->where('company_id', $company->id);
 
-        if ($request->filled('branch')) {
+        // Non-admin roles are scoped to their primary branch
+        if ($branchId = $user->scopedBranchId()) {
+            $query->where('branch_id', $branchId);
+        }
+
+        if ($request->filled('branch') && $user->isSuperAdmin()) {
             $query->where('branch_id', $request->branch);
         }
         if ($request->filled('status')) {

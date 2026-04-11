@@ -9,14 +9,14 @@
     <h1 class="page-title">Add New Employee</h1>
     <p class="page-subtitle">Create a staff account and assign them to a branch</p>
   </div>
-  <a href="{{ route('employees.index') }}" class="btn btn-secondary">
+  <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     Back to Employees
   </a>
 </div>
 
 <div style="max-width:800px;" class="animate-in" style="animation-delay:.05s">
-  <form method="POST" action="{{ route('employees.store') }}">
+  <form method="POST" action="{{ route('admin.employees.store') }}">
     @csrf
 
     {{-- Personal Info --}}
@@ -140,7 +140,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Create Employee
       </button>
-      <a href="{{ route('employees.index') }}" class="btn btn-secondary">Cancel</a>
+      <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">Cancel</a>
     </div>
   </form>
 </div>

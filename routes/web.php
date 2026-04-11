@@ -33,65 +33,75 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-    // Smart redirect — role-aware landing
+    // Smart redirect: DashboardController redirects to role workspace
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // -----------------------------------------------------------------------
-    // ADMIN AREA — system_admin only
-    // (middleware bypasses for role=admin / employee_type=system_admin)
-    // -----------------------------------------------------------------------
-    Route::middleware('role:system_admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/',             [AdminController::class, 'index'])->name('index');
-        Route::resource('branches',  BranchController::class);
-        Route::resource('employees', EmployeeController::class);
-        Route::get('roles',         [AdminController::class, 'roles'])->name('roles');
-        Route::get('settings',      [AdminController::class, 'settings'])->name('settings');
-        Route::get('activity-logs', [AdminController::class, 'activityLogs'])->name('activity-logs');
-    });
+    // -------------------------------------------------------------------
+    // ADMIN AREA — system_admin / role=admin only
+    // -------------------------------------------------------------------
+    Route::middleware('role:system_admin')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('/',             [AdminController::class,  'index'])->name('index');
+            Route::get('roles',         [AdminController::class,  'roles'])->name('roles');
+            Route::get('settings',      [AdminController::class,  'settings'])->name('settings');
+            Route::get('activity-logs', [AdminController::class,  'activityLogs'])->name('activity-logs');
+            Route::resource('branches',  BranchController::class);
+            Route::resource('employees', EmployeeController::class);
+        });
 
-    // -----------------------------------------------------------------------
-    // CLINICAL — secretary, technician, doctor, nurse, branch_manager
-    // -----------------------------------------------------------------------
-    Route::middleware('role:secretary,technician,doctor,nurse,branch_manager,finance')->group(function () {
+    // -------------------------------------------------------------------
+    // CLINICAL ROUTES — all clinical staff
+    // -------------------------------------------------------------------
+    $clinical = 'role:secretary,technician,doctor,nurse,branch_manager,finance';
 
-        // Patients — full CRUD for secretary+, view-only enforced in controller
-        Route::resource('patients', PatientController::class);
+    // Patient search must be defined BEFORE the resource to avoid route conflict
+    Route::get('/patients/search', [PatientController::class, 'search'])
+        ->name('patients.search')
+        ->middleware($clinical);
 
-        // Patient JSON search (used by appointment booking autocomplete)
-        Route::get('/patients/search', [PatientController::class, 'search'])->name('patients.search');
+    Route::resource('patients', PatientController::class)
+        ->middleware($clinical);
 
-        // Appointments — index + create/store for secretary+
-        Route::get('/appointments',        [AppointmentController::class, 'index'])->name('appointments.index');
-        Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])->name('appointments.kanban');
+    // Appointments index + kanban (read for all clinical)
+    Route::get('/appointments',        [AppointmentController::class, 'index'])->name('appointments.index')->middleware($clinical);
+    Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])->name('appointments.kanban')->middleware($clinical);
 
-        // Notes
-        Route::post('/notes',          [NoteController::class, 'store'])->name('notes.store');
-        Route::put('/notes/{note}',    [NoteController::class, 'update'])->name('notes.update');
-        Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
-
-        // Follow-ups
-        Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('followups.index');
-
-        // Leads
-        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-    });
-
-    // Secretary + branch_manager: can create / edit appointments
+    // Appointment booking — secretary and branch_manager only
     Route::middleware('role:secretary,branch_manager')->group(function () {
-        Route::get('/appointments/create',  [AppointmentController::class, 'create'])->name('appointments.create');
-        Route::post('/appointments',        [AppointmentController::class, 'store'])->name('appointments.store');
-        Route::patch('/appointments/{appointment}/status', [WorkspaceController::class, 'updateAppointmentStatus'])->name('appointments.status');
-        Route::patch('/appointments/{appointment}/checkin', [AppointmentController::class, 'checkIn'])->name('appointments.checkin');
+        Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+        Route::post('/appointments',       [AppointmentController::class, 'store'])->name('appointments.store');
     });
 
-    // -----------------------------------------------------------------------
+    // Appointment status update — all clinical staff (technician moves cards, secretary checks in, etc.)
+    Route::patch(
+        '/appointments/{appointment}/status',
+        [WorkspaceController::class, 'updateAppointmentStatus']
+    )->name('appointments.status')->middleware($clinical);
+
+    Route::patch(
+        '/appointments/{appointment}/checkin',
+        [AppointmentController::class, 'checkIn']
+    )->name('appointments.checkin')->middleware('role:secretary,branch_manager');
+
+    // Notes
+    Route::post('/notes',          [NoteController::class, 'store'])->name('notes.store')->middleware($clinical);
+    Route::put('/notes/{note}',    [NoteController::class, 'update'])->name('notes.update')->middleware($clinical);
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy')->middleware($clinical);
+
+    // Operations
+    Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('followups.index')->middleware($clinical);
+    Route::get('/leads',       [LeadController::class,    'index'])->name('leads.index')->middleware($clinical);
+
+    // -------------------------------------------------------------------
     // ROLE WORKSPACES
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------
     Route::get('/front-desk',   [WorkspaceController::class, 'frontDesk'])->name('front-desk')
         ->middleware('role:secretary,branch_manager');
 
     Route::get('/my-queue',     [WorkspaceController::class, 'myQueue'])->name('my-queue')
-        ->middleware('role:technician,doctor,nurse');
+        ->middleware('role:technician,doctor,nurse,branch_manager');
 
     Route::get('/operations',   [WorkspaceController::class, 'operations'])->name('operations')
         ->middleware('role:branch_manager');
@@ -101,10 +111,4 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/finance',      [WorkspaceController::class, 'finance'])->name('finance')
         ->middleware('role:finance,branch_manager');
-
-    // Technician + doctor can also update status from their queues
-    Route::patch('/appointments/{appointment}/status', [WorkspaceController::class, 'updateAppointmentStatus'])
-        ->name('appointments.status')
-        ->middleware('role:technician,doctor,nurse,branch_manager,secretary')
-        ->withoutMiddleware('role:secretary,branch_manager'); // allow both groups
 });

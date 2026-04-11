@@ -9,14 +9,14 @@
     <h1 class="page-title">Add New Branch</h1>
     <p class="page-subtitle">Set up a new clinic location</p>
   </div>
-  <a href="{{ route('branches.index') }}" class="btn btn-secondary">
+  <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     Back to Branches
   </a>
 </div>
 
 <div style="max-width:760px;" class="animate-in" style="animation-delay:.05s">
-  <form method="POST" action="{{ route('branches.store') }}">
+  <form method="POST" action="{{ route('admin.branches.store') }}">
     @csrf
 
     <div class="card" style="margin-bottom:18px;">
@@ -104,7 +104,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Create Branch
       </button>
-      <a href="{{ route('branches.index') }}" class="btn btn-secondary">Cancel</a>
+      <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">Cancel</a>
     </div>
   </form>
 </div>

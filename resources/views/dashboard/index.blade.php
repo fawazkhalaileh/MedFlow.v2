@@ -126,7 +126,7 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title">Branches</div>
-        <a href="{{ route('branches.index') }}" class="btn btn-ghost btn-sm">Manage</a>
+        @if(Auth::user()->isSuperAdmin())<a href="{{ route('admin.branches.index') }}" class="btn btn-ghost btn-sm">Manage</a>@endif
       </div>
       @foreach($branches as $branch)
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);">

@@ -10,7 +10,7 @@
     <p class="page-subtitle">Manage all clinic locations and their settings</p>
   </div>
   <div class="header-actions">
-    <a href="{{ route('branches.create') }}" class="btn btn-primary">
+    <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Branch
     </a>
@@ -66,12 +66,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
           </button>
           <div class="dropdown-menu">
-            <a href="{{ route('branches.edit', $branch) }}" class="dropdown-item">
+            <a href="{{ route('admin.branches.edit', $branch) }}" class="dropdown-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit Branch
             </a>
             <div class="dropdown-divider"></div>
-            <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
+            <form method="POST" action="{{ route('admin.branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
               @csrf @method('DELETE')
               <button type="submit" class="dropdown-item danger" style="width:100%;border:none;background:none;text-align:left;cursor:pointer;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
@@ -123,7 +123,7 @@
 
     {{-- Actions --}}
     <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;">
-      <a href="{{ route('branches.edit', $branch) }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">
+      <a href="{{ route('admin.branches.edit', $branch) }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">
         Edit Branch
       </a>
     </div>
@@ -134,7 +134,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
       <h3>No branches yet</h3>
       <p>Create your first branch to get started.</p>
-      <a href="{{ route('branches.create') }}" class="btn btn-primary" style="margin-top:14px">Add First Branch</a>
+      <a href="{{ route('admin.branches.create') }}" class="btn btn-primary" style="margin-top:14px">Add First Branch</a>
     </div>
   </div>
   @endforelse

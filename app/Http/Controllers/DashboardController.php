@@ -10,10 +10,36 @@ use App\Models\TreatmentPlan;
 use App\Models\User;
 use App\Models\Branch;
 use App\Models\Company;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
+    {
+        $user = Auth::user();
+
+        // Role-based redirect: each role has a purpose-built workspace
+        if (!$user->isSuperAdmin()) {
+            return redirect($this->roleHome($user));
+        }
+
+        // Super Admin sees the full company-wide dashboard
+        return $this->adminDashboard();
+    }
+
+    private function roleHome($user): string
+    {
+        return match($user->employee_type) {
+            'branch_manager' => route('operations'),
+            'secretary'      => route('front-desk'),
+            'technician'     => route('my-queue'),
+            'doctor', 'nurse'=> route('review-queue'),
+            'finance'        => route('finance'),
+            default          => route('dashboard'),
+        };
+    }
+
+    private function adminDashboard()
     {
         $company   = Company::first();
         $companyId = $company?->id;

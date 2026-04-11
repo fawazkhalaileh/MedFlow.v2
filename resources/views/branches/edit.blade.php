@@ -9,7 +9,7 @@
     <h1 class="page-title">{{ $branch->name }}</h1>
     <p class="page-subtitle">Edit branch details &mdash; <span style="font-family:monospace;font-size:.85em;">{{ $branch->code }}</span></p>
   </div>
-  <a href="{{ route('branches.index') }}" class="btn btn-secondary">
+  <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     Back to Branches
   </a>
@@ -18,7 +18,7 @@
 <div class="grid-2-1 animate-in" style="animation-delay:.05s;align-items:start;">
 
   {{-- Edit Form --}}
-  <form method="POST" action="{{ route('branches.update', $branch) }}">
+  <form method="POST" action="{{ route('admin.branches.update', $branch) }}">
     @csrf @method('PUT')
 
     <div class="card" style="margin-bottom:18px;">
@@ -102,7 +102,7 @@
 
     <div style="display:flex;gap:10px;">
       <button type="submit" class="btn btn-primary">Save Changes</button>
-      <a href="{{ route('branches.index') }}" class="btn btn-secondary">Cancel</a>
+      <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">Cancel</a>
     </div>
   </form>
 
@@ -171,7 +171,7 @@
     <div class="card" style="border-color:var(--danger-light);">
       <div class="card-title" style="margin-bottom:10px;color:var(--danger);">Danger Zone</div>
       <p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;">Deleting this branch will soft-delete all its records. This action can be reversed by an admin.</p>
-      <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Are you sure you want to delete {{ addslashes($branch->name) }}?')">
+      <form method="POST" action="{{ route('admin.branches.destroy', $branch) }}" onsubmit="return confirm('Are you sure you want to delete {{ addslashes($branch->name) }}?')">
         @csrf @method('DELETE')
         <button type="submit" class="btn btn-danger btn-sm">Delete Branch</button>
       </form>
