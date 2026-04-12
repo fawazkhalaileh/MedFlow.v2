@@ -146,7 +146,7 @@ class PatientController extends Controller
             'treatmentPlans.service',
             'appointments' => fn($q) => $q->with(['service', 'assignedStaff'])->latest('scheduled_at')->limit(10),
             'notes'        => fn($q) => $q->with('createdBy')->latest()->limit(30),
-            'followUps'    => fn($q) => $q->orderBy('due_date')->limit(10),
+            'followUps'    => fn($q) => $q->where('status', 'pending')->orderBy('due_date')->limit(15),
         ]);
 
         $allFlags = ClinicalFlag::where('is_active', true)->orderBy('sort_order')->get();

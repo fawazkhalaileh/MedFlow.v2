@@ -6,6 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'MedFlow CRM')</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+@stack('page_style')
 <style>
 :root {
   --bg-primary: #f8f9fb;
@@ -646,6 +647,15 @@ tr:hover td { background: rgba(37,99,235,0.015); }
 
     @endif
 
+    {{-- AI — always shown in sidebar --}}
+    <div class="sidebar-divider"></div>
+    <a href="{{ route('ai.page') }}" class="sidebar-item {{ request()->routeIs('ai.*') ? 'active' : '' }}"
+      style="{{ request()->routeIs('ai.*') ? '' : 'background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.08));' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      <span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:600;">MedFlow AI</span>
+      <span class="sidebar-badge" style="background:linear-gradient(135deg,#2563eb,#7c3aed);margin-left:auto;font-size:.62rem;">✨ NEW</span>
+    </a>
+
     {{-- SIGN OUT — always shown --}}
       <div class="sidebar-bottom">
         <form method="POST" action="{{ route('logout') }}">
@@ -676,6 +686,10 @@ tr:hover td { background: rgba(37,99,235,0.015); }
         <button class="topbar-icon-btn" title="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
+        <a href="{{ route('ai.page') }}" class="topbar-icon-btn" title="MedFlow AI Assistant" style="border-color:rgba(124,58,237,.25);background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.08));color:#7c3aed;text-decoration:none;position:relative;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <span style="position:absolute;top:6px;right:6px;width:7px;height:7px;background:#7c3aed;border-radius:50%;animation:aiPulse 2.5s infinite;"></span>
+        </a>
         <div class="topbar-user">
           <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#2563eb,#7c3aed);">{{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}</div>
           <div>
@@ -708,6 +722,13 @@ tr:hover td { background: rgba(37,99,235,0.015); }
   </div>
 
 </div>
+
+<style>
+@keyframes aiPulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:.3; }
+}
+</style>
 
 <script>
 // ── Dropdown toggle ────────────────────────────────────────

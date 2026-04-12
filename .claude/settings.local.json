@@ -15,7 +15,11 @@
       "Bash(\"C:\\\\Users\\\\Fawwa\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\php.exe\" artisan:*)",
       "Bash(\"/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe\" artisan:*)",
       "Bash(\"/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe\" -l \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/app/Http/Controllers/Admin/ImportController.php\")",
-      "Bash(\"/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe\" -l \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/app/Models/ImportLog.php\")"
+      "Bash(\"/c/Users/Fawwa/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe\" -l \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/app/Models/ImportLog.php\")",
+      "Bash(python -c \"import sys, json; lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\); [print\\(json.loads\\(l\\).get\\('content',''\\)[:500] if isinstance\\(json.loads\\(l\\).get\\('content',''\\), str\\) else ''\\) for l in lines[-20:] if l]\")",
+      "Bash(docker compose:*)",
+      "Bash(php C:/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/artisan route:list --name=followups)",
+      "Bash(python3)"
     ]
   }
 }

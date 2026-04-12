@@ -20,6 +20,11 @@
     </div>
   </div>
   <div class="header-actions">
+    <a href="{{ route('ai.page') }}?patient_id={{ $patient->id }}" class="btn btn-secondary" title="Open AI with this patient loaded"
+      style="border-color:rgba(124,58,237,.2);color:#7c3aed;background:linear-gradient(135deg,rgba(37,99,235,.05),rgba(124,58,237,.05));">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      Ask AI
+    </a>
     <a href="{{ route('patients.edit', $patient) }}" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Edit Patient
@@ -159,11 +164,20 @@
             </div>
           </div>
 
-          <textarea name="content" rows="3"
-            placeholder="Write your note here…"
-            style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.87rem;font-family:inherit;resize:vertical;background:var(--bg-secondary);transition:border-color .2s;outline:none;"
-            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
-            required maxlength="3000"></textarea>
+          <div style="position:relative;">
+            <textarea name="content" id="note-content-input" rows="3"
+              placeholder="Write your note here…"
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.87rem;font-family:inherit;resize:vertical;background:var(--bg-secondary);transition:border-color .2s;outline:none;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+              required maxlength="3000"></textarea>
+            <button type="button" id="ai-suggest-note-btn"
+              onclick="suggestNote()"
+              style="position:absolute;bottom:8px;right:8px;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;cursor:pointer;color:#fff;border-radius:6px;padding:4px 10px;font-size:.73rem;font-family:inherit;display:flex;align-items:center;gap:5px;"
+              title="AI: draft this note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83"/></svg>
+              AI Draft
+            </button>
+          </div>
 
           <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
             <button type="button" class="btn btn-ghost btn-sm"
@@ -287,11 +301,13 @@
 
     @push('scripts')
     <script>
+    // ── Note edit toggle ──────────────────────────────────────
     function toggleNoteEdit(id) {
       document.getElementById('note-view-'+id).classList.toggle('hidden');
       document.getElementById('note-edit-'+id).classList.toggle('hidden');
     }
 
+    // ── Clinical flag detail field ────────────────────────────
     function handleFlagSelect(select) {
       var option = select.options[select.selectedIndex];
       var requiresDetail = option.getAttribute('data-requires-detail') === '1';
@@ -308,8 +324,44 @@
         detailInput.value = '';
       }
     }
+
+    // ── AI Note Suggest ───────────────────────────────────────
+    function suggestNote() {
+      const btn       = document.getElementById('ai-suggest-note-btn');
+      const textarea  = document.getElementById('note-content-input');
+      const typeSelect= document.querySelector('#add-note-form select[name="note_type"]');
+      const noteType  = typeSelect ? typeSelect.value : 'clinical';
+      const hint      = textarea.value.trim();
+
+      btn.disabled = true;
+      btn.innerHTML = '⟳ Thinking…';
+
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      fetch('/ai/patient/{{ $patient->id }}/suggest-note', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ note_type: noteType, hint: hint }),
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.suggestion) {
+          textarea.value = data.suggestion;
+          textarea.style.borderColor = '#7c3aed';
+          setTimeout(() => textarea.style.borderColor = 'var(--border)', 2000);
+        }
+      })
+      .catch(() => alert('AI note suggestion failed.'))
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4"/></svg> AI Draft';
+      });
+    }
+
     </script>
-    <style>.hidden { display: none !important; }</style>
+    <style>
+    .hidden { display: none !important; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
     @endpush
 
   </div>
@@ -490,20 +542,90 @@
     @endif
 
     {{-- Follow-ups --}}
-    @if($patient->followUps->isNotEmpty())
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">Follow-ups</div>
-      @foreach($patient->followUps as $fu)
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);">
-        <div>
-          <div style="font-size:.84rem;font-weight:500;">{{ ucfirst($fu->type) }}</div>
-          <div style="font-size:.74rem;color:var(--text-tertiary);">Due {{ \Carbon\Carbon::parse($fu->due_date)->format('d M Y') }}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="card-title" style="margin:0;">Follow-ups</div>
+          @if($patient->followUps->isNotEmpty())
+          <span style="font-size:.73rem;background:var(--bg-tertiary);color:var(--text-tertiary);padding:2px 8px;border-radius:10px;font-weight:600;">{{ $patient->followUps->count() }}</span>
+          @endif
         </div>
-        <span class="badge {{ $fu->status === 'completed' ? 'badge-green' : ($fu->status === 'pending' ? 'badge-yellow' : 'badge-gray') }}">{{ ucfirst($fu->status) }}</span>
+        <button type="button" class="btn btn-secondary btn-sm"
+          onclick="document.getElementById('add-followup-form').classList.toggle('hidden');this.textContent=this.textContent.trim()==='+ Follow-up'?'✕ Cancel':'+ Follow-up'">
+          + Follow-up
+        </button>
+      </div>
+
+      {{-- Add Follow-up Form --}}
+      <div id="add-followup-form" class="hidden" style="margin-bottom:14px;padding:14px;background:var(--bg-tertiary);border-radius:var(--radius-md);border:1px solid var(--border);">
+        <form method="POST" action="{{ route('followups.store') }}">
+          @csrf
+          <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Type</label>
+              <select name="type" class="filter-select" style="width:100%;font-size:.84rem;" required>
+                <option value="call">📞 Call</option>
+                <option value="appointment">📅 Appointment</option>
+                <option value="check_in">✅ Check-in</option>
+                <option value="email">✉️ Email</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Due Date</label>
+              <input type="date" name="due_date" required value="{{ today()->addDay()->format('Y-m-d') }}"
+                style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:var(--bg-secondary);">
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Notes</label>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="What needs to be done?"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;resize:none;background:var(--bg-secondary);outline:none;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button type="button" class="btn btn-ghost btn-sm"
+              onclick="document.getElementById('add-followup-form').classList.add('hidden');document.querySelector('[onclick*=add-followup-form]').textContent='+ Follow-up'">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary btn-sm">Save Follow-up</button>
+          </div>
+        </form>
+      </div>
+
+      @if($patient->followUps->isEmpty())
+        <p style="color:var(--text-tertiary);font-size:.83rem;text-align:center;padding:12px 0;">No follow-ups scheduled.</p>
+      @else
+      @foreach($patient->followUps as $fu)
+      @php $fuOverdue = $fu->due_date->lt(today()) && $fu->status === 'pending'; @endphp
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);">
+        <div>
+          <div style="font-size:.84rem;font-weight:500;">
+            @php $typeIcons = ['call'=>'📞','appointment'=>'📅','check_in'=>'✅','email'=>'✉️']; @endphp
+            {{ ($typeIcons[$fu->type] ?? '') . ' ' . ucfirst(str_replace('_',' ',$fu->type)) }}
+          </div>
+          <div style="font-size:.74rem;color:{{ $fuOverdue ? 'var(--danger)' : 'var(--text-tertiary)' }};">
+            {{ $fuOverdue ? '⚠️ Overdue — ' : 'Due ' }}{{ $fu->due_date->format('d M Y') }}
+          </div>
+          @if($fu->notes)
+          <div style="font-size:.74rem;color:var(--text-secondary);margin-top:2px;">{{ \Illuminate\Support\Str::limit($fu->notes, 60) }}</div>
+          @endif
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="badge {{ $fuOverdue ? 'badge-red' : ($fu->status === 'completed' ? 'badge-green' : 'badge-yellow') }}">
+            {{ $fuOverdue ? 'Overdue' : ucfirst($fu->status) }}
+          </span>
+          @if($fu->status === 'pending')
+          <form method="POST" action="{{ route('followups.complete', $fu) }}" style="display:inline;">
+            @csrf @method('PATCH')
+            <button type="submit" title="Mark done" style="background:none;border:none;cursor:pointer;color:var(--success);font-size:.8rem;padding:2px 4px;">✓</button>
+          </form>
+          @endif
+        </div>
       </div>
       @endforeach
+      @endif
     </div>
-    @endif
 
   </div>
 </div>
