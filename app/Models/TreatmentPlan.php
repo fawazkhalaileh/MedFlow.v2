@@ -53,6 +53,11 @@ class TreatmentPlan extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function notes(): MorphMany
     {
         return $this->morphMany(Note::class, 'notable');
@@ -81,5 +86,10 @@ class TreatmentPlan extends Model
     public function isComplete(): bool
     {
         return $this->completed_sessions >= $this->total_sessions;
+    }
+
+    public function scopeForBranch($query, int $branchId)
+    {
+        return $query->where('branch_id', $branchId);
     }
 }

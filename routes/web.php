@@ -12,6 +12,7 @@ use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ClinicalFlagController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\LocaleController;
@@ -163,5 +164,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:doctor,nurse,branch_manager');
 
     Route::get('/finance',      [WorkspaceController::class, 'finance'])->name('finance')
+        ->middleware('role:finance,branch_manager');
+
+    Route::post('/finance/transactions', [TransactionController::class, 'store'])
+        ->name('finance.transactions.store')
         ->middleware('role:finance,branch_manager');
 });

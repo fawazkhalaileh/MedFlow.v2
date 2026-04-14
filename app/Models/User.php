@@ -85,6 +85,11 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function receivedTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'received_by');
+    }
+
     // --- Permission helpers ---
 
     public function hasRole(string $roleName, ?int $branchId = null): bool
