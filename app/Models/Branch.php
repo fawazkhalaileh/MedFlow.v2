@@ -67,6 +67,21 @@ class Branch extends Model
         return $this->hasMany(CashRegisterSession::class);
     }
 
+    public function branchInventories(): HasMany
+    {
+        return $this->hasMany(BranchInventory::class);
+    }
+
+    public function outgoingInventoryTransfers(): HasMany
+    {
+        return $this->hasMany(BranchTransfer::class, 'source_branch_id');
+    }
+
+    public function incomingInventoryTransfers(): HasMany
+    {
+        return $this->hasMany(BranchTransfer::class, 'destination_branch_id');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

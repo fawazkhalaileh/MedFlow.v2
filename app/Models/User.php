@@ -100,6 +100,16 @@ class User extends Authenticatable
         return $this->hasMany(CashRegisterSession::class, 'closed_by');
     }
 
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class, 'performed_by');
+    }
+
+    public function inventoryTransfers(): HasMany
+    {
+        return $this->hasMany(BranchTransfer::class, 'transferred_by');
+    }
+
     // --- Permission helpers ---
 
     public function hasRole(string $roleName, ?int $branchId = null): bool
