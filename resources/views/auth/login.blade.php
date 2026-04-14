@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign In — MedFlow CRM</title>
+<title>{{ __('Sign In') }} — MedFlow CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET ────────────────────────────────────────────────── */
@@ -461,28 +461,28 @@ body {
 
   <div class="brand">
     <div class="brand-logo">Med<em>Flow</em></div>
-    <div class="brand-tag">Clinic Management Platform</div>
+    <div class="brand-tag">{{ __('Clinic Management Platform') }}</div>
   </div>
 
   <div class="hero">
     <h2 class="hero-headline">
-      Clinical care,<br><em>streamlined</em><br>for your team.
+      {{ __('Clinical care,') }}<br><em>{{ __('streamlined') }}</em><br>{{ __('for your team.') }}
     </h2>
     <p class="hero-sub">
-      Manage appointments, patient records, treatment plans, and your entire care team — all in one place.
+      {{ __('Manage appointments, patient records, treatment plans, and your entire care team — all in one place.') }}
     </p>
     <div class="stat-row">
       <div class="stat-item">
         <span class="stat-value">9+</span>
-        <span class="stat-label">Workflow stages</span>
+        <span class="stat-label">{{ __('Workflow stages') }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-value">6</span>
-        <span class="stat-label">Role types</span>
+        <span class="stat-label">{{ __('Role types') }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-value">100%</span>
-        <span class="stat-label">Branch scoped</span>
+        <span class="stat-label">{{ __('Branch scoped') }}</span>
       </div>
     </div>
   </div>
@@ -500,12 +500,12 @@ body {
     <!-- Mobile brand (shown only on small screens) -->
     <div class="mobile-brand">
       <div class="brand-logo">Med<em>Flow</em></div>
-      <div class="brand-tag">Clinic Management Platform</div>
+      <div class="brand-tag">{{ __('Clinic Management Platform') }}</div>
     </div>
 
     <div class="form-heading">
-      <h1>Welcome back</h1>
-      <p>Sign in to your workspace</p>
+      <h1>{{ __('Welcome back') }}</h1>
+      <p>{{ __('Sign in to your workspace') }}</p>
     </div>
 
     @if ($errors->any())
@@ -522,7 +522,7 @@ body {
 
       <!-- Email -->
       <div class="field">
-        <label for="email">Email address</label>
+        <label for="email">{{ __('Email address') }}</label>
         <div class="input-wrap">
           <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/>
@@ -541,7 +541,7 @@ body {
 
       <!-- Password -->
       <div class="field">
-        <label for="password">Password</label>
+        <label for="password">{{ __('Password') }}</label>
         <div class="input-wrap">
           <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -566,12 +566,12 @@ body {
       <div class="bottom-row">
         <div class="remember-wrap">
           <input type="checkbox" id="remember" name="remember">
-          <label for="remember">Keep me signed in</label>
+          <label for="remember">{{ __('Keep me signed in') }}</label>
         </div>
       </div>
 
       <button type="submit" class="login-btn">
-        Sign In
+        {{ __('Sign In') }}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
         </svg>
@@ -580,7 +580,7 @@ body {
 
     <div class="form-footer">
       <div class="form-footer-dot"></div>
-      <p>Secure access — all data is branch-scoped and role-protected</p>
+      <p>{{ __('Secure access') }} — {{ __('all data is branch-scoped and role-protected') }}</p>
     </div>
 
   </div>

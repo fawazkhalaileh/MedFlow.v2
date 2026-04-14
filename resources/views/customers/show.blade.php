@@ -14,7 +14,7 @@
       <p class="page-subtitle">
         <span style="font-family:monospace;color:var(--accent);">{{ $customer->customer_code }}</span>
         &bull; {{ $customer->branch?->name ?? 'No branch' }}
-        @if($customer->status === 'vip') &bull; <span class="badge badge-purple">VIP</span> @endif
+        @if($customer->status === 'vip') &bull; <span class="badge badge-purple">{{ __('VIP') }}</span> @endif
       </p>
     </div>
   </div>
@@ -39,7 +39,7 @@
       @else
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Date & Time</th><th>Service</th><th>Staff</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date & Time</th><th>Service</th><th>Staff</th><th>{{ __('Status') }}</th></tr></thead>
           <tbody>
             @foreach($customer->appointments as $appt)
             <tr>
@@ -82,7 +82,7 @@
     {{-- Notes --}}
     @if($customer->notes->isNotEmpty())
     <div class="card">
-      <div class="card-header"><div class="card-title">Notes</div></div>
+      <div class="card-header"><div class="card-title">{{ __('Notes') }}</div></div>
       @foreach($customer->notes as $note)
       <div class="activity-item">
         <div class="activity-dot" style="background:{{ $note->is_flagged ? 'var(--danger)' : 'var(--accent)' }}"></div>
@@ -103,10 +103,10 @@
 
     {{-- Personal Info --}}
     <div class="card">
-      <div class="card-title" style="margin-bottom:14px;">Personal Information</div>
+      <div class="card-title" style="margin-bottom:14px;">{{ __('Personal Information') }}</div>
       <div style="display:flex;flex-direction:column;gap:9px;font-size:.84rem;">
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Phone</span>
+          <span style="color:var(--text-secondary);">{{ __('Phone') }}</span>
           <span style="font-weight:500;">{{ $customer->phone }}</span>
         </div>
         @if($customer->email)
@@ -116,7 +116,7 @@
         </div>
         @endif
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Gender</span>
+          <span style="color:var(--text-secondary);">{{ __('Gender') }}</span>
           <span>{{ ucfirst($customer->gender ?? '--') }}</span>
         </div>
         @if($customer->date_of_birth)

@@ -31,7 +31,7 @@
   @if($appt->treatmentPlan)
   <div style="margin-bottom:8px;">
     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-tertiary);margin-bottom:3px;">
-      <span>Session Progress</span>
+      <span>{{ __('Service') }}</span>
       <span>{{ $appt->treatmentPlan->completed_sessions }}/{{ $appt->treatmentPlan->total_sessions }}</span>
     </div>
     <div style="height:4px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden;">

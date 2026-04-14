@@ -13,7 +13,7 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">My Treatment Queue</h1>
+    <h1 class="page-title">{{ __('My Queue') }}</h1>
     <p class="page-subtitle">{{ now()->format('l, d F Y') }}</p>
   </div>
   <div class="header-actions">

@@ -47,7 +47,7 @@
 
   <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;text-align:center;">
     <div style="font-size:1.6rem;font-weight:700;color:var(--success);">{{ $stats['completed'] }}</div>
-    <div style="font-size:.73rem;color:var(--text-secondary);margin-top:2px;">Completed</div>
+    <div style="font-size:.73rem;color:var(--text-secondary);margin-top:2px;">{{ __('Completed') }}</div>
   </div>
 
   <div style="background:var(--bg-secondary);border:1px solid {{ $stats['pending_confirm'] > 0 ? '#fde68a' : 'var(--border)' }};border-radius:var(--radius-md);padding:12px 14px;text-align:center;background:{{ $stats['pending_confirm'] > 0 ? 'var(--warning-light)' : 'var(--bg-secondary)' }};">
@@ -139,7 +139,7 @@
               @if($isArrivalStatus)
               <form method="POST" action="{{ route('appointments.checkin', $appt) }}">
                 @csrf @method('PATCH')
-                <button type="submit" class="btn btn-primary btn-sm" style="font-size:.72rem;white-space:nowrap;">Check In</button>
+                <button type="submit" class="btn btn-primary btn-sm" style="font-size:.72rem;white-space:nowrap;">{{ __('Check In') }}</button>
               </form>
               @elseif($appt->status === 'checked_in' || $appt->status === 'intake_complete')
               <form method="POST" action="{{ route('appointments.status', $appt) }}">
@@ -180,7 +180,7 @@
         <form method="POST" action="{{ route('appointments.status', $appt) }}">
           @csrf @method('PATCH')
           <input type="hidden" name="status" value="confirmed">
-          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:.7rem;">Confirm</button>
+          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:.7rem;">{{ __('Confirm') }}</button>
         </form>
       </div>
       @endforeach
@@ -208,7 +208,7 @@
 
     {{-- QUICK ACTIONS --}}
     <div class="card" style="background:var(--bg-tertiary);border:none;">
-      <div class="card-title" style="margin-bottom:10px;font-size:.85rem;">Quick Actions</div>
+      <div class="card-title" style="margin-bottom:10px;font-size:.85rem;">{{ __('Quick Actions') }}</div>
       <div style="display:flex;flex-direction:column;gap:6px;">
         <a href="{{ route('appointments.create') }}" class="btn btn-primary btn-sm" style="justify-content:flex-start;gap:8px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>

@@ -29,9 +29,9 @@
   </select>
   <select name="status" class="filter-select" onchange="this.form.submit()">
     <option value="">All Statuses</option>
-    <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
-    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-    <option value="vip"      {{ request('status') === 'vip'      ? 'selected' : '' }}>VIP</option>
+    <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>{{ __('Active') }}</option>
+    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+    <option value="vip"      {{ request('status') === 'vip'      ? 'selected' : '' }}>{{ __('VIP') }}</option>
   </select>
   @if(request()->anyFilled(['q','branch','status']))
   <a href="{{ route('customers.index') }}" class="btn btn-ghost btn-sm">Clear</a>
@@ -47,9 +47,9 @@
         <tr>
           <th>Customer</th>
           <th>Code</th>
-          <th>Phone</th>
+          <th>{{ __('Phone') }}</th>
           <th>Branch</th>
-          <th>Gender</th>
+          <th>{{ __('Gender') }}</th>
           <th>Status</th>
           <th>Last Visit</th>
           <th>Registered</th>
@@ -75,9 +75,9 @@
           <td style="color:var(--text-secondary);font-size:.83rem;">{{ ucfirst($c->gender ?? '--') }}</td>
           <td>
             @if($c->status === 'active')
-              <span class="badge badge-green">Active</span>
+              <span class="badge badge-green">{{ __('Active') }}</span>
             @elseif($c->status === 'vip')
-              <span class="badge badge-purple">VIP</span>
+              <span class="badge badge-purple">{{ __('VIP') }}</span>
             @else
               <span class="badge badge-gray">{{ ucfirst($c->status) }}</span>
             @endif
@@ -105,7 +105,7 @@
   @if($customers->hasPages())
   <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:.82rem;color:var(--text-secondary);">
-      Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }}
+      {{ __('Showing') }} {{ $customers->firstItem() }}–{{ $customers->lastItem() }} {{ __('of') }} {{ $customers->total() }}
     </div>
     <div style="display:flex;gap:6px;">
       @if($customers->onFirstPage())

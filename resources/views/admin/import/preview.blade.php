@@ -113,7 +113,7 @@
 
   {{-- SUBMIT --}}
   <div style="display:flex;gap:10px;justify-content:flex-end;padding-bottom:24px;">
-    <a href="{{ route('admin.import.index') }}" class="btn btn-ghost">Cancel</a>
+    <a href="{{ route('admin.import.index') }}" class="btn btn-ghost">{{ __('Cancel') }}</a>
     <button type="submit" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Validate Import

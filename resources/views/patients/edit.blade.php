@@ -6,7 +6,7 @@
 @section('content')
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Edit Patient</h1>
+    <h1 class="page-title">{{ __('Edit Patient') }}</h1>
     <p class="page-subtitle">
       <span style="font-family:monospace;color:var(--accent);">{{ $patient->patient_code }}</span>
       &bull; {{ $patient->full_name }}
@@ -35,7 +35,7 @@
 {{-- PERSONAL INFO --}}
 <div class="card animate-in" style="animation-delay:.05s;margin-bottom:18px;">
   <div class="card-header">
-    <div class="card-title">Personal Information</div>
+    <div class="card-title">{{ __('Personal Information') }}</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-top:4px;">
 
@@ -65,12 +65,12 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Date of Birth</label>
+      <label class="form-label">{{ __('Date of Birth') }}</label>
       <input type="date" name="date_of_birth" class="form-input" value="{{ old('date_of_birth', $patient->date_of_birth?->format('Y-m-d')) }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Gender</label>
+      <label class="form-label">{{ __('Gender') }}</label>
       <select name="gender" class="form-input">
         <option value="">-- Select --</option>
         @foreach(['male','female','other'] as $g)
@@ -90,12 +90,12 @@
     </div>
 
     <div class="form-group" style="grid-column:span 2;">
-      <label class="form-label">Address</label>
+      <label class="form-label">{{ __('Address') }}</label>
       <input type="text" name="address" class="form-input" value="{{ old('address', $patient->address) }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">City</label>
+      <label class="form-label">{{ __('City') }}</label>
       <input type="text" name="city" class="form-input" value="{{ old('city', $patient->city) }}">
     </div>
 
@@ -133,7 +133,7 @@
     <div class="form-group">
       <label class="form-label">Branch <span style="color:var(--danger)">*</span></label>
       <select name="branch_id" class="form-input" required>
-        <option value="">-- Select Branch --</option>
+        <option value="">{{ __('-- Select Branch --') }}</option>
         @foreach($branches as $b)
         <option value="{{ $b->id }}" {{ old('branch_id', $patient->branch_id) == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
         @endforeach
@@ -313,7 +313,7 @@
 
 {{-- SUBMIT --}}
 <div class="animate-in" style="animation-delay:.16s;display:flex;justify-content:flex-end;gap:10px;margin-bottom:32px;">
-  <a href="{{ route('patients.show', $patient) }}" class="btn btn-secondary">Cancel</a>
+  <a href="{{ route('patients.show', $patient) }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
   <button type="submit" class="btn btn-primary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     Save Changes

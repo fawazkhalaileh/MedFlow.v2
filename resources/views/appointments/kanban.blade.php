@@ -13,8 +13,8 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Appointment Kanban</h1>
-    <p class="page-subtitle">{{ $today->format('l, d F Y') }} &bull; Live status board</p>
+    <h1 class="page-title">{{ __('Appointment Kanban') }}</h1>
+    <p class="page-subtitle">{{ $today->format('l, d F Y') }} &bull; {{ __('Live status board') }}</p>
   </div>
   <div class="header-actions">
     <span class="badge badge-blue"   style="padding:5px 12px;">{{ $stats['total'] }} total</span>
@@ -92,7 +92,7 @@
       {{-- Contraindication alert --}}
       @if($contraFlag)
       <div style="background:var(--danger-light);color:var(--danger);font-size:.68rem;font-weight:600;padding:3px 6px;border-radius:4px;margin-bottom:6px;">
-        Contraindication flagged
+        {{ __('Contraindication flagged') }}
       </div>
       @endif
 
@@ -122,7 +122,7 @@
         {{ $appt->assignedStaff->first_name }} {{ $appt->assignedStaff->last_name }}
       </div>
       @else
-      <div style="font-size:.7rem;color:var(--text-tertiary);margin-bottom:5px;">No staff assigned</div>
+      <div style="font-size:.7rem;color:var(--text-tertiary);margin-bottom:5px;">{{ __('No staff assigned') }}</div>
       @endif
 
       {{-- Treatment plan progress --}}
@@ -137,7 +137,7 @@
 
       {{-- Quick actions --}}
       <div style="display:flex;gap:5px;margin-top:6px;">
-        <a href="{{ route('patients.show', $appt->patient_id) }}" class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:3px 7px;flex:1;text-align:center;">Profile</a>
+        <a href="{{ route('patients.show', $appt->patient_id) }}" class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:3px 7px;flex:1;text-align:center;">{{ __('Profile') }}</a>
         @if($nextStatus)
         <form method="POST" action="{{ route('appointments.status', $appt) }}" style="flex:1;">
           @csrf @method('PATCH')

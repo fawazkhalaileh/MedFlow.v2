@@ -31,7 +31,7 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Patient</th><th>Service</th><th>Assigned Tech</th><th>Waiting Since</th><th>Action</th></tr>
+        <tr><th>{{ __('Patient') }}</th><th>Service</th><th>Assigned Tech</th><th>Waiting Since</th><th>Action</th></tr>
       </thead>
       <tbody>
         @foreach($escalations as $appt)
@@ -81,7 +81,7 @@
     @else
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Time</th><th>Patient</th><th>Service</th><th>Status</th></tr></thead>
+        <thead><tr><th>Time</th><th>{{ __('Patient') }}</th><th>Service</th><th>{{ __('Status') }}</th></tr></thead>
         <tbody>
           @foreach($todayConsultations as $appt)
           @php

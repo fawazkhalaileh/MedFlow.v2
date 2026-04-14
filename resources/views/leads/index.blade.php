@@ -101,7 +101,7 @@
               @endif
               {{-- Edit --}}
               <button type="button" class="btn btn-ghost btn-sm" style="font-size:.71rem;padding:2px 7px;"
-                onclick="openLeadEdit({{ $lead->id }})">Edit</button>
+                onclick="openLeadEdit({{ $lead->id }})">{{ __('Edit') }}</button>
               {{-- Delete --}}
               <form method="POST" action="{{ route('leads.destroy', $lead) }}" onsubmit="return confirm('Delete this lead?')" style="display:inline;">
                 @csrf @method('DELETE')
@@ -118,17 +118,17 @@
               @csrf @method('PUT')
               <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
                 <div>
-                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">First Name</label>
+                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('First Name') }}</label>
                   <input type="text" name="first_name" value="{{ $lead->first_name }}" required maxlength="80"
                     style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:var(--bg-secondary);">
                 </div>
                 <div>
-                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Last Name</label>
+                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Last Name') }}</label>
                   <input type="text" name="last_name" value="{{ $lead->last_name }}" maxlength="80"
                     style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:var(--bg-secondary);">
                 </div>
                 <div>
-                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Phone</label>
+                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Phone') }}</label>
                   <input type="text" name="phone" value="{{ $lead->phone }}" required maxlength="30"
                     style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:var(--bg-secondary);">
                 </div>
@@ -145,7 +145,7 @@
                 <div>
                   <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Source</label>
                   <select name="source" class="filter-select" style="width:100%;">
-                    <option value="phone"    {{ $lead->source === 'phone'    ? 'selected' : '' }}>Phone</option>
+                    <option value="phone"    {{ $lead->source === 'phone'    ? 'selected' : '' }}>{{ __('Phone') }}</option>
                     <option value="walk_in"  {{ $lead->source === 'walk_in'  ? 'selected' : '' }}>Walk-in</option>
                     <option value="social"   {{ $lead->source === 'social'   ? 'selected' : '' }}>Social</option>
                     <option value="online"   {{ $lead->source === 'online'   ? 'selected' : '' }}>Online</option>
@@ -173,13 +173,13 @@
                 </div>
               </div>
               <div style="margin-bottom:10px;">
-                <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Notes</label>
+                <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Notes') }}</label>
                 <textarea name="notes" rows="2" maxlength="1000"
                   style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;resize:none;background:var(--bg-secondary);">{{ $lead->notes }}</textarea>
               </div>
               <div style="display:flex;gap:8px;">
                 <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="closeLeadEdit({{ $lead->id }})">Cancel</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeLeadEdit({{ $lead->id }})">{{ __('Cancel') }}</button>
               </div>
             </form>
           </td>
@@ -189,8 +189,8 @@
           <td colspan="8">
             <div class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              <h3>No leads found</h3>
-              <p>No leads match your current filters. Click <strong>New Lead</strong> to add one.</p>
+              <h3>{{ __('No leads found') }}</h3>
+              <p>No leads match your current filters. Click <strong>{{ __('New Lead') }}</strong> to add one.</p>
             </div>
           </td>
         </tr>
@@ -202,7 +202,7 @@
   @if($leads->hasPages())
   <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:.82rem;color:var(--text-secondary);">
-      Showing {{ $leads->firstItem() }}–{{ $leads->lastItem() }} of {{ $leads->total() }}
+      {{ __('Showing') }} {{ $leads->firstItem() }}–{{ $leads->lastItem() }} {{ __('of') }} {{ $leads->total() }}
     </div>
     <div style="display:flex;gap:6px;">
       @if($leads->onFirstPage())
@@ -224,7 +224,7 @@
 <div id="create-lead-modal" class="hidden" style="position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);">
   <div style="background:var(--bg-secondary);border-radius:var(--radius-lg);width:580px;max-width:95vw;box-shadow:var(--shadow-xl);padding:24px;position:relative;max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <h3 style="font-size:1.05rem;font-weight:600;">New Lead</h3>
+      <h3 style="font-size:1.05rem;font-weight:600;">{{ __('New Lead') }}</h3>
       <button onclick="document.getElementById('create-lead-modal').classList.add('hidden')" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:1.2rem;">✕</button>
     </div>
     <form method="POST" action="{{ route('leads.store') }}">
@@ -237,7 +237,7 @@
             onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
         <div>
-          <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">Last Name</label>
+          <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">{{ __('Last Name') }}</label>
           <input type="text" name="last_name" maxlength="80" placeholder="Last name"
             style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-family:inherit;background:var(--bg-secondary);outline:none;"
             onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
@@ -289,14 +289,14 @@
         </div>
       </div>
       <div style="margin-bottom:16px;">
-        <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">Notes</label>
+        <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">{{ __('Notes') }}</label>
         <textarea name="notes" rows="2" maxlength="1000" placeholder="Any additional details…"
           style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-family:inherit;resize:none;background:var(--bg-secondary);outline:none;"
           onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
-        <button type="button" class="btn btn-ghost" onclick="document.getElementById('create-lead-modal').classList.add('hidden')">Cancel</button>
-        <button type="submit" class="btn btn-primary">Add Lead</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('create-lead-modal').classList.add('hidden')">{{ __('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ __('Add Lead') }}</button>
       </div>
     </form>
   </div>

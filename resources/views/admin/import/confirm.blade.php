@@ -19,7 +19,7 @@
     <div class="kpi-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     </div>
-    <div class="kpi-label">Total Rows</div>
+    <div class="kpi-label">{{ __('Total Rows') }}</div>
     <div class="kpi-value">{{ $totalRows }}</div>
     <div class="kpi-change neutral">in your file</div>
   </div>
@@ -28,7 +28,7 @@
     <div class="kpi-icon" style="{{ $validCount > 0 ? 'color:var(--success);' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <div class="kpi-label">Valid Rows</div>
+    <div class="kpi-label">{{ __('Valid Rows') }}</div>
     <div class="kpi-value" style="{{ $validCount > 0 ? 'color:var(--success);' : '' }}">{{ $validCount }}</div>
     <div class="kpi-change up">ready to import</div>
   </div>
@@ -37,7 +37,7 @@
     <div class="kpi-icon" style="{{ $errorCount > 0 ? 'color:var(--danger);' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
     </div>
-    <div class="kpi-label">Rows with Errors</div>
+    <div class="kpi-label">{{ __('Rows with Errors') }}</div>
     <div class="kpi-value" style="{{ $errorCount > 0 ? 'color:var(--danger);' : '' }}">{{ $errorCount }}</div>
     <div class="kpi-change {{ $errorCount > 0 ? 'down' : 'neutral' }}">will be skipped</div>
   </div>
@@ -46,7 +46,7 @@
     <div class="kpi-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     </div>
-    <div class="kpi-label">Will Import</div>
+    <div class="kpi-label">{{ __('Will Import') }}</div>
     <div class="kpi-value" style="color:var(--accent);">{{ $validCount }}</div>
     <div class="kpi-change up">records</div>
   </div>
@@ -68,7 +68,7 @@
 @if(count($errors) > 0)
 <div class="card" style="padding:0;margin-bottom:20px;" class="animate-in" style="animation-delay:.08s;">
   <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-    <div class="card-title" style="color:var(--danger);">Validation Errors</div>
+    <div class="card-title" style="color:var(--danger);">{{ __('Validation Errors') }}</div>
     <span style="font-size:.75rem;color:var(--text-tertiary);">Showing first {{ min(20, count($errors)) }} of {{ count($errors) }} errors</span>
   </div>
   <div class="table-wrap">
@@ -76,9 +76,9 @@
       <thead>
         <tr>
           <th style="width:80px;">Row #</th>
-          <th style="width:150px;">Field</th>
-          <th>Issue</th>
-          <th>Raw Data</th>
+          <th style="width:150px;">{{ __('Field') }}</th>
+          <th>{{ __('Issue') }}</th>
+          <th>{{ __('Raw Data') }}</th>
         </tr>
       </thead>
       <tbody>

@@ -23,7 +23,7 @@
 <div class="filter-bar animate-in" style="animation-delay:.05s">
   <select name="status" class="filter-select" onchange="this.form.submit()">
     <option value="pending"   {{ (request('status','pending')) === 'pending'   ? 'selected' : '' }}>Pending</option>
-    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>{{ __('Completed') }}</option>
     <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
     <option value=""          {{ request('status') === ''          ? 'selected' : '' }}>All Statuses</option>
   </select>
@@ -63,7 +63,7 @@
           <th>Type</th>
           <th>Due Date</th>
           <th>Assigned To</th>
-          <th>Notes</th>
+          <th>{{ __('Notes') }}</th>
           <th>Status</th>
           <th style="width:120px;">Actions</th>
         </tr>
@@ -172,7 +172,7 @@
                   <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Status</label>
                   <select name="status" class="filter-select" style="width:100%;">
                     <option value="pending"   {{ $fu->status === 'pending'   ? 'selected' : '' }}>Pending</option>
-                    <option value="completed" {{ $fu->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="completed" {{ $fu->status === 'completed' ? 'selected' : '' }}>{{ __('Completed') }}</option>
                     <option value="cancelled" {{ $fu->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                   </select>
                 </div>
@@ -186,13 +186,13 @@
                   </select>
                 </div>
                 <div style="display:flex;gap:6px;">
-                  <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                  <button type="submit" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
                   <button type="button" class="btn btn-ghost btn-sm" onclick="closeEditModal({{ $fu->id }})">✕</button>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
                 <div>
-                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Notes</label>
+                  <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Notes') }}</label>
                   <textarea name="notes" rows="2" maxlength="1000"
                     style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;resize:none;background:var(--bg-secondary);">{{ $fu->notes }}</textarea>
                 </div>
@@ -215,7 +215,7 @@
                 <span style="font-size:.84rem;font-weight:500;color:var(--success);">✓ Mark as complete</span>
                 <input type="text" name="outcome" placeholder="Outcome / notes (optional)" maxlength="1000"
                   style="flex:1;padding:7px 10px;border:1px solid #6ee7b7;border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:#fff;">
-                <button type="submit" class="btn btn-sm" style="background:var(--success);color:#fff;border:none;">Complete</button>
+                <button type="submit" class="btn btn-sm" style="background:var(--success);color:#fff;border:none;">{{ __('Complete') }}</button>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="closeCompleteModal({{ $fu->id }})">✕</button>
               </div>
             </form>
@@ -226,7 +226,7 @@
           <td colspan="7">
             <div class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-              <h3>No follow-ups found</h3>
+              <h3>{{ __('No follow-ups found') }}</h3>
               <p>All clear! No follow-ups match your current filter.</p>
             </div>
           </td>
@@ -239,7 +239,7 @@
   @if($followups->hasPages())
   <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:.82rem;color:var(--text-secondary);">
-      Showing {{ $followups->firstItem() }}–{{ $followups->lastItem() }} of {{ $followups->total() }}
+      {{ __('Showing') }} {{ $followups->firstItem() }}–{{ $followups->lastItem() }} {{ __('of') }} {{ $followups->total() }}
     </div>
     <div style="display:flex;gap:6px;">
       @if($followups->onFirstPage())
@@ -304,13 +304,13 @@
         </div>
       </div>
       <div style="margin-bottom:16px;">
-        <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">Notes</label>
+        <label style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:5px;">{{ __('Notes') }}</label>
         <textarea name="notes" rows="2" maxlength="1000" placeholder="What needs to be done?"
           style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-family:inherit;resize:none;background:var(--bg-secondary);outline:none;"
           onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
-        <button type="button" class="btn btn-ghost" onclick="document.getElementById('create-followup-modal').classList.add('hidden')">Cancel</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('create-followup-modal').classList.add('hidden')">{{ __('Cancel') }}</button>
         <button type="submit" class="btn btn-primary">Create Follow-up</button>
       </div>
     </form>

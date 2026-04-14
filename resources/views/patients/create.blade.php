@@ -6,18 +6,18 @@
 @section('content')
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Register New Patient</h1>
-    <p class="page-subtitle">Fill in patient details to create their profile</p>
+    <h1 class="page-title">{{ __('Register New Patient') }}</h1>
+    <p class="page-subtitle">{{ __('Fill in patient details to create their profile') }}</p>
   </div>
   <a href="{{ route('patients.index') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to Patients
+    {{ __('Back to Patients') }}
   </a>
 </div>
 
 @if($errors->any())
 <div class="alert alert-danger animate-in" style="background:var(--danger-light);border:1px solid #fca5a5;border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;color:#991b1b;">
-  <strong>Please fix the following errors:</strong>
+  <strong>{{ __('Please fix the following errors:') }}</strong>
   <ul style="margin-top:6px;padding-left:18px;">
     @foreach($errors->all() as $error)
     <li style="font-size:.84rem;">{{ $error }}</li>
@@ -32,67 +32,67 @@
 {{-- PERSONAL INFO --}}
 <div class="card animate-in" style="animation-delay:.05s;margin-bottom:18px;">
   <div class="card-header">
-    <div class="card-title">Personal Information</div>
+    <div class="card-title">{{ __('Personal Information') }}</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-top:4px;">
 
     <div class="form-group">
-      <label class="form-label">First Name <span style="color:var(--danger)">*</span></label>
+      <label class="form-label">{{ __('First Name') }} <span style="color:var(--danger)">*</span></label>
       <input type="text" name="first_name" class="form-input" value="{{ old('first_name') }}" required>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Last Name <span style="color:var(--danger)">*</span></label>
+      <label class="form-label">{{ __('Last Name') }} <span style="color:var(--danger)">*</span></label>
       <input type="text" name="last_name" class="form-input" value="{{ old('last_name') }}" required>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Phone <span style="color:var(--danger)">*</span></label>
+      <label class="form-label">{{ __('Phone') }} <span style="color:var(--danger)">*</span></label>
       <input type="text" name="phone" class="form-input" value="{{ old('phone') }}" required>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Alternate Phone</label>
+      <label class="form-label">{{ __('Alternate Phone') }}</label>
       <input type="text" name="phone_alt" class="form-input" value="{{ old('phone_alt') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Email</label>
+      <label class="form-label">{{ __('Email') }}</label>
       <input type="email" name="email" class="form-input" value="{{ old('email') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Date of Birth</label>
+      <label class="form-label">{{ __('Date of Birth') }}</label>
       <input type="date" name="date_of_birth" class="form-input" value="{{ old('date_of_birth') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Gender</label>
+      <label class="form-label">{{ __('Gender') }}</label>
       <select name="gender" class="form-input">
-        <option value="">-- Select --</option>
-        <option value="male"   {{ old('gender') === 'male'   ? 'selected' : '' }}>Male</option>
-        <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
-        <option value="other"  {{ old('gender') === 'other'  ? 'selected' : '' }}>Other</option>
+        <option value="">{{ __('-- Select --') }}</option>
+        <option value="male"   {{ old('gender') === 'male'   ? 'selected' : '' }}>{{ __('Male') }}</option>
+        <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>{{ __('Female') }}</option>
+        <option value="other"  {{ old('gender') === 'other'  ? 'selected' : '' }}>{{ __('Other') }}</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Nationality</label>
+      <label class="form-label">{{ __('Nationality') }}</label>
       <input type="text" name="nationality" class="form-input" value="{{ old('nationality') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">ID / Passport Number</label>
+      <label class="form-label">{{ __('ID / Passport Number') }}</label>
       <input type="text" name="id_number" class="form-input" value="{{ old('id_number') }}">
     </div>
 
     <div class="form-group" style="grid-column:span 2;">
-      <label class="form-label">Address</label>
+      <label class="form-label">{{ __('Address') }}</label>
       <input type="text" name="address" class="form-input" value="{{ old('address') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">City</label>
+      <label class="form-label">{{ __('City') }}</label>
       <input type="text" name="city" class="form-input" value="{{ old('city') }}">
     </div>
 
@@ -102,20 +102,20 @@
 {{-- EMERGENCY CONTACT --}}
 <div class="card animate-in" style="animation-delay:.08s;margin-bottom:18px;">
   <div class="card-header">
-    <div class="card-title">Emergency Contact</div>
-    <span style="font-size:.78rem;color:var(--text-tertiary);">Optional</span>
+    <div class="card-title">{{ __('Emergency Contact') }}</div>
+    <span style="font-size:.78rem;color:var(--text-tertiary);">{{ __('Optional') }}</span>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-top:4px;">
     <div class="form-group">
-      <label class="form-label">Contact Name</label>
+      <label class="form-label">{{ __('Contact Name') }}</label>
       <input type="text" name="emergency_contact_name" class="form-input" value="{{ old('emergency_contact_name') }}">
     </div>
     <div class="form-group">
-      <label class="form-label">Contact Phone</label>
+      <label class="form-label">{{ __('Contact Phone') }}</label>
       <input type="text" name="emergency_contact_phone" class="form-input" value="{{ old('emergency_contact_phone') }}">
     </div>
     <div class="form-group">
-      <label class="form-label">Relationship</label>
+      <label class="form-label">{{ __('Relationship') }}</label>
       <input type="text" name="emergency_contact_relation" class="form-input" placeholder="e.g. Spouse, Parent" value="{{ old('emergency_contact_relation') }}">
     </div>
   </div>
@@ -131,7 +131,7 @@
     <div class="form-group">
       <label class="form-label">Branch <span style="color:var(--danger)">*</span></label>
       <select name="branch_id" class="form-input" required>
-        <option value="">-- Select Branch --</option>
+        <option value="">{{ __('-- Select Branch --') }}</option>
         @foreach($branches as $b)
         <option value="{{ $b->id }}" {{ old('branch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
         @endforeach
@@ -153,9 +153,9 @@
     <div class="form-group">
       <label class="form-label">Patient Status <span style="color:var(--danger)">*</span></label>
       <select name="status" class="form-input" required>
-        <option value="active"      {{ old('status','active') === 'active'      ? 'selected' : '' }}>Active</option>
-        <option value="inactive"    {{ old('status') === 'inactive'    ? 'selected' : '' }}>Inactive</option>
-        <option value="vip"         {{ old('status') === 'vip'         ? 'selected' : '' }}>VIP</option>
+        <option value="active"      {{ old('status','active') === 'active'      ? 'selected' : '' }}>{{ __('Active') }}</option>
+        <option value="inactive"    {{ old('status') === 'inactive'    ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+        <option value="vip"         {{ old('status') === 'vip'         ? 'selected' : '' }}>{{ __('VIP') }}</option>
         <option value="blacklisted" {{ old('status') === 'blacklisted' ? 'selected' : '' }}>Blacklisted</option>
       </select>
     </div>
@@ -289,7 +289,7 @@
 
 {{-- SUBMIT --}}
 <div class="animate-in" style="animation-delay:.14s;display:flex;justify-content:flex-end;gap:10px;margin-bottom:32px;">
-  <a href="{{ route('patients.index') }}" class="btn btn-secondary">Cancel</a>
+  <a href="{{ route('patients.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
   <button type="submit" class="btn btn-primary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     Register Patient

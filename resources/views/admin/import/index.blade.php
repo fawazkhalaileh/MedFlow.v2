@@ -7,7 +7,7 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Data Import</h1>
+    <h1 class="page-title">{{ __('Data Import') }}</h1>
     <p class="page-subtitle">Import data from your old system into MedFlow CRM</p>
   </div>
 </div>
@@ -109,7 +109,7 @@
 {{-- RECENT IMPORTS TABLE --}}
 <div class="card animate-in" style="animation-delay:.08s;padding:0;">
   <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-    <div class="card-title">Recent Imports</div>
+    <div class="card-title">{{ __('Import Logs') }}</div>
     <span style="font-size:.75rem;color:var(--text-tertiary);">Last 20 imports</span>
   </div>
 

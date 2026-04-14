@@ -22,7 +22,7 @@
     {{-- Personal Info --}}
     <div class="card" style="margin-bottom:18px;">
       <div class="form-section">
-        <div class="form-section-title">Personal Information</div>
+        <div class="form-section-title">{{ __('Personal Information') }}</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">First Name <span class="required">*</span></label>
@@ -30,13 +30,13 @@
             @error('first_name')<div class="form-error">{{ $message }}</div>@enderror
           </div>
           <div class="form-group">
-            <label class="form-label">Last Name</label>
+            <label class="form-label">{{ __('Last Name') }}</label>
             <input type="text" name="last_name" class="form-input" value="{{ old('last_name') }}" placeholder="Al Mansouri">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Gender</label>
+            <label class="form-label">{{ __('Gender') }}</label>
             <select name="gender" class="form-select">
               <option value="">-- Select --</option>
               <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
@@ -45,14 +45,14 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Date of Birth</label>
+            <label class="form-label">{{ __('Date of Birth') }}</label>
             <input type="date" name="date_of_birth" class="form-input" value="{{ old('date_of_birth') }}">
           </div>
         </div>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">Contact Information</div>
+        <div class="form-section-title">{{ __('Contact Information') }}</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Email Address <span class="required">*</span></label>
@@ -60,7 +60,7 @@
             @error('email')<div class="form-error">{{ $message }}</div>@enderror
           </div>
           <div class="form-group">
-            <label class="form-label">Phone</label>
+            <label class="form-label">{{ __('Phone') }}</label>
             <input type="text" name="phone" class="form-input" value="{{ old('phone') }}" placeholder="+971 50 XXX XXXX">
           </div>
         </div>
@@ -81,7 +81,7 @@
         <div class="form-section-title">Employment Details</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Employee Type <span class="required">*</span></label>
+            <label class="form-label">{{ __('Employee Type') }} <span class="required">*</span></label>
             <select name="employee_type" class="form-select {{ $errors->has('employee_type') ? 'error' : '' }}" required>
               <option value="">-- Select type --</option>
               @foreach($types as $t)
@@ -91,10 +91,10 @@
             @error('employee_type')<div class="form-error">{{ $message }}</div>@enderror
           </div>
           <div class="form-group">
-            <label class="form-label">Employment Status</label>
+            <label class="form-label">{{ __('Employment Status') }}</label>
             <select name="employment_status" class="form-select">
-              <option value="active"   {{ old('employment_status','active') === 'active'   ? 'selected' : '' }}>Active</option>
-              <option value="inactive" {{ old('employment_status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+              <option value="active"   {{ old('employment_status','active') === 'active'   ? 'selected' : '' }}>{{ __('Active') }}</option>
+              <option value="inactive" {{ old('employment_status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
               <option value="on_leave" {{ old('employment_status') === 'on_leave' ? 'selected' : '' }}>On Leave</option>
             </select>
           </div>
@@ -127,7 +127,7 @@
       </div>
 
       <div class="form-section" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
-        <div class="form-section-title">Notes</div>
+        <div class="form-section-title">{{ __('Notes') }}</div>
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">Internal Notes</label>
           <textarea name="employee_notes" class="form-textarea" placeholder="Any internal notes about this employee...">{{ old('employee_notes') }}</textarea>
@@ -140,7 +140,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Create Employee
       </button>
-      <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">Cancel</a>
+      <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
     </div>
   </form>
 </div>

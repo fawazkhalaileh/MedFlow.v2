@@ -90,15 +90,15 @@
   <div class="header-actions">
     <a href="{{ route('appointments.index') }}" class="btn btn-secondary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      View Schedule
+      {{ __('View Schedule') }}
     </a>
   </div>
 </div>
 
 {{-- Tab bar --}}
 <div class="dash-tabs animate-in" style="animation-delay:.03s">
-  <div class="dash-tab active" data-tab="overview">📊 Overview</div>
-  <div class="dash-tab" data-tab="revenue">💰 Revenue &amp; Reports</div>
+  <div class="dash-tab active" data-tab="overview">📊 {{ __('Overview') }}</div>
+  <div class="dash-tab" data-tab="revenue">💰 {{ __('Revenue & Reports') }}</div>
 </div>
 
 {{-- ═══════════════════════════════════════════════════════════
@@ -112,36 +112,36 @@
       <div class="kpi-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
-      <div class="kpi-label">Total Patients</div>
+      <div class="kpi-label">{{ __('Total Patients') }}</div>
       <div class="kpi-value">{{ number_format($kpi['total_patients']) }}</div>
-      <div class="kpi-change up">{{ number_format($kpi['active_patients']) }} active</div>
+      <div class="kpi-change up">{{ number_format($kpi['active_patients']) }} {{ __('active') }}</div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div>
-      <div class="kpi-label">Today's Appointments</div>
+      <div class="kpi-label">{{ __("Today's Appointments") }}</div>
       <div class="kpi-value">{{ $kpi['today_appointments'] }}</div>
-      <div class="kpi-change {{ $kpi['today_completed'] > 0 ? 'up' : 'neutral' }}">{{ $kpi['today_completed'] }} completed</div>
+      <div class="kpi-change {{ $kpi['today_completed'] > 0 ? 'up' : 'neutral' }}">{{ $kpi['today_completed'] }} {{ __('completed') }}</div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
-      <div class="kpi-label">Active Plans</div>
+      <div class="kpi-label">{{ __('Active Plans') }}</div>
       <div class="kpi-value">{{ number_format($kpi['active_plans']) }}</div>
-      <div class="kpi-change neutral">treatment plans</div>
+      <div class="kpi-change neutral">{{ __('treatment plans') }}</div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
       </div>
-      <div class="kpi-label">Pending Follow-ups</div>
+      <div class="kpi-label">{{ __('Pending Follow-ups') }}</div>
       <div class="kpi-value">{{ number_format($kpi['pending_followups']) }}</div>
-      <div class="kpi-change {{ $kpi['open_leads'] > 0 ? 'neutral' : 'up' }}">{{ number_format($kpi['open_leads']) }} open leads</div>
+      <div class="kpi-change {{ $kpi['open_leads'] > 0 ? 'neutral' : 'up' }}">{{ number_format($kpi['open_leads']) }} {{ __('open leads') }}</div>
     </div>
   </div>
 
@@ -152,22 +152,22 @@
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Today's Appointments</div>
+          <div class="card-title">{{ __("Today's Appointments") }}</div>
           <div class="card-subtitle">{{ now()->format('d M Y') }}</div>
         </div>
-        <a href="{{ route('appointments.index') }}" class="btn btn-secondary btn-sm">View all</a>
+        <a href="{{ route('appointments.index') }}" class="btn btn-secondary btn-sm">{{ __('View all') }}</a>
       </div>
       @if($todayAppointments->isEmpty())
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <h3>No appointments today</h3>
-          <p>Enjoy the quiet day!</p>
+          <h3>{{ __('No appointments today') }}</h3>
+          <p>{{ __('Enjoy the quiet day!') }}</p>
         </div>
       @else
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Time</th><th>Patient</th><th>Service</th><th>Staff</th><th>Status</th></tr>
+              <tr><th>{{ __('Time') }}</th><th>{{ __('Patient') }}</th><th>{{ __('Service') }}</th><th>{{ __('Staff') }}</th><th>{{ __('Status') }}</th></tr>
             </thead>
             <tbody>
               @foreach($todayAppointments as $appt)
@@ -197,8 +197,8 @@
       {{-- Branches --}}
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Branches</div>
-          @if(Auth::user()->isSuperAdmin())<a href="{{ route('admin.branches.index') }}" class="btn btn-ghost btn-sm">Manage</a>@endif
+          <div class="card-title">{{ __('Branches') }}</div>
+          @if(Auth::user()->isSuperAdmin())<a href="{{ route('admin.branches.index') }}" class="btn btn-ghost btn-sm">{{ __('Manage') }}</a>@endif
         </div>
         @forelse($branches as $branch)
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);">
@@ -215,15 +215,15 @@
           </div>
         </div>
         @empty
-        <p style="color:var(--text-tertiary);font-size:.84rem;padding:10px 0;">No branches configured</p>
+        <p style="color:var(--text-tertiary);font-size:.84rem;padding:10px 0;">{{ __('No branches configured') }}</p>
         @endforelse
       </div>
 
       {{-- Pending Follow-ups --}}
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Pending Follow-ups</div>
-          <a href="{{ route('followups.index') }}" class="btn btn-ghost btn-sm">View all</a>
+          <div class="card-title">{{ __('Pending Follow-ups') }}</div>
+          <a href="{{ route('followups.index') }}" class="btn btn-ghost btn-sm">{{ __('View all') }}</a>
         </div>
         @forelse($pendingFollowUps as $fu)
         <div class="activity-item">
@@ -234,7 +234,7 @@
           </div>
         </div>
         @empty
-        <p style="color:var(--text-tertiary);font-size:.84rem;padding:10px 0;">No pending follow-ups 🎉</p>
+        <p style="color:var(--text-tertiary);font-size:.84rem;padding:10px 0;">{{ __('No pending follow-ups') }} 🎉</p>
         @endforelse
       </div>
 
@@ -245,15 +245,15 @@
   <div class="card animate-in" style="margin-top:18px;animation-delay:.15s">
     <div class="card-header">
       <div>
-        <div class="card-title">Recent Patients</div>
-        <div class="card-subtitle">Latest registrations</div>
+        <div class="card-title">{{ __('Recent Patients') }}</div>
+        <div class="card-subtitle">{{ __('Latest registrations') }}</div>
       </div>
-      <a href="{{ route('patients.index') }}" class="btn btn-secondary btn-sm">View all</a>
+      <a href="{{ route('patients.index') }}" class="btn btn-secondary btn-sm">{{ __('View all') }}</a>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Patient</th><th>Code</th><th>Phone</th><th>Branch</th><th>Status</th><th>Registered</th></tr>
+          <tr><th>{{ __('Patient') }}</th><th>{{ __('Code') }}</th><th>{{ __('Phone') }}</th><th>{{ __('Branch') }}</th><th>{{ __('Status') }}</th><th>{{ __('Registered') }}</th></tr>
         </thead>
         <tbody>
           @foreach($recentPatients as $c)
@@ -294,9 +294,9 @@
 
     {{-- Collected this month --}}
     <div class="rev-card green">
-      <div class="rev-label">Collected This Month</div>
+      <div class="rev-label">{{ __('Collected This Month') }}</div>
       <div class="rev-value">{{ number_format($revenue['collected_this_month'], 0) }} <span style="font-size:.9rem;font-weight:500;color:var(--text-tertiary);">SAR</span></div>
-      <div class="rev-sub">vs {{ number_format($revenue['collected_last_month'], 0) }} SAR last month</div>
+      <div class="rev-sub">{{ __('vs') }} {{ number_format($revenue['collected_last_month'], 0) }} SAR {{ __('last month') }}</div>
       @if($revenue['mom_change'] !== null)
         <span class="rev-badge {{ $revenue['mom_change'] >= 0 ? 'up' : 'down' }}">
           {{ $revenue['mom_change'] >= 0 ? '↑' : '↓' }} {{ abs($revenue['mom_change']) }}% MoM
@@ -306,23 +306,23 @@
 
     {{-- Booked this month --}}
     <div class="rev-card blue">
-      <div class="rev-label">Booked This Month</div>
+      <div class="rev-label">{{ __('Booked This Month') }}</div>
       <div class="rev-value">{{ number_format($revenue['booked_this_month'], 0) }} <span style="font-size:.9rem;font-weight:500;color:var(--text-tertiary);">SAR</span></div>
-      <div class="rev-sub">Total treatment plan value</div>
+      <div class="rev-sub">{{ __('Total treatment plan value') }}</div>
       @php $collRate = $revenue['booked_this_month'] > 0 ? round($revenue['collected_this_month'] / $revenue['booked_this_month'] * 100, 1) : 0; @endphp
       <span class="rev-badge flat">{{ $collRate }}% collected</span>
     </div>
 
     {{-- Outstanding --}}
     <div class="rev-card amber">
-      <div class="rev-label">Outstanding Balance</div>
+      <div class="rev-label">{{ __('Outstanding Balance') }}</div>
       <div class="rev-value">{{ number_format($revenue['outstanding'], 0) }} <span style="font-size:.9rem;font-weight:500;color:var(--text-tertiary);">SAR</span></div>
-      <div class="rev-sub">Unpaid on active plans</div>
+      <div class="rev-sub">{{ __('Unpaid on active plans') }}</div>
     </div>
 
     {{-- Collection rate all time --}}
     <div class="rev-card purple">
-      <div class="rev-label">Collection Rate (All Time)</div>
+      <div class="rev-label">{{ __('Collection Rate (All Time)') }}</div>
       <div class="rev-value">{{ $revenue['collection_rate'] }}<span style="font-size:1rem;">%</span></div>
       <div class="rev-sub">{{ number_format($revenue['total_all_time'], 0) }} / {{ number_format($revenue['total_booked'], 0) }} SAR</div>
     </div>
@@ -333,16 +333,16 @@
   <div class="charts-2 animate-in" style="animation-delay:.08s">
 
     <div class="chart-card">
-      <div class="chart-title">Revenue Trend</div>
-      <div class="chart-sub">Booked vs Collected — last 6 months</div>
+      <div class="chart-title">{{ __('Revenue Trend') }}</div>
+      <div class="chart-sub">{{ __('Booked vs Collected — last 6 months') }}</div>
       <div class="chart-wrap" style="height:220px;">
         <canvas id="chartRevenue"></canvas>
       </div>
     </div>
 
     <div class="chart-card">
-      <div class="chart-title">Appointment Trend</div>
-      <div class="chart-sub">Daily appointments — last 30 days</div>
+      <div class="chart-title">{{ __('Appointment Trend') }}</div>
+      <div class="chart-sub">{{ __('Daily appointments — last 30 days') }}</div>
       <div class="chart-wrap" style="height:220px;">
         <canvas id="chartAppts"></canvas>
       </div>
@@ -355,8 +355,8 @@
 
     {{-- Top services --}}
     <div class="chart-card">
-      <div class="chart-title">Top Services This Month</div>
-      <div class="chart-sub">By revenue generated</div>
+      <div class="chart-title">{{ __('Top Services This Month') }}</div>
+      <div class="chart-sub">{{ __('By revenue generated') }}</div>
       @php $maxSvcRev = collect($topServices)->max('revenue') ?: 1; @endphp
       @forelse($topServices as $svc)
       <div class="hbar-row">
@@ -367,14 +367,14 @@
         <div class="hbar-val">{{ number_format($svc['revenue'], 0) }} <span style="font-weight:400;color:var(--text-tertiary);">SAR</span></div>
       </div>
       @empty
-      <p style="color:var(--text-tertiary);font-size:.84rem;padding:20px 0;text-align:center;">No services data this month</p>
+      <p style="color:var(--text-tertiary);font-size:.84rem;padding:20px 0;text-align:center;">{{ __('No services data this month') }}</p>
       @endforelse
     </div>
 
     {{-- Branch revenue --}}
     <div class="chart-card">
-      <div class="chart-title">Revenue by Branch</div>
-      <div class="chart-sub">This month — collected vs booked</div>
+      <div class="chart-title">{{ __('Revenue by Branch') }}</div>
+      <div class="chart-sub">{{ __('This month — collected vs booked') }}</div>
       @php $maxBranchRev = collect($branchRevenue)->max('revenue') ?: 1; @endphp
       @forelse($branchRevenue as $br)
       <div class="hbar-row">
@@ -385,7 +385,7 @@
         <div class="hbar-val">{{ number_format($br['revenue'], 0) }} <span style="font-weight:400;color:var(--text-tertiary);">SAR</span></div>
       </div>
       @empty
-      <p style="color:var(--text-tertiary);font-size:.84rem;padding:20px 0;text-align:center;">No branch revenue data</p>
+      <p style="color:var(--text-tertiary);font-size:.84rem;padding:20px 0;text-align:center;">{{ __('No branch revenue data') }}</p>
       @endforelse
     </div>
 
@@ -396,8 +396,8 @@
 
     {{-- Patient trend chart --}}
     <div class="chart-card">
-      <div class="chart-title">New Patients per Month</div>
-      <div class="chart-sub">Patient registrations — last 6 months</div>
+      <div class="chart-title">{{ __('New Patients per Month') }}</div>
+      <div class="chart-sub">{{ __('Patient registrations — last 6 months') }}</div>
       <div class="chart-wrap" style="height:200px;">
         <canvas id="chartPatients"></canvas>
       </div>
@@ -405,16 +405,16 @@
 
     {{-- Quick stats panel --}}
     <div class="chart-card">
-      <div class="chart-title">At a Glance</div>
-      <div class="chart-sub">Operational summary</div>
+      <div class="chart-title">{{ __('At a Glance') }}</div>
+      <div class="chart-sub">{{ __('Operational summary') }}</div>
       <div style="display:flex;flex-direction:column;gap:14px;margin-top:6px;">
         @php
           $glanceItems = [
-            ['label'=>'Total Staff (Active)',    'val'=> number_format($kpi['total_staff']),          'icon'=>'👥', 'color'=>'#6366f1'],
-            ['label'=>'Open Leads',              'val'=> number_format($kpi['open_leads']),            'icon'=>'🎯', 'color'=>'#f59e0b'],
-            ['label'=>'Pending Follow-ups',      'val'=> number_format($kpi['pending_followups']),    'icon'=>'📞', 'color'=>'#ef4444'],
-            ['label'=>'Active Treatment Plans',  'val'=> number_format($kpi['active_plans']),         'icon'=>'📋', 'color'=>'#10b981'],
-            ['label'=>'All-Time Collected',      'val'=> number_format($revenue['total_all_time'],0).' SAR', 'icon'=>'💵', 'color'=>'#3b82f6'],
+            ['label'=>__('Total Staff (Active)'),    'val'=> number_format($kpi['total_staff']),          'icon'=>'👥', 'color'=>'#6366f1'],
+            ['label'=>__('Open Leads'),              'val'=> number_format($kpi['open_leads']),            'icon'=>'🎯', 'color'=>'#f59e0b'],
+            ['label'=>__('Pending Follow-ups'),      'val'=> number_format($kpi['pending_followups']),    'icon'=>'📞', 'color'=>'#ef4444'],
+            ['label'=>__('Active Treatment Plans'),  'val'=> number_format($kpi['active_plans']),         'icon'=>'📋', 'color'=>'#10b981'],
+            ['label'=>__('All-Time Collected'),      'val'=> number_format($revenue['total_all_time'],0).' SAR', 'icon'=>'💵', 'color'=>'#3b82f6'],
           ];
         @endphp
         @foreach($glanceItems as $g)
@@ -435,27 +435,27 @@
   <div class="card animate-in" style="margin-top:4px;animation-delay:.17s">
     <div class="card-header">
       <div>
-        <div class="card-title">Outstanding Balances</div>
-        <div class="card-subtitle">Treatment plans with unpaid amounts — largest first</div>
+        <div class="card-title">{{ __('Outstanding Balances') }}</div>
+        <div class="card-subtitle">{{ __('Treatment plans with unpaid amounts — largest first') }}</div>
       </div>
     </div>
     @if($outstanding->isEmpty())
       <div class="empty-state" style="padding:30px 0;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><polyline points="9 11 12 14 22 4"/></svg>
-        <h3>All caught up!</h3>
-        <p>No outstanding balances.</p>
+        <h3>{{ __('All caught up!') }}</h3>
+        <p>{{ __('No outstanding balances.') }}</p>
       </div>
     @else
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Patient</th>
-              <th>Service</th>
-              <th>Total Price</th>
-              <th>Paid</th>
-              <th>Balance Due</th>
-              <th>Status</th>
+              <th>{{ __('Patient') }}</th>
+              <th>{{ __('Service') }}</th>
+              <th>{{ __('Total Price') }}</th>
+              <th>{{ __('Paid') }}</th>
+              <th>{{ __('Balance Due') }}</th>
+              <th>{{ __('Status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -609,7 +609,7 @@ function initCharts() {
     data: {
       labels: ptLabels,
       datasets: [{
-        label: 'New Patients',
+        label: '{{ __('New Patients') }}',
         data: ptCounts,
         backgroundColor: 'rgba(59,130,246,0.6)',
         borderColor: '#3b82f6',

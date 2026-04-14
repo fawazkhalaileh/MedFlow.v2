@@ -55,7 +55,7 @@
           <tr>
             <th>Patient</th>
             <th>Service</th>
-            <th>Completed</th>
+            <th>{{ __('Completed') }}</th>
             <th>Action</th>
           </tr>
         </thead>

@@ -55,9 +55,9 @@
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         @if($branch->status === 'active')
-          <span class="badge badge-green">Active</span>
+          <span class="badge badge-green">{{ __('Active') }}</span>
         @elseif($branch->status === 'inactive')
-          <span class="badge badge-gray">Inactive</span>
+          <span class="badge badge-gray">{{ __('Inactive') }}</span>
         @else
           <span class="badge badge-yellow">Coming Soon</span>
         @endif

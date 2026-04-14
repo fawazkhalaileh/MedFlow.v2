@@ -7,7 +7,7 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Admin Panel</h1>
+    <h1 class="page-title">{{ __('Admin Panel') }}</h1>
     <p class="page-subtitle">Company-wide governance, configuration, and staff management</p>
   </div>
   <div class="header-actions">
@@ -26,7 +26,7 @@
 
   <div class="kpi-card">
     <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-    <div class="kpi-label">Branches</div>
+    <div class="kpi-label">{{ __('Branches') }}</div>
     <div class="kpi-value">{{ $stats['branches'] }}</div>
     <div class="kpi-change up">{{ $stats['active_branches'] }} active</div>
   </div>
@@ -59,13 +59,13 @@
   {{-- BRANCHES TABLE --}}
   <div class="card" style="padding:0;">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <div class="card-title">Branches</div>
-      <a href="{{ route('admin.branches.index') }}" class="btn btn-ghost btn-sm">Manage All</a>
+      <div class="card-title">{{ __('Branches') }}</div>
+      <a href="{{ route('admin.branches.index') }}" class="btn btn-ghost btn-sm">{{ __('View All') }}</a>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Branch</th><th>Patients</th><th>Staff</th><th>Appts</th><th>Status</th><th></th></tr>
+          <tr><th>{{ __('Branch') }}</th><th>{{ __('Patients') }}</th><th>{{ __('Staff') }}</th><th>{{ __('Appointments') }}</th><th>{{ __('Status') }}</th><th></th></tr>
         </thead>
         <tbody>
           @foreach($branches as $b)
@@ -81,7 +81,7 @@
               <span class="badge {{ $b->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($b->status) }}</span>
             </td>
             <td>
-              <a href="{{ route('admin.branches.edit', $b) }}" class="btn btn-ghost btn-sm" style="font-size:.73rem;">Edit</a>
+              <a href="{{ route('admin.branches.edit', $b) }}" class="btn btn-ghost btn-sm" style="font-size:.73rem;">{{ __('Edit') }}</a>
             </td>
           </tr>
           @endforeach

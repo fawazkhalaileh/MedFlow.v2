@@ -24,7 +24,7 @@
         <div class="form-section-title">Branch Information</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Branch Name <span class="required">*</span></label>
+            <label class="form-label">{{ __('Branch Name') }} <span class="required">*</span></label>
             <input type="text" name="name" class="form-input {{ $errors->has('name') ? 'error' : '' }}" value="{{ old('name') }}" placeholder="e.g. Dubai Marina Branch" required>
             @error('name')<div class="form-error">{{ $message }}</div>@enderror
           </div>
@@ -39,8 +39,8 @@
           <div class="form-group">
             <label class="form-label">Status <span class="required">*</span></label>
             <select name="status" class="form-select" required>
-              <option value="active"       {{ old('status','active') === 'active'       ? 'selected' : '' }}>Active</option>
-              <option value="inactive"     {{ old('status') === 'inactive'     ? 'selected' : '' }}>Inactive</option>
+              <option value="active"       {{ old('status','active') === 'active'       ? 'selected' : '' }}>{{ __('Active') }}</option>
+              <option value="inactive"     {{ old('status') === 'inactive'     ? 'selected' : '' }}>{{ __('Inactive') }}</option>
               <option value="coming_soon"  {{ old('status') === 'coming_soon'  ? 'selected' : '' }}>Coming Soon</option>
             </select>
           </div>
@@ -62,7 +62,7 @@
         <div class="form-section-title">Contact Details</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Phone</label>
+            <label class="form-label">{{ __('Phone') }}</label>
             <input type="text" name="phone" class="form-input" value="{{ old('phone') }}" placeholder="+971 4 XXX XXXX">
           </div>
           <div class="form-group">
@@ -73,14 +73,14 @@
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">Location</div>
+        <div class="form-section-title">{{ __('Location') }}</div>
         <div class="form-group">
-          <label class="form-label">Address</label>
+          <label class="form-label">{{ __('Address') }}</label>
           <input type="text" name="address" class="form-input" value="{{ old('address') }}" placeholder="Street address">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">City</label>
+            <label class="form-label">{{ __('City') }}</label>
             <input type="text" name="city" class="form-input" value="{{ old('city') }}" placeholder="Dubai">
           </div>
           <div class="form-group">
@@ -91,7 +91,7 @@
       </div>
 
       <div class="form-section" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
-        <div class="form-section-title">Notes</div>
+        <div class="form-section-title">{{ __('Notes') }}</div>
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">Internal Notes</label>
           <textarea name="notes" class="form-textarea" placeholder="Any internal notes about this branch...">{{ old('notes') }}</textarea>
@@ -104,7 +104,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Create Branch
       </button>
-      <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">Cancel</a>
+      <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
     </div>
   </form>
 </div>

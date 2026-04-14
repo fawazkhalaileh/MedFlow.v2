@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'MedFlow CRM')</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 @stack('page_style')
 <style>
 :root {
@@ -364,6 +364,19 @@ tr:hover td { background: rgba(37,99,235,0.015); }
   .filter-bar { gap: 8px; }
   .filter-select { font-size: 0.82rem; padding: 8px 10px; }
 }
+
+/* RTL SUPPORT */
+[dir="rtl"] body { font-family: 'Cairo', var(--font-body); }
+[dir="rtl"] .sidebar { border-right: none; border-left: 1px solid rgba(255,255,255,0.06); }
+[dir="rtl"] .sidebar-item.active::before { left: auto; right: 0; border-radius: 3px 0 0 3px; }
+[dir="rtl"] .sidebar-badge { margin-left: 0; margin-right: auto; }
+[dir="rtl"] th { text-align: right; }
+[dir="rtl"] .topbar-search { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .topbar-search input { padding: 8px 36px 8px 14px; }
+[dir="rtl"] .topbar-search-icon { left: auto; right: 11px; }
+[dir="rtl"] .page-header { flex-direction: row-reverse; }
+[dir="rtl"] .filter-bar { flex-direction: row-reverse; }
+[dir="rtl"] .form-row, [dir="rtl"] .form-row-3 { direction: rtl; }
 </style>
 </head>
 <body>
@@ -393,66 +406,66 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @if($navGroup === 'admin')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-section-title">{{ __('Overview') }}</div>
         <a href="{{ route('dashboard') }}" class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Dashboard
+          {{ __('Dashboard') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Clinical</div>
+        <div class="sidebar-section-title">{{ __('Clinical') }}</div>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Patients
+          {{ __('Patients') }}
           <span class="sidebar-badge">{{ \App\Models\Patient::count() }}</span>
         </a>
         <a href="{{ route('appointments.index') }}" class="sidebar-item {{ request()->routeIs('appointments.index') || request()->routeIs('appointments.kanban') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Appointments
+          {{ __('Appointments') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
         </a>
         <a href="{{ route('leads.index') }}" class="sidebar-item {{ request()->routeIs('leads.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Leads
+          {{ __('Leads') }}
         </a>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-          Follow-ups
+          {{ __('Follow-ups') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Admin Panel</div>
+        <div class="sidebar-section-title">{{ __('Admin Panel') }}</div>
         <a href="{{ route('admin.index') }}" class="sidebar-item {{ request()->routeIs('admin.index') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Admin Panel
+          {{ __('Admin Panel') }}
         </a>
         <a href="{{ route('admin.branches.index') }}" class="sidebar-item {{ request()->routeIs('admin.branches.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          Branches
+          {{ __('Branches') }}
           <span class="sidebar-badge">{{ \App\Models\Branch::count() }}</span>
         </a>
         <a href="{{ route('admin.employees.index') }}" class="sidebar-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-          Staff Accounts
+          {{ __('Staff Accounts') }}
           <span class="sidebar-badge">{{ \App\Models\User::whereNotNull('company_id')->where('employment_status','active')->count() }}</span>
         </a>
         <a href="{{ route('admin.roles') }}" class="sidebar-item {{ request()->routeIs('admin.roles') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Roles
+          {{ __('Roles') }}
         </a>
         <a href="{{ route('admin.activity-logs') }}" class="sidebar-item {{ request()->routeIs('admin.activity-logs') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Activity Logs
+          {{ __('Activity Logs') }}
         </a>
         <a href="{{ route('admin.import.index') }}" class="sidebar-item {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Data Import
+          {{ __('Data Import') }}
         </a>
         <a href="{{ route('admin.settings') }}" class="sidebar-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          Settings
+          {{ __('Settings') }}
         </a>
       </div>
 
@@ -462,47 +475,47 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @elseif($navGroup === 'secretary')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Front Desk</div>
+        <div class="sidebar-section-title">{{ __('Front Desk') }}</div>
         <a href="{{ route('front-desk') }}" class="sidebar-item {{ request()->routeIs('front-desk') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Front Desk
+          {{ __('Front Desk') }}
           @if($apptToday > 0)<span class="sidebar-badge">{{ $apptToday }}</span>@endif
         </a>
         <a href="{{ route('appointments.create') }}" class="sidebar-item {{ request()->routeIs('appointments.create') ? 'active' : '' }}" style="color:#93c5fd;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          New Appointment
+          {{ __('New Appointment') }}
         </a>
         <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          Kanban Board
+          {{ __('Kanban Board') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Patients</div>
+        <div class="sidebar-section-title">{{ __('Patients') }}</div>
         <a href="{{ route('patients.create') }}" class="sidebar-item {{ request()->routeIs('patients.create') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          Register Patient
+          {{ __('Register Patient') }}
         </a>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.index') || request()->routeIs('patients.show') || request()->routeIs('patients.edit') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          All Patients
+          {{ __('All Patients') }}
         </a>
         <a href="{{ route('appointments.index') }}" class="sidebar-item {{ request()->routeIs('appointments.index') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Appointment Schedule
+          {{ __('Appointment Schedule') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">My Tasks</div>
+        <div class="sidebar-section-title">{{ __('My Tasks') }}</div>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-          Follow-ups
+          {{ __('Follow-ups') }}
         </a>
         <a href="{{ route('leads.index') }}" class="sidebar-item {{ request()->routeIs('leads.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Leads
+          {{ __('Leads') }}
         </a>
       </div>
 
@@ -512,55 +525,55 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @elseif($navGroup === 'manager')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">My Branch</div>
+        <div class="sidebar-section-title">{{ __('My Branch') }}</div>
         <a href="{{ route('operations') }}" class="sidebar-item {{ request()->routeIs('operations') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Operations Board
+          {{ __('Operations Board') }}
         </a>
         <a href="{{ route('front-desk') }}" class="sidebar-item {{ request()->routeIs('front-desk') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
-          Front Desk
+          {{ __('Front Desk') }}
         </a>
         <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          Kanban
+          {{ __('Kanban') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Clinical</div>
+        <div class="sidebar-section-title">{{ __('Clinical') }}</div>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Patients
+          {{ __('Patients') }}
         </a>
         <a href="{{ route('appointments.index') }}" class="sidebar-item {{ request()->routeIs('appointments.index') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Appointments
+          {{ __('Appointments') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
         </a>
         <a href="{{ route('appointments.create') }}" class="sidebar-item {{ request()->routeIs('appointments.create') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New Appointment
+          {{ __('New Appointment') }}
         </a>
         <a href="{{ route('review-queue') }}" class="sidebar-item {{ request()->routeIs('review-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
-          Review Queue
+          {{ __('Review Queue') }}
         </a>
         <a href="{{ route('finance') }}" class="sidebar-item {{ request()->routeIs('finance') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Finance
+          {{ __('Finance') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Operations</div>
+        <div class="sidebar-section-title">{{ __('Operations') }}</div>
         <a href="{{ route('leads.index') }}" class="sidebar-item {{ request()->routeIs('leads.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Leads
+          {{ __('Leads') }}
         </a>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.31-6.31 19.79 19.79 0 0 1-3.07-8.63 2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-          Follow-ups
+          {{ __('Follow-ups') }}
         </a>
       </div>
 
@@ -570,27 +583,27 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @elseif($navGroup === 'technician')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">My Work</div>
+        <div class="sidebar-section-title">{{ __('My Work') }}</div>
         <a href="{{ route('my-queue') }}" class="sidebar-item {{ request()->routeIs('my-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          My Queue
+          {{ __('My Queue') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
         </a>
         <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          Kanban View
+          {{ __('Kanban View') }}
         </a>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Patients</div>
+        <div class="sidebar-section-title">{{ __('Patients') }}</div>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Patient Profiles
+          {{ __('Patient Profiles') }}
         </a>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.31-6.31 19.79 19.79 0 0 1-3.07-8.63 2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-          Follow-ups
+          {{ __('Follow-ups') }}
         </a>
       </div>
 
@@ -600,27 +613,27 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @elseif($navGroup === 'doctor')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Clinical</div>
+        <div class="sidebar-section-title">{{ __('Clinical') }}</div>
         <a href="{{ route('review-queue') }}" class="sidebar-item {{ request()->routeIs('review-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Review Queue
+          {{ __('Review Queue') }}
         </a>
         <a href="{{ route('my-queue') }}" class="sidebar-item {{ request()->routeIs('my-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg>
-          My Consultations
+          {{ __('My Consultations') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
         </a>
         <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          Kanban
+          {{ __('Kanban') }}
         </a>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Patients
+          {{ __('Patients') }}
         </a>
         <a href="{{ route('followups.index') }}" class="sidebar-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.31-6.31 19.79 19.79 0 0 1-3.07-8.63 2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
-          Follow-ups
+          {{ __('Follow-ups') }}
         </a>
       </div>
 
@@ -630,18 +643,18 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     @elseif($navGroup === 'finance')
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">Finance</div>
+        <div class="sidebar-section-title">{{ __('Finance') }}</div>
         <a href="{{ route('finance') }}" class="sidebar-item {{ request()->routeIs('finance') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Finance Dashboard
+          {{ __('Finance Dashboard') }}
         </a>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Patients
+          {{ __('Patients') }}
         </a>
         <a href="{{ route('appointments.index') }}" class="sidebar-item {{ request()->routeIs('appointments.index') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Appointments
+          {{ __('Appointments') }}
         </a>
       </div>
 
@@ -652,7 +665,7 @@ tr:hover td { background: rgba(37,99,235,0.015); }
     <a href="{{ route('ai.page') }}" class="sidebar-item {{ request()->routeIs('ai.*') ? 'active' : '' }}"
       style="{{ request()->routeIs('ai.*') ? '' : 'background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.08));' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-      <span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:600;">MedFlow AI</span>
+      <span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:600;">{{ __('MedFlow AI') }}</span>
       <span class="sidebar-badge" style="background:linear-gradient(135deg,#2563eb,#7c3aed);margin-left:auto;font-size:.62rem;">✨ NEW</span>
     </a>
 
@@ -662,7 +675,7 @@ tr:hover td { background: rgba(37,99,235,0.015); }
           @csrf
           <button type="submit" class="sidebar-item" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
+            {{ __('Sign Out') }}
           </button>
         </form>
       </div>
@@ -680,13 +693,19 @@ tr:hover td { background: rgba(37,99,235,0.015); }
       <div class="topbar-breadcrumb">MedFlow / <strong>@yield('breadcrumb', 'Dashboard')</strong></div>
       <div class="topbar-search">
         <span class="topbar-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" placeholder="Search...">
+        <input type="text" placeholder="{{ __('Search...') }}">
       </div>
       <div class="topbar-actions">
-        <button class="topbar-icon-btn" title="Notifications">
+        <button class="topbar-icon-btn" title="{{ __('Notifications') }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
-        <a href="{{ route('ai.page') }}" class="topbar-icon-btn" title="MedFlow AI Assistant" style="border-color:rgba(124,58,237,.25);background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.08));color:#7c3aed;text-decoration:none;position:relative;">
+        <form method="POST" action="{{ route('locale.switch', app()->getLocale() === 'ar' ? 'en' : 'ar') }}" style="display:inline;">
+          @csrf
+          <button type="submit" class="topbar-icon-btn" title="{{ __('Language') }}" style="font-size:0.72rem;font-weight:600;width:auto;padding:0 10px;">
+            {{ app()->getLocale() === 'ar' ? 'EN' : 'ع' }}
+          </button>
+        </form>
+        <a href="{{ route('ai.page') }}" class="topbar-icon-btn" title="{{ __('MedFlow AI Assistant') }}" style="border-color:rgba(124,58,237,.25);background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.08));color:#7c3aed;text-decoration:none;position:relative;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
           <span style="position:absolute;top:6px;right:6px;width:7px;height:7px;background:#7c3aed;border-radius:50%;animation:aiPulse 2.5s infinite;"></span>
         </a>

@@ -14,7 +14,7 @@
       <p class="page-subtitle">
         <span style="font-family:monospace;color:var(--accent);">{{ $patient->patient_code }}</span>
         &bull; {{ $patient->branch?->name ?? 'No branch' }}
-        @if($patient->status === 'vip') &bull; <span class="badge badge-purple">VIP</span> @endif
+        @if($patient->status === 'vip') &bull; <span class="badge badge-purple">{{ __('VIP') }}</span> @endif
         @if(!$patient->consent_given) &bull; <span class="badge badge-red">Consent Pending</span> @endif
       </p>
     </div>
@@ -52,7 +52,7 @@
       @else
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Date & Time</th><th>Service</th><th>Staff</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date & Time</th><th>Service</th><th>Staff</th><th>{{ __('Status') }}</th></tr></thead>
           <tbody>
             @foreach($patient->appointments as $appt)
             <tr>
@@ -128,7 +128,7 @@
     <div class="card" id="notes-section">
       <div class="card-header">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div class="card-title">Notes</div>
+          <div class="card-title">{{ __('Notes') }}</div>
           <span style="font-size:.73rem;background:var(--bg-tertiary);color:var(--text-tertiary);padding:2px 8px;border-radius:10px;font-weight:600;">{{ $patient->notes->count() }}</span>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('add-note-form').classList.toggle('hidden');this.innerText=this.innerText.trim()==='+ Add Note'?'✕ Cancel':'+ Add Note'">
@@ -282,7 +282,7 @@
               </label>
             </div>
             <div style="display:flex;gap:8px;">
-              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleNoteEdit({{ $note->id }})">Cancel</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleNoteEdit({{ $note->id }})">{{ __('Cancel') }}</button>
               <button type="submit" class="btn btn-primary btn-sm">Update Note</button>
             </div>
           </form>
@@ -440,8 +440,8 @@
               placeholder="e.g. Penicillin">
           </div>
           <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('add-flag-form').classList.add('hidden')">Cancel</button>
-            <button type="submit" class="btn btn-primary btn-sm">Add Flag</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('add-flag-form').classList.add('hidden')">{{ __('Cancel') }}</button>
+            <button type="submit" class="btn btn-primary btn-sm">{{ __('Add Flag') }}</button>
           </div>
         </form>
       </div>
@@ -457,10 +457,10 @@
 
     {{-- Personal Info --}}
     <div class="card">
-      <div class="card-title" style="margin-bottom:14px;">Patient Information</div>
+      <div class="card-title" style="margin-bottom:14px;">{{ __('Patient Information') }}</div>
       <div style="display:flex;flex-direction:column;gap:9px;font-size:.84rem;">
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Phone</span>
+          <span style="color:var(--text-secondary);">{{ __('Phone') }}</span>
           <span style="font-weight:500;">{{ $patient->phone }}</span>
         </div>
         @if($patient->email)
@@ -470,7 +470,7 @@
         </div>
         @endif
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Gender</span>
+          <span style="color:var(--text-secondary);">{{ __('Gender') }}</span>
           <span>{{ ucfirst($patient->gender ?? '--') }}</span>
         </div>
         @if($patient->date_of_birth)
@@ -578,7 +578,7 @@
             </div>
           </div>
           <div style="margin-bottom:10px;">
-            <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Notes</label>
+            <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Notes') }}</label>
             <textarea name="notes" rows="2" maxlength="1000" placeholder="What needs to be done?"
               style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;resize:none;background:var(--bg-secondary);outline:none;"
               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>

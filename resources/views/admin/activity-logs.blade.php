@@ -4,7 +4,7 @@
 @section('content')
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Activity Logs</h1>
+    <h1 class="page-title">{{ __('Activity Logs') }}</h1>
     <p class="page-subtitle">Full audit trail of all system actions</p>
   </div>
   <a href="{{ route('admin.index') }}" class="btn btn-secondary">Back to Admin</a>
@@ -14,7 +14,7 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Time</th><th>User</th><th>Action</th><th>Model</th><th>Details</th></tr>
+        <tr><th>{{ __('Time') }}</th><th>{{ __('User') }}</th><th>{{ __('Actions') }}</th><th>{{ __('Name') }}</th><th>{{ __('Description') }}</th></tr>
       </thead>
       <tbody>
         @forelse($logs as $log)

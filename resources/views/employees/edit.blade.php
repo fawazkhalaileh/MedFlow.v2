@@ -22,20 +22,20 @@
     <div>
       <div class="card" style="margin-bottom:18px;">
         <div class="form-section">
-          <div class="form-section-title">Personal Information</div>
+          <div class="form-section-title">{{ __('Personal Information') }}</div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">First Name <span class="required">*</span></label>
               <input type="text" name="first_name" class="form-input" value="{{ old('first_name', $employee->first_name) }}" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Last Name</label>
+              <label class="form-label">{{ __('Last Name') }}</label>
               <input type="text" name="last_name" class="form-input" value="{{ old('last_name', $employee->last_name) }}">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Gender</label>
+              <label class="form-label">{{ __('Gender') }}</label>
               <select name="gender" class="form-select">
                 <option value="">-- Select --</option>
                 <option value="female" {{ old('gender',$employee->gender) === 'female' ? 'selected' : '' }}>Female</option>
@@ -44,7 +44,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Date of Birth</label>
+              <label class="form-label">{{ __('Date of Birth') }}</label>
               <input type="date" name="date_of_birth" class="form-input" value="{{ old('date_of_birth', $employee->date_of_birth?->format('Y-m-d')) }}">
             </div>
           </div>
@@ -59,7 +59,7 @@
               @error('email')<div class="form-error">{{ $message }}</div>@enderror
             </div>
             <div class="form-group">
-              <label class="form-label">Phone</label>
+              <label class="form-label">{{ __('Phone') }}</label>
               <input type="text" name="phone" class="form-input" value="{{ old('phone', $employee->phone) }}">
             </div>
           </div>
@@ -74,7 +74,7 @@
           <div class="form-section-title">Employment</div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Employee Type <span class="required">*</span></label>
+              <label class="form-label">{{ __('Employee Type') }} <span class="required">*</span></label>
               <select name="employee_type" class="form-select" required>
                 @foreach($types as $t)
                 <option value="{{ $t }}" {{ old('employee_type',$employee->employee_type) === $t ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$t)) }}</option>
@@ -84,8 +84,8 @@
             <div class="form-group">
               <label class="form-label">Status</label>
               <select name="employment_status" class="form-select">
-                <option value="active"      {{ old('employment_status',$employee->employment_status) === 'active'      ? 'selected' : '' }}>Active</option>
-                <option value="inactive"    {{ old('employment_status',$employee->employment_status) === 'inactive'    ? 'selected' : '' }}>Inactive</option>
+                <option value="active"      {{ old('employment_status',$employee->employment_status) === 'active'      ? 'selected' : '' }}>{{ __('Active') }}</option>
+                <option value="inactive"    {{ old('employment_status',$employee->employment_status) === 'inactive'    ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                 <option value="on_leave"    {{ old('employment_status',$employee->employment_status) === 'on_leave'    ? 'selected' : '' }}>On Leave</option>
                 <option value="terminated"  {{ old('employment_status',$employee->employment_status) === 'terminated'  ? 'selected' : '' }}>Terminated</option>
               </select>
@@ -109,7 +109,7 @@
         </div>
 
         <div class="form-section" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
-          <div class="form-section-title">Notes</div>
+          <div class="form-section-title">{{ __('Notes') }}</div>
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">Internal Notes</label>
             <textarea name="employee_notes" class="form-textarea">{{ old('employee_notes', $employee->employee_notes) }}</textarea>
@@ -119,7 +119,7 @@
 
       <div style="display:flex;gap:10px;">
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('admin.employees.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
       </div>
     </div>
 
@@ -132,7 +132,7 @@
         <div style="font-weight:600;font-size:1rem;">{{ $employee->first_name }} {{ $employee->last_name }}</div>
         <div style="color:var(--text-tertiary);font-size:.8rem;margin:4px 0 10px;">{{ $employee->email }}</div>
         @if($employee->employment_status === 'active')
-          <span class="badge badge-green">Active</span>
+          <span class="badge badge-green">{{ __('Active') }}</span>
         @elseif($employee->employment_status === 'on_leave')
           <span class="badge badge-yellow">On Leave</span>
         @else
@@ -156,7 +156,7 @@
             <span>{{ $employee->primaryBranch?->name ?? 'Unassigned' }}</span>
           </div>
           <div style="display:flex;justify-content:space-between;">
-            <span style="color:var(--text-secondary);">Phone</span>
+            <span style="color:var(--text-secondary);">{{ __('Phone') }}</span>
             <span>{{ $employee->phone ?? '--' }}</span>
           </div>
         </div>

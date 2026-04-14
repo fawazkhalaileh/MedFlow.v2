@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'MedFlow AI — Clinical Assistant')
+@section('title', 'MedFlow AI — {{ __('Clinical Assistant') }}')
 @section('breadcrumb', 'AI Assistant')
 
 {{-- Override page padding so the chat fills the full content area --}}
@@ -34,7 +34,7 @@
         </div>
         <div>
           <div style="font-weight:700;font-size:.92rem;line-height:1.2;">MedFlow AI</div>
-          <div style="font-size:.72rem;color:var(--text-tertiary);">Clinical Assistant</div>
+          <div style="font-size:.72rem;color:var(--text-tertiary);">{{ __('Clinical Assistant') }}</div>
         </div>
       </div>
       <button id="new-chat-btn" style="width:100%;padding:9px;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;border-radius:var(--radius-md);color:#fff;font-size:.84rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-body);transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
@@ -45,7 +45,7 @@
 
     {{-- Provider / Model selector --}}
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:8px;">AI Provider</div>
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:8px;">{{ __('AI Provider') }}</div>
 
       {{-- Provider tabs --}}
       <div style="display:flex;gap:4px;margin-bottom:10px;">
@@ -88,9 +88,9 @@
 
     {{-- Patient context --}}
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:8px;">Patient Context</div>
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:8px;">{{ __('Patient Context') }}</div>
       <div style="position:relative;">
-        <input type="text" id="patient-search-input" placeholder="Search patient…" autocomplete="off"
+        <input type="text" id="patient-search-input" placeholder="{{ __('Search patient') }}…" autocomplete="off"
           style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.82rem;font-family:var(--font-body);background:#fff;outline:none;transition:border-color .2s;"
           onfocus="this.style.borderColor='var(--accent)'" onblur="setTimeout(()=>document.getElementById('patient-results').style.display='none',200)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text-tertiary);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -109,10 +109,10 @@
 
     {{-- Quick prompts --}}
     <div style="padding:14px 16px;flex:1;overflow-y:auto;">
-      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:10px;">Quick Prompts</div>
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-tertiary);margin-bottom:10px;">{{ __('Quick Prompts') }}</div>
       <div style="display:flex;flex-direction:column;gap:4px;" id="quick-prompt-list">
 
-        <div class="qp-group-label">General</div>
+        <div class="qp-group-label">{{ __('General') }}</div>
         <button class="qp-btn" data-prompt="What are the most common contraindications for laser hair removal that I should always check before treatment?">Laser contraindications</button>
         <button class="qp-btn" data-prompt="Summarize the key Fitzpatrick skin types and which laser treatments are safe for each.">Fitzpatrick guide</button>
         <button class="qp-btn" data-prompt="What should I document after a laser session to ensure proper clinical record-keeping?">Post-session checklist</button>
@@ -136,12 +136,12 @@
     {{-- Chat header --}}
     <div style="height:56px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:.88rem;font-weight:600;" id="chat-header-title">MedFlow AI — Clinical Assistant</div>
+        <div style="font-size:.88rem;font-weight:600;" id="chat-header-title">MedFlow AI — {{ __('Clinical Assistant') }}</div>
         <div style="font-size:.73rem;color:var(--text-tertiary);" id="chat-header-sub">No patient linked · Claude (Anthropic)</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <div id="ai-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--success);animation:aiPulse 2.5s infinite;" title="AI Ready"></div>
-        <span style="font-size:.76rem;color:var(--text-tertiary);" id="ai-status-label">Ready</span>
+        <div id="ai-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--success);animation:aiPulse 2.5s infinite;" title="{{ __('AI Ready') }}"></div>
+        <span style="font-size:.76rem;color:var(--text-tertiary);" id="ai-status-label">{{ __('Ready') }}</span>
       </div>
     </div>
 
@@ -188,7 +188,7 @@
       <div style="max-width:800px;margin:0 auto;">
         <div style="display:flex;gap:10px;align-items:flex-end;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;transition:border-color .2s;box-shadow:var(--shadow-sm);" id="input-wrapper">
           <textarea id="chat-input"
-            placeholder="Ask anything clinical, or link a patient for context…"
+            placeholder="{{ __('Ask anything clinical, or link a patient for context') }}…"
             rows="1"
             style="flex:1;border:none;outline:none;font-family:var(--font-body);font-size:.88rem;resize:none;background:transparent;line-height:1.55;max-height:140px;overflow-y:auto;color:var(--text-primary);"
           ></textarea>

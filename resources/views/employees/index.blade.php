@@ -36,8 +36,8 @@
   </select>
   <select name="status" class="filter-select" onchange="this.form.submit()">
     <option value="">All Statuses</option>
-    <option value="active"      {{ request('status') === 'active'      ? 'selected' : '' }}>Active</option>
-    <option value="inactive"    {{ request('status') === 'inactive'    ? 'selected' : '' }}>Inactive</option>
+    <option value="active"      {{ request('status') === 'active'      ? 'selected' : '' }}>{{ __('Active') }}</option>
+    <option value="inactive"    {{ request('status') === 'inactive'    ? 'selected' : '' }}>{{ __('Inactive') }}</option>
     <option value="on_leave"    {{ request('status') === 'on_leave'    ? 'selected' : '' }}>On Leave</option>
     <option value="terminated"  {{ request('status') === 'terminated'  ? 'selected' : '' }}>Terminated</option>
   </select>
@@ -100,7 +100,7 @@
           <td style="color:var(--text-secondary);font-size:.82rem;">{{ $emp->hire_date?->format('d M Y') ?? '--' }}</td>
           <td>
             @if($emp->employment_status === 'active')
-              <span class="status-dot active">Active</span>
+              <span class="status-dot active">{{ __('Active') }}</span>
             @elseif($emp->employment_status === 'on_leave')
               <span class="status-dot pending">On Leave</span>
             @elseif($emp->employment_status === 'terminated')
@@ -138,7 +138,7 @@
           <td colspan="7">
             <div class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <h3>No employees found</h3>
+              <h3>{{ __('No employees found') }}</h3>
               <p>Try adjusting your filters or add a new employee.</p>
             </div>
           </td>
@@ -152,7 +152,7 @@
   @if($employees->hasPages())
   <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:.82rem;color:var(--text-secondary);">
-      Showing {{ $employees->firstItem() }}–{{ $employees->lastItem() }} of {{ $employees->total() }}
+      {{ __('Showing') }} {{ $employees->firstItem() }}–{{ $employees->lastItem() }} {{ __('of') }} {{ $employees->total() }}
     </div>
     <div style="display:flex;gap:6px;">
       @if($employees->onFirstPage())

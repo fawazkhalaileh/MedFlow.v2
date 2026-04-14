@@ -13,7 +13,7 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Operations Board</h1>
+    <h1 class="page-title">{{ __('Operations Board') }}</h1>
     <p class="page-subtitle">Live branch overview &bull; {{ now()->format('l, d F Y') }}</p>
   </div>
   <button onclick="location.reload()" class="btn btn-secondary">

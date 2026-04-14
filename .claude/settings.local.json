@@ -19,7 +19,14 @@
       "Bash(python -c \"import sys, json; lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\); [print\\(json.loads\\(l\\).get\\('content',''\\)[:500] if isinstance\\(json.loads\\(l\\).get\\('content',''\\), str\\) else ''\\) for l in lines[-20:] if l]\")",
       "Bash(docker compose:*)",
       "Bash(php C:/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/artisan route:list --name=followups)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "Bash(sed -n '1,35p' \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/resources/views/admin/roles.blade.php\")",
+      "Bash(sed -n '1,38p' \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/resources/views/admin/settings.blade.php\")",
+      "Bash(sed -n '1,48p' \"/c/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/resources/views/admin/activity-logs.blade.php\")",
+      "Bash(python3:*)",
+      "Bash(grep -l \"__\\(\" \"C:/Users/Fawwa/OneDrive/Documentos/Projects/Clinical/resources/views/\"**/*.blade.php)",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline"
     ]
   }
 }

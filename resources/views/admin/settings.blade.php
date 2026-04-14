@@ -4,7 +4,7 @@
 @section('content')
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">System Settings</h1>
+    <h1 class="page-title">{{ __('Settings') }}</h1>
     <p class="page-subtitle">Company configuration, branding, and defaults</p>
   </div>
   <a href="{{ route('admin.index') }}" class="btn btn-secondary">Back to Admin</a>

@@ -37,7 +37,7 @@
       @csrf
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
         <div>
-          <label style="font-size:.75rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Flag Name <span style="color:var(--danger);">*</span></label>
+          <label style="font-size:.75rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Flag Name') }} <span style="color:var(--danger);">*</span></label>
           <input type="text" name="name" required maxlength="80" placeholder="e.g. Allergic to Penicillin"
             style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-family:inherit;background:var(--bg-secondary);">
         </div>
@@ -80,7 +80,7 @@
         </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('create-flag-form').classList.add('hidden')">Cancel</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('create-flag-form').classList.add('hidden')">{{ __('Cancel') }}</button>
         <button type="submit" class="btn btn-primary btn-sm">Create Flag</button>
       </div>
     </form>
@@ -119,7 +119,7 @@
           <th>Color</th>
           <th>Needs Detail?</th>
           <th>Patients</th>
-          <th>Active</th>
+          <th>{{ __('Active') }}</th>
           <th style="width:140px;">Actions</th>
         </tr>
       </thead>
@@ -155,19 +155,19 @@
             </td>
             <td>
               @if($flag->is_active)
-                <span class="badge badge-green">Active</span>
+                <span class="badge badge-green">{{ __('Active') }}</span>
               @else
-                <span class="badge badge-gray">Inactive</span>
+                <span class="badge badge-gray">{{ __('Inactive') }}</span>
               @endif
             </td>
             <td>
               <div style="display:flex;gap:6px;">
                 <button type="button" class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:3px 10px;"
-                  onclick="toggleFlagEdit({{ $flag->id }})">Edit</button>
+                  onclick="toggleFlagEdit({{ $flag->id }})">{{ __('Edit') }}</button>
                 <form method="POST" action="{{ route('clinical-flags.destroy', $flag) }}"
                   onsubmit="return confirm('Delete flag &quot;{{ addslashes($flag->name) }}&quot;? This will remove it from all assigned patients.')" style="display:inline;">
                   @csrf @method('DELETE')
-                  <button type="submit" class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:3px 10px;color:var(--danger);">Delete</button>
+                  <button type="submit" class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:3px 10px;color:var(--danger);">{{ __('Delete') }}</button>
                 </form>
               </div>
             </td>
@@ -216,11 +216,11 @@
                   </div>
                   <label style="display:flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap;">
                     <input type="checkbox" name="is_active" value="1" {{ $flag->is_active ? 'checked' : '' }}>
-                    <span style="font-size:.83rem;">Active</span>
+                    <span style="font-size:.83rem;">{{ __('Active') }}</span>
                   </label>
                 </div>
                 <div style="display:flex;gap:8px;">
-                  <button type="button" class="btn btn-ghost btn-sm" style="font-size:.73rem;" onclick="toggleFlagEdit({{ $flag->id }})">Cancel</button>
+                  <button type="button" class="btn btn-ghost btn-sm" style="font-size:.73rem;" onclick="toggleFlagEdit({{ $flag->id }})">{{ __('Cancel') }}</button>
                   <button type="submit" class="btn btn-primary btn-sm" style="font-size:.73rem;">Save Changes</button>
                 </div>
               </form>

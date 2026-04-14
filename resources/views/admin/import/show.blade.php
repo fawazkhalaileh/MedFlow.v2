@@ -7,7 +7,7 @@
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Import Result</h1>
+    <h1 class="page-title">{{ __('Import Result') }}</h1>
     <p class="page-subtitle">{{ $log->filename }} &mdash; {{ $log->created_at->format('M d, Y H:i') }}</p>
   </div>
   <div class="header-actions">
@@ -30,7 +30,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="width:24px;height:24px;"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
     <div>
-      <div style="font-size:1.05rem;font-weight:600;color:#10b981;">Import Completed Successfully</div>
+      <div style="font-size:1.05rem;font-weight:600;color:#10b981;">{{ __('Import Completed Successfully') }}</div>
       <div style="font-size:.82rem;color:var(--text-secondary);margin-top:2px;">
         {{ $log->imported }} record{{ $log->imported !== 1 ? 's' : '' }} imported from {{ $log->filename }}
       </div>
@@ -54,21 +54,21 @@
 
   <div class="kpi-card">
     <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg></div>
-    <div class="kpi-label">Total Rows</div>
+    <div class="kpi-label">{{ __('Total Rows') }}</div>
     <div class="kpi-value">{{ $log->total_rows }}</div>
     <div class="kpi-change neutral">processed</div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-icon" style="color:var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <div class="kpi-label">Imported</div>
+    <div class="kpi-label">{{ __('Imported') }}</div>
     <div class="kpi-value" style="color:var(--success);">{{ $log->imported }}</div>
     <div class="kpi-change up">records added</div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-icon" style="color:var(--warning);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
-    <div class="kpi-label">Skipped</div>
+    <div class="kpi-label">{{ __('Skipped') }}</div>
     <div class="kpi-value" style="color:var(--warning);">{{ $log->skipped }}</div>
     <div class="kpi-change neutral">duplicates or errors</div>
   </div>
@@ -77,7 +77,7 @@
     <div class="kpi-icon" style="{{ $log->errors > 0 ? 'color:var(--danger);' : '' }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
     </div>
-    <div class="kpi-label">Errors</div>
+    <div class="kpi-label">{{ __('Errors') }}</div>
     <div class="kpi-value" style="{{ $log->errors > 0 ? 'color:var(--danger);' : '' }}">{{ $log->errors }}</div>
     <div class="kpi-change {{ $log->errors > 0 ? 'down' : 'neutral' }}">validation failures</div>
   </div>
@@ -87,23 +87,23 @@
 {{-- META INFO --}}
 <div class="card animate-in" style="animation-delay:.08s;margin-bottom:20px;">
   <div class="card-header">
-    <div class="card-title">Import Details</div>
+    <div class="card-title">{{ __('Import Details') }}</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;padding:4px 0;">
     <div>
-      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Type</div>
+      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">{{ __('Type') }}</div>
       <div style="font-size:.85rem;font-weight:500;text-transform:capitalize;">{{ $log->import_type }}</div>
     </div>
     <div>
-      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">File</div>
+      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">{{ __('File') }}</div>
       <div style="font-size:.85rem;font-weight:500;">{{ $log->filename }}</div>
     </div>
     <div>
-      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Imported By</div>
+      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">{{ __('Imported By') }}</div>
       <div style="font-size:.85rem;font-weight:500;">{{ $log->user?->first_name }} {{ $log->user?->last_name }}</div>
     </div>
     <div>
-      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Date</div>
+      <div style="font-size:.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">{{ __('Date') }}</div>
       <div style="font-size:.85rem;font-weight:500;">{{ $log->created_at->format('M d, Y \a\t H:i') }}</div>
     </div>
   </div>
@@ -113,16 +113,16 @@
 @if($log->errors > 0 && is_array($log->error_details) && count($log->error_details) > 0)
 <div class="card animate-in" style="animation-delay:.1s;padding:0;margin-bottom:24px;">
   <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
-    <div class="card-title" style="color:var(--danger);">Error Details</div>
-    <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:2px;">Rows that were skipped during import</div>
+    <div class="card-title" style="color:var(--danger);">{{ __('Error Details') }}</div>
+    <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:2px;">{{ __('Rows that were skipped during import') }}</div>
   </div>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th style="width:80px;">Row #</th>
-          <th style="width:150px;">Field</th>
-          <th>Reason</th>
+          <th style="width:150px;">{{ __('Field') }}</th>
+          <th>{{ __('Reason') }}</th>
         </tr>
       </thead>
       <tbody>

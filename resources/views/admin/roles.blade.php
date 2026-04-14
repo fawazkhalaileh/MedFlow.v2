@@ -4,7 +4,7 @@
 @section('content')
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Roles &amp; Permissions</h1>
+    <h1 class="page-title">{{ __('Roles') }}</h1>
     <p class="page-subtitle">Define what each role can access across the system</p>
   </div>
   <a href="{{ route('admin.index') }}" class="btn btn-secondary">Back to Admin</a>
