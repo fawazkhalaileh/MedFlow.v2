@@ -62,6 +62,11 @@ class Branch extends Model
                     ->withPivot('price_override', 'is_active');
     }
 
+    public function cashRegisterSessions(): HasMany
+    {
+        return $this->hasMany(CashRegisterSession::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

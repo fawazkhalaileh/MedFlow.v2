@@ -11,8 +11,10 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ClinicalFlagController;
+use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionReceiptController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\LocaleController;
@@ -168,5 +170,17 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/finance/transactions', [TransactionController::class, 'store'])
         ->name('finance.transactions.store')
+        ->middleware('role:finance,branch_manager');
+
+    Route::get('/finance/transactions/{transaction}/receipt', [TransactionReceiptController::class, 'show'])
+        ->name('finance.transactions.receipt')
+        ->middleware('role:finance,branch_manager');
+
+    Route::post('/finance/register/open', [CashRegisterController::class, 'open'])
+        ->name('finance.register.open')
+        ->middleware('role:finance,branch_manager');
+
+    Route::post('/finance/register/{session}/close', [CashRegisterController::class, 'close'])
+        ->name('finance.register.close')
         ->middleware('role:finance,branch_manager');
 });

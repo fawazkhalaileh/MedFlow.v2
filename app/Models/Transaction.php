@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class Transaction extends Model
 {
+    public const TYPE_PAYMENT = 'payment';
+
     public const METHOD_CASH = 'cash';
     public const METHOD_CARD = 'card';
     public const METHOD_TRANSFER = 'transfer';
@@ -18,9 +21,12 @@ class Transaction extends Model
         'patient_id',
         'treatment_plan_id',
         'appointment_id',
+        'cash_register_session_id',
         'amount',
         'amount_received',
         'change_returned',
+        'transaction_type',
+        'receipt_number',
         'payment_method',
         'reference_number',
         'received_at',
@@ -60,6 +66,11 @@ class Transaction extends Model
         return $this->belongsTo(Appointment::class);
     }
 
+    public function cashRegisterSession(): BelongsTo
+    {
+        return $this->belongsTo(CashRegisterSession::class);
+    }
+
     public function receivedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
@@ -78,5 +89,37 @@ class Transaction extends Model
             self::METHOD_TRANSFER,
             self::METHOD_INSURANCE,
         ];
+    }
+
+    public function scopeCash($query)
+    {
+        return $query->where('payment_method', self::METHOD_CASH);
+    }
+
+    public function isPayment(): bool
+    {
+        return $this->transaction_type === self::TYPE_PAYMENT;
+    }
+
+    public function receiptFilename(): string
+    {
+        return ($this->receipt_number ?: 'receipt-' . $this->id) . '.pdf';
+    }
+
+    public static function makeReceiptNumber(?string $branchCode, Carbon|string $receivedAt, int $transactionId): string
+    {
+        $paddedTransactionId = str_pad((string) $transactionId, 6, '0', STR_PAD_LEFT);
+        $normalizedBranchCode = preg_replace('/[^A-Z0-9]/', '', strtoupper((string) $branchCode));
+
+        if (blank($normalizedBranchCode)) {
+            return 'RCPT-' . $paddedTransactionId;
+        }
+
+        return sprintf(
+            'RCPT-%s-%s-%s',
+            $normalizedBranchCode,
+            Carbon::parse($receivedAt)->format('Ymd'),
+            $paddedTransactionId
+        );
     }
 }
