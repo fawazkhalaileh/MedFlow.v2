@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\FollowUp;
 use App\Models\Patient;
@@ -205,11 +206,35 @@ class WorkspaceController extends Controller
             ->limit(15)
             ->get();
 
+        $activeRegister = CashRegisterSession::with(['openedBy', 'closedBy'])
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->open()
+            ->latest('opened_at')
+            ->first();
+
+        if ($activeRegister) {
+            $activeRegister->refreshTotals();
+        }
+
+        $todayTransactions = Transaction::query()
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->whereDate('received_at', $today)
+            ->get();
+
         $recentTransactions = Transaction::with(['patient', 'treatmentPlan.service', 'receivedBy'])
             ->when($branchId, fn($q) => $q->forBranch($branchId))
             ->latest('received_at')
             ->limit(10)
             ->get();
+
+        $dailyCashFlow = [
+            'payments_total'      => round((float) $todayTransactions->sum('amount'), 2),
+            'cash_sales_total'    => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'cash_received_total' => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount_received'), 2),
+            'change_total'        => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('change_returned'), 2),
+            'non_cash_total'      => round((float) $todayTransactions->where('payment_method', '!=', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'transactions_count'  => $todayTransactions->count(),
+        ];
 
         $stats = [
             'payment_pending' => $outstandingPlansCount,
@@ -218,7 +243,15 @@ class WorkspaceController extends Controller
                 ->whereDate('completed_at', $today)->where('status', 'completed')->count(),
         ];
 
-        return view('workspaces.finance', compact('paymentPending', 'outstandingPlans', 'plansNearingEnd', 'recentTransactions', 'stats'));
+        return view('workspaces.finance', compact(
+            'paymentPending',
+            'outstandingPlans',
+            'plansNearingEnd',
+            'activeRegister',
+            'dailyCashFlow',
+            'recentTransactions',
+            'stats'
+        ));
     }
 
     // Appointment status quick-update (used by all role pages)

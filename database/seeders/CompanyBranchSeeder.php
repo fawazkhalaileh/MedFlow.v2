@@ -18,7 +18,7 @@ class CompanyBranchSeeder extends Seeder
             'phone'    => '+971 4 000 0000',
             'address'  => 'Dubai, United Arab Emirates',
             'timezone' => 'Asia/Dubai',
-            'currency' => 'AED',
+            'currency' => 'JOD',
             'status'   => 'active',
             'settings' => [
                 'clinic_type'       => 'laser',
