@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Finance Dashboard - MedFlow CRM')
-@section('breadcrumb', 'Finance Dashboard')
+@section('title', __('finance.dashboard') . ' - MedFlow CRM')
+@section('breadcrumb', __('finance.dashboard'))
 
 @section('content')
 
 <div class="page-header animate-in">
   <div>
-    <h1 class="page-title">Finance Dashboard</h1>
-    <p class="page-subtitle">Billing, payments and treatment plan status</p>
+    <h1 class="page-title">{{ __('finance.dashboard') }}</h1>
+    <p class="page-subtitle">{{ __('finance.subtitle') }}</p>
   </div>
 </div>
 
@@ -17,23 +17,23 @@
 
   <div class="kpi-card">
     <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-    <div class="kpi-label">Payment Pending</div>
+    <div class="kpi-label">{{ __('finance.payment_pending') }}</div>
     <div class="kpi-value">{{ $stats['payment_pending'] }}</div>
-    <div class="kpi-change neutral">outstanding plans</div>
+    <div class="kpi-change neutral">{{ __('finance.outstanding_plans') }}</div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-    <div class="kpi-label">Plans Ending Soon</div>
+    <div class="kpi-label">{{ __('finance.plans_ending_soon') }}</div>
     <div class="kpi-value" style="color:var(--warning);">{{ $stats['plans_ending'] }}</div>
-    <div class="kpi-change neutral">last session approaching</div>
+    <div class="kpi-change neutral">{{ __('finance.last_session_approaching') }}</div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-    <div class="kpi-label">Completed Today</div>
+    <div class="kpi-label">{{ __('finance.completed_today') }}</div>
     <div class="kpi-value" style="color:var(--success);">{{ $stats['completed_today'] }}</div>
-    <div class="kpi-change up">appointments finished</div>
+    <div class="kpi-change up">{{ __('finance.appointments_finished') }}</div>
   </div>
 
 </div>
@@ -42,20 +42,20 @@
 
   <div class="card" style="padding:0;">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <div class="card-title">Outstanding Plans</div>
-      <span style="font-size:.75rem;color:var(--text-tertiary);">Record payments and returned change</span>
+      <div class="card-title">{{ __('finance.outstanding_plans_title') }}</div>
+      <span style="font-size:.75rem;color:var(--text-tertiary);">{{ __('finance.record_payments_and_change') }}</span>
     </div>
     @if($outstandingPlans->isEmpty())
-    <div class="empty-state" style="padding:30px;"><p>No outstanding treatment plan balances</p></div>
+    <div class="empty-state" style="padding:30px;"><p>{{ __('finance.no_outstanding_balances') }}</p></div>
     @else
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>Patient</th>
-            <th>Plan</th>
-            <th>Balance</th>
-            <th>Record Payment</th>
+            <th>{{ __('finance.plan') }}</th>
+            <th>{{ __('finance.balance') }}</th>
+            <th>{{ __('finance.record_payment') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -71,14 +71,14 @@
             <td style="font-size:.83rem;color:var(--text-secondary);">
               <div>{{ $plan->service?->name ?? $plan->name ?? 'Plan' }}</div>
               <div style="font-size:.72rem;color:var(--text-tertiary);margin-top:3px;">
-                Paid AED {{ number_format($plan->amount_paid, 2) }} / AED {{ number_format($plan->total_price, 2) }}
+                {{ __('finance.paid') }} AED {{ number_format($plan->amount_paid, 2) }} / AED {{ number_format($plan->total_price, 2) }}
               </div>
             </td>
             <td style="font-size:.82rem;color:var(--text-tertiary);">
               <div style="font-weight:600;color:var(--warning);">AED {{ number_format($plan->amount_remaining, 2) }}</div>
               @if($latestCompletedAppointment?->completed_at)
               <div style="font-size:.72rem;margin-top:3px;">
-                Last completed {{ \Carbon\Carbon::parse($latestCompletedAppointment->completed_at)->format('d M, h:i A') }}
+                {{ __('finance.last_completed') }} {{ \Carbon\Carbon::parse($latestCompletedAppointment->completed_at)->format('d M, h:i A') }}
               </div>
               @endif
             </td>
@@ -97,7 +97,7 @@
                   name="amount"
                   value="{{ old('treatment_plan_id') == $plan->id ? old('amount') : number_format($plan->amount_remaining, 2, '.', '') }}"
                   class="form-input"
-                  placeholder="Payment amount"
+                  placeholder="{{ __('finance.payment_amount') }}"
                   required
                 >
                 <input
@@ -107,13 +107,13 @@
                   name="amount_received"
                   value="{{ old('treatment_plan_id') == $plan->id ? old('amount_received') : number_format($plan->amount_remaining, 2, '.', '') }}"
                   class="form-input"
-                  placeholder="Amount received"
+                  placeholder="{{ __('finance.amount_received') }}"
                   required
                 >
                 <select name="payment_method" class="form-input" required>
                   @foreach(\App\Models\Transaction::paymentMethods() as $method)
                   <option value="{{ $method }}" {{ old('treatment_plan_id') == $plan->id && old('payment_method') === $method ? 'selected' : ($method === 'cash' ? 'selected' : '') }}>
-                    {{ ucfirst($method) }}
+                    {{ __('finance.methods.' . $method) }}
                   </option>
                   @endforeach
                 </select>
@@ -122,23 +122,23 @@
                   name="reference_number"
                   value="{{ old('treatment_plan_id') == $plan->id ? old('reference_number') : '' }}"
                   class="form-input"
-                  placeholder="Reference number"
+                  placeholder="{{ __('finance.reference_number') }}"
                 >
                 <input
                   type="text"
                   name="notes"
                   value="{{ old('treatment_plan_id') == $plan->id ? old('notes') : '' }}"
                   class="form-input"
-                  placeholder="Optional note"
+                  placeholder="{{ __('finance.optional_note') }}"
                   style="grid-column:1 / -1;"
                 >
                 <div style="grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:8px;">
                   <span style="font-size:.72rem;color:var(--text-tertiary);">
-                    Change = amount received minus payment amount
+                    {{ __('finance.change_formula') }}
                   </span>
                   <div style="display:flex;gap:8px;">
-                    <a href="{{ route('patients.show', $plan->patient_id) }}" class="btn btn-secondary btn-sm" style="font-size:.73rem;">View Patient</a>
-                    <button type="submit" class="btn btn-primary btn-sm" style="font-size:.73rem;">Record Payment</button>
+                    <a href="{{ route('patients.show', $plan->patient_id) }}" class="btn btn-secondary btn-sm" style="font-size:.73rem;">{{ __('finance.view_patient') }}</a>
+                    <button type="submit" class="btn btn-primary btn-sm" style="font-size:.73rem;">{{ __('finance.record_payment') }}</button>
                   </div>
                 </div>
               </form>
@@ -155,7 +155,7 @@
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Recent Transactions</div>
+        <div class="card-title">{{ __('finance.recent_transactions') }}</div>
         <span class="badge badge-gray">{{ $recentTransactions->count() }}</span>
       </div>
       @forelse($recentTransactions as $transaction)
@@ -164,27 +164,27 @@
           <div>
             <div style="font-size:.84rem;font-weight:500;">{{ $transaction->patient?->full_name }}</div>
             <div style="font-size:.74rem;color:var(--text-tertiary);">
-              {{ $transaction->treatmentPlan?->service?->name ?? $transaction->treatmentPlan?->name ?? 'Plan payment' }}
+              {{ $transaction->treatmentPlan?->service?->name ?? $transaction->treatmentPlan?->name ?? __('finance.plan_payment') }}
             </div>
           </div>
           <span class="badge badge-green">AED {{ number_format($transaction->amount, 2) }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-tertiary);margin-top:6px;gap:10px;">
-          <span>{{ ucfirst($transaction->payment_method) }} by {{ $transaction->receivedBy?->full_name ?? 'System' }}</span>
+          <span>{{ __('finance.methods.' . $transaction->payment_method) }} {{ __('finance.by') }} {{ $transaction->receivedBy?->full_name ?? __('finance.system') }}</span>
           <span>{{ $transaction->received_at?->format('d M, h:i A') }}</span>
         </div>
         @if((float) $transaction->change_returned > 0)
-        <div style="font-size:.72rem;color:var(--warning);margin-top:4px;">Change returned: AED {{ number_format($transaction->change_returned, 2) }}</div>
+        <div style="font-size:.72rem;color:var(--warning);margin-top:4px;">{{ __('finance.change_returned') }}: AED {{ number_format($transaction->change_returned, 2) }}</div>
         @endif
       </div>
       @empty
-      <p style="color:var(--text-tertiary);font-size:.83rem;padding:8px 0;">No payments recorded yet</p>
+      <p style="color:var(--text-tertiary);font-size:.83rem;padding:8px 0;">{{ __('finance.no_payments_yet') }}</p>
       @endforelse
     </div>
 
     <div class="card" style="{{ $plansNearingEnd->isNotEmpty() ? 'border:1px solid #fde68a;' : '' }}">
       <div class="card-header">
-        <div class="card-title" style="{{ $plansNearingEnd->isNotEmpty() ? 'color:var(--warning);' : '' }}">Plans Nearing End</div>
+        <div class="card-title" style="{{ $plansNearingEnd->isNotEmpty() ? 'color:var(--warning);' : '' }}">{{ __('finance.plans_ending_soon') }}</div>
         <span class="badge {{ $plansNearingEnd->isNotEmpty() ? 'badge-yellow' : 'badge-green' }}">{{ $plansNearingEnd->count() }}</span>
       </div>
       @forelse($plansNearingEnd as $plan)
@@ -192,9 +192,9 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
           <div>
             <div style="font-size:.84rem;font-weight:500;">{{ $plan->patient?->full_name }}</div>
-            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $plan->service?->name ?? $plan->name ?? 'Plan' }}</div>
+            <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $plan->service?->name ?? $plan->name ?? __('finance.plan') }}</div>
           </div>
-          <span class="badge badge-yellow" style="font-size:.7rem;">{{ $plan->total_sessions - $plan->completed_sessions }} left</span>
+          <span class="badge badge-yellow" style="font-size:.7rem;">{{ $plan->total_sessions - $plan->completed_sessions }} {{ __('finance.left') }}</span>
         </div>
         <div style="height:4px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden;">
           <div style="height:100%;width:{{ $plan->progress_percent }}%;background:var(--warning);border-radius:2px;"></div>
@@ -207,24 +207,24 @@
         </div>
       </div>
       @empty
-      <p style="color:var(--text-tertiary);font-size:.83rem;padding:8px 0;">No plans nearing end</p>
+      <p style="color:var(--text-tertiary);font-size:.83rem;padding:8px 0;">{{ __('finance.no_plans_nearing_end') }}</p>
       @endforelse
     </div>
 
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">Finance Checklist</div>
+      <div class="card-title" style="margin-bottom:12px;">{{ __('finance.checklist') }}</div>
       <div style="font-size:.8rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:7px;">
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="color:var(--accent);flex-shrink:0;">&rarr;</span>
-          <span>Collect payment against the plan balance and return any cash change immediately</span>
+          <span>{{ __('finance.checklist_collect_payment') }}</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="color:var(--accent);flex-shrink:0;">&rarr;</span>
-          <span>Offer package renewal to patients with <strong>1 session remaining</strong></span>
+          <span>{!! __('finance.checklist_offer_renewal') !!}</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="color:var(--accent);flex-shrink:0;">&rarr;</span>
-          <span>Capture a reference number for card, transfer, or insurance payments when available</span>
+          <span>{{ __('finance.checklist_capture_reference') }}</span>
         </div>
       </div>
     </div>
