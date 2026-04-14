@@ -12,6 +12,7 @@ use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ClinicalFlagController;
 use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionReceiptController;
@@ -167,6 +168,42 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/finance',      [WorkspaceController::class, 'finance'])->name('finance')
         ->middleware('role:finance,branch_manager');
+
+    Route::get('/inventory', [InventoryController::class, 'index'])
+        ->name('inventory.index')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/items', [InventoryController::class, 'storeItem'])
+        ->name('inventory.items.store')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/stock', [InventoryController::class, 'stockIn'])
+        ->name('inventory.stock.store')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/usage', [InventoryController::class, 'useStock'])
+        ->name('inventory.usage.store')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/transfers', [InventoryController::class, 'storeTransfer'])
+        ->name('inventory.transfers.store')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/transfers/{transfer}/approve', [InventoryController::class, 'approveTransfer'])
+        ->name('inventory.transfers.approve')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/transfers/{transfer}/send', [InventoryController::class, 'sendTransfer'])
+        ->name('inventory.transfers.send')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/transfers/{transfer}/receive', [InventoryController::class, 'receiveTransfer'])
+        ->name('inventory.transfers.receive')
+        ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::post('/inventory/transfers/{transfer}/cancel', [InventoryController::class, 'cancelTransfer'])
+        ->name('inventory.transfers.cancel')
+        ->middleware('role:finance,branch_manager,system_admin');
 
     Route::post('/finance/transactions', [TransactionController::class, 'store'])
         ->name('finance.transactions.store')

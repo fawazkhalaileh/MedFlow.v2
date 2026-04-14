@@ -41,6 +41,16 @@ class Company extends Model
         return $this->hasMany(Service::class);
     }
 
+    public function inventoryItems(): HasMany
+    {
+        return $this->hasMany(InventoryItem::class);
+    }
+
+    public function branchInventories(): HasMany
+    {
+        return $this->hasMany(BranchInventory::class);
+    }
+
     public function activeBranches(): HasMany
     {
         return $this->branches()->where('status', 'active');
