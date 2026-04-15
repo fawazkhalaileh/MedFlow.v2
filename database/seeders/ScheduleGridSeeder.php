@@ -27,15 +27,11 @@ class ScheduleGridSeeder extends Seeder
             return;
         }
 
-        // Skip if today's grid appointments already exist (idempotent)
-        $todayCount = Appointment::where('branch_id', $branch1->id)
+        // Clear today's existing appointments for this branch so the seeder is always fresh
+        Appointment::where('branch_id', $branch1->id)
             ->whereDate('scheduled_at', today())
-            ->count();
-
-        if ($todayCount >= 10) {
-            $this->command->info("Today's schedule already has {$todayCount} appointments. Skipping grid seed.");
-            return;
-        }
+            ->delete();
+        $this->command->info('Cleared today\'s existing appointments for BR-001.');
 
         // ── Staff ──────────────────────────────────────────────────────────────
         $doctorRole = Role::where('company_id', $company->id)->where('name', 'doctor')->first();
@@ -75,10 +71,10 @@ class ScheduleGridSeeder extends Seeder
         $rooms = Room::where('branch_id', $branch1->id)->where('is_active', true)->orderBy('id')->get();
 
         $roomLabels = [
-            ['name' => 'Laser Room A',       'description' => 'Candela GentleMax Pro — laser hair removal & skin treatments'],
-            ['name' => 'Laser Room B',       'description' => 'Candela GentleMax Pro — laser hair removal & body contouring'],
-            ['name' => 'Laser Room C',       'description' => 'Cynosure Elite iQ — tattoo removal & IPL photofacial'],
-            ['name' => 'Consultation Room',  'description' => 'Doctor consultations, botox & dermal filler procedures'],
+            ['name' => 'Laser Room A',       'device_name' => 'Candela GentleMax Pro',  'description' => 'Laser hair removal & skin treatments'],
+            ['name' => 'Laser Room B',       'device_name' => 'Candela GentleMax Pro',  'description' => 'Laser hair removal & body contouring'],
+            ['name' => 'Laser Room C',       'device_name' => 'Cynosure Elite iQ',      'description' => 'Tattoo removal & IPL photofacial'],
+            ['name' => 'Consultation Room',  'device_name' => null,                      'description' => 'Doctor consultations, botox & dermal filler procedures'],
         ];
 
         foreach ($rooms as $i => $room) {

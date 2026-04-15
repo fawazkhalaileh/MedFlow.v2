@@ -181,10 +181,37 @@ $statusLabel = [
             min-width:185px;
             text-align:left;
           ">
-            <div style="font-size:.82rem;font-weight:700;color:var(--text-primary);">{{ $room->name }}</div>
-            @if($room->description)
-            <div style="font-size:.67rem;color:var(--text-tertiary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">
-              {{ $room->description }}
+            {{-- Display row: device name (primary) + room name subtitle --}}
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+              <div style="min-width:0;">
+                <div style="font-size:.82rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">
+                  {{ $room->device_name ?? $room->name }}
+                </div>
+                @if($room->device_name)
+                <div style="font-size:.67rem;color:var(--text-tertiary);margin-top:1px;">{{ $room->name }}</div>
+                @elseif($room->description)
+                <div style="font-size:.67rem;color:var(--text-tertiary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">{{ $room->description }}</div>
+                @endif
+              </div>
+              @if(in_array(auth()->user()->employee_type, ['branch_manager','system_admin']))
+              <button onclick="toggleDeviceEdit({{ $room->id }})" title="Edit device name"
+                style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-tertiary);font-size:.75rem;line-height:1;border-radius:4px;"
+                onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-tertiary)'">✎</button>
+              @endif
+            </div>
+            {{-- Inline edit form (hidden by default) --}}
+            @if(in_array(auth()->user()->employee_type, ['branch_manager','system_admin']))
+            <div id="device-edit-{{ $room->id }}" style="display:none;margin-top:6px;">
+              <form method="POST" action="{{ route('rooms.update-device-name', $room) }}" style="display:flex;gap:4px;align-items:center;">
+                @csrf
+                @method('PATCH')
+                <input type="text" name="device_name"
+                  value="{{ $room->device_name }}"
+                  placeholder="Device name…"
+                  style="flex:1;min-width:0;font-size:.72rem;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);">
+                <button type="submit" style="font-size:.72rem;padding:3px 8px;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer;">Save</button>
+                <button type="button" onclick="toggleDeviceEdit({{ $room->id }})" style="font-size:.72rem;padding:3px 6px;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-secondary);">✕</button>
+              </form>
             </div>
             @endif
           </th>
@@ -484,6 +511,13 @@ document.addEventListener('click', e => {
     qsResults.style.display = 'none';
   }
 });
+
+// Toggle room device name edit form
+function toggleDeviceEdit(roomId) {
+  const el = document.getElementById('device-edit-' + roomId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 
 // Auto-scroll to current time on page load
 document.addEventListener('DOMContentLoaded', function () {
