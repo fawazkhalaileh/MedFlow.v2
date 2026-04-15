@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Operations Board - MedFlow CRM')
-@section('breadcrumb', 'Operations Board')
+@section('title', __('Operations Board') . ' - MedFlow CRM')
+@section('breadcrumb', __('Operations Board'))
 
 @section('content')
 
@@ -14,30 +14,30 @@
 <div class="page-header animate-in">
   <div>
     <h1 class="page-title">{{ __('Operations Board') }}</h1>
-    <p class="page-subtitle">Live branch overview &bull; {{ now()->format('l, d F Y') }}</p>
+    <p class="page-subtitle">{{ __('Live branch overview') }} &bull; {{ now()->format('l, d F Y') }}</p>
   </div>
   <button onclick="location.reload()" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-    Refresh
+    {{ __('Refresh') }}
   </button>
 </div>
 
 {{-- KPI ROW --}}
 <div class="kpi-grid animate-in" style="animation-delay:.04s;">
   <div class="kpi-card">
-    <div class="kpi-label">Total Today</div>
+    <div class="kpi-label">{{ __('Total Today') }}</div>
     <div class="kpi-value">{{ $stats['total'] }}</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">In Clinic Now</div>
+    <div class="kpi-label">{{ __('In Clinic Now') }}</div>
     <div class="kpi-value" style="color:var(--accent);">{{ $stats['in_clinic'] }}</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">Completed</div>
+    <div class="kpi-label">{{ __('Completed') }}</div>
     <div class="kpi-value" style="color:var(--success);">{{ $stats['completed'] }}</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">No Shows</div>
+    <div class="kpi-label">{{ __('No Shows') }}</div>
     <div class="kpi-value" style="color:{{ $stats['no_shows'] > 0 ? 'var(--danger)' : 'var(--text-tertiary)' }};">{{ $stats['no_shows'] }}</div>
   </div>
 </div>
@@ -69,14 +69,14 @@
 
         @php
           $pipelineConfig = [
-            'booked'           => ['label'=>'Booked',      'color'=>'var(--text-tertiary)', 'badge'=>'badge-gray'],
-            'confirmed'        => ['label'=>'Confirmed',   'color'=>'var(--info)',           'badge'=>'badge-cyan'],
-            'arrived'          => ['label'=>'Arrived',     'color'=>'var(--warning)',         'badge'=>'badge-yellow'],
-            'in_progress'      => ['label'=>'In Progress', 'color'=>'var(--accent)',          'badge'=>'badge-blue'],
-            'review_needed'    => ['label'=>'Review',      'color'=>'#7c3aed',               'badge'=>'badge-purple'],
-            'completed'        => ['label'=>'Done',        'color'=>'var(--success)',         'badge'=>'badge-green'],
-            'follow_up_needed' => ['label'=>'Follow-up',  'color'=>'var(--warning)',         'badge'=>'badge-yellow'],
-            'no_show'          => ['label'=>'No Show',     'color'=>'var(--danger)',          'badge'=>'badge-red'],
+            'booked' => ['label' => __('Booked'), 'color' => 'var(--text-tertiary)', 'badge' => 'badge-gray'],
+            'confirmed' => ['label' => __('Confirmed'), 'color' => 'var(--info)', 'badge' => 'badge-cyan'],
+            'arrived' => ['label' => __('Arrived'), 'color' => 'var(--warning)', 'badge' => 'badge-yellow'],
+            'in_progress' => ['label' => __('In Progress'), 'color' => 'var(--accent)', 'badge' => 'badge-blue'],
+            'review_needed' => ['label' => __('Review'), 'color' => '#7c3aed', 'badge' => 'badge-purple'],
+            'completed' => ['label' => __('Done'), 'color' => 'var(--success)', 'badge' => 'badge-green'],
+            'follow_up_needed' => ['label' => __('Follow-up'), 'color' => 'var(--warning)', 'badge' => 'badge-yellow'],
+            'no_show' => ['label' => __('No Show'), 'color' => 'var(--danger)', 'badge' => 'badge-red'],
           ];
         @endphp
 
@@ -90,7 +90,7 @@
           </div>
 
           @if($col->isEmpty())
-          <div style="border:2px dashed var(--border);border-radius:var(--radius-md);padding:16px 8px;text-align:center;color:var(--text-tertiary);font-size:.75rem;">—</div>
+          <div style="border:2px dashed var(--border);border-radius:var(--radius-md);padding:16px 8px;text-align:center;color:var(--text-tertiary);font-size:.75rem;">&mdash;</div>
           @endif
 
           @foreach($col as $appt)
@@ -114,7 +114,7 @@
   <div>
     <div class="card">
       <div class="card-header" style="margin-bottom:12px;">
-        <div class="card-title">Staff Today</div>
+        <div class="card-title">{{ __('Staff Today') }}</div>
       </div>
       @forelse($staff as $s)
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);">
@@ -123,17 +123,17 @@
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:.83rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $s->first_name }} {{ $s->last_name }}</div>
-          <div style="font-size:.72rem;color:var(--text-tertiary);">{{ ucfirst($s->employee_type) }}</div>
+          <div style="font-size:.72rem;color:var(--text-tertiary);">{{ __(\Illuminate\Support\Str::headline($s->employee_type)) }}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-size:.8rem;font-weight:600;">{{ $s->today_count }}</div>
           @if($s->active_count > 0)
-          <div style="font-size:.7rem;color:var(--accent);">{{ $s->active_count }} active</div>
+          <div style="font-size:.7rem;color:var(--accent);">{{ $s->active_count }} {{ __('active') }}</div>
           @endif
         </div>
       </div>
       @empty
-      <p style="color:var(--text-tertiary);font-size:.82rem;">No active staff</p>
+      <p style="color:var(--text-tertiary);font-size:.82rem;">{{ __('No active staff') }}</p>
       @endforelse
     </div>
   </div>

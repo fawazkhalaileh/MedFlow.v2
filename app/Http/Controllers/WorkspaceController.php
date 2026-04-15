@@ -11,6 +11,7 @@ use App\Models\Room;
 use App\Models\Transaction;
 use App\Models\TreatmentPlan;
 use App\Models\User;
+use App\Services\PackageService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -343,6 +344,10 @@ class WorkspaceController extends Controller
         }
 
         $appointment->save();
+
+        if ($request->status === Appointment::STATUS_COMPLETED && $appointment->patient_package_id) {
+            app(PackageService::class)->recordAppointmentUsage(Auth::user(), $appointment);
+        }
 
         return back()->with('success', 'Status updated to ' . ucfirst(str_replace('_', ' ', $request->status)) . '.');
     }

@@ -6,7 +6,7 @@
   {{-- Safety Banner --}}
   @if($contraFlag)
   <div style="background:var(--danger-light);border-radius:var(--radius-sm);padding:5px 8px;margin-bottom:9px;font-size:.73rem;color:var(--danger);font-weight:600;">
-    ⚠ Contraindication flagged — verify before treatment
+    {{ __('Contraindication flagged — verify before treatment') }}
   </div>
   @endif
 
@@ -16,7 +16,7 @@
       {{ strtoupper(substr($appt->patient?->first_name ?? '?',0,1).substr($appt->patient?->last_name ?? '',0,1)) }}
     </div>
     <div>
-      <div style="font-weight:600;font-size:.85rem;">{{ $appt->patient?->full_name ?? 'Unknown' }}</div>
+      <div style="font-weight:600;font-size:.85rem;">{{ $appt->patient?->full_name ?? __('Unknown') }}</div>
       <div style="font-size:.72rem;color:var(--text-tertiary);">{{ $appt->patient?->patient_code }}</div>
     </div>
   </div>
@@ -43,7 +43,7 @@
   {{-- Room --}}
   @if($appt->room)
   <div style="font-size:.74rem;color:var(--text-tertiary);margin-bottom:8px;">
-    Room: <strong style="color:var(--text-secondary);">{{ $appt->room->name }}</strong>
+    {{ __('Room:') }} <strong style="color:var(--text-secondary);">{{ $appt->room->name }}</strong>
   </div>
   @endif
 
@@ -58,7 +58,7 @@
   </form>
   @else
   <div style="text-align:center;font-size:.78rem;color:var(--success);font-weight:600;padding:4px 0;">
-    ✓ Complete
+    {{ __('Complete') }}
   </div>
   @endif
 

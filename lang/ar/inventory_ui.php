@@ -74,6 +74,7 @@ return [
     'movements' => [
         'stock_in' => 'إضافة مخزون',
         'usage' => 'استخدام',
+        'waste' => 'هدر',
         'transfer_out' => 'نقل صادر',
         'transfer_in' => 'نقل وارد',
     ],
@@ -100,6 +101,10 @@ return [
         'description' => 'الوصف / الملاحظات',
         'unit_cost' => 'تكلفة الوحدة',
         'opening' => 'افتتاحي',
+        'patient' => 'المريض',
+        'no_patient' => 'بدون مريض',
+        'waste_entry' => 'كمية مهدورة / متلفة',
+        'usage_split_hint' => 'أدخل الكمية المستخدمة للمريض، وإذا لزم الأمر أدخل الكمية المهدورة أو المتلفة من نفس الصنف.',
     ],
     'forms' => [
         'item_name' => 'اسم العنصر',
@@ -116,8 +121,12 @@ return [
         'unit_cost_optional' => 'تكلفة الوحدة (اختياري)',
         'add_stock' => 'إضافة مخزون',
         'select_branch_item' => 'اختر عنصر الفرع',
+        'patient_optional' => 'المريض (اختياري)',
         'quantity_used' => 'الكمية المستخدمة',
+        'quantity_used_on_patient' => 'الكمية المستخدمة للمريض',
+        'quantity_wasted' => 'الكمية المهدورة / المتلفة',
         'deduct_stock' => 'خصم الكمية',
+        'record_usage' => 'تسجيل الاستخدام',
         'destination_branch' => 'الفرع المستلم',
         'quantity_to_transfer' => 'الكمية المنقولة',
         'internal_price_optional' => 'السعر الداخلي (اختياري)',
@@ -126,11 +135,14 @@ return [
     'messages' => [
         'item_created' => 'تم إنشاء عنصر المخزون :name.',
         'stock_added' => 'تمت إضافة :quantity :unit من :name إلى :branch.',
-        'usage_recorded' => 'تم تسجيل استخدام :quantity :unit من :name.',
+        'usage_recorded' => 'تم تسجيل حركة المخزون للصنف :name: استُخدم :used_quantity :unit للمريض :patient وتم إهدار :wasted_quantity :unit.',
         'transfer_created' => 'تم إنشاء نقل لـ :quantity :unit من :name إلى :branch.',
         'transfer_approved' => 'تم اعتماد النقل رقم :id.',
         'transfer_sent' => 'تم إرسال النقل رقم :id.',
         'transfer_received' => 'تم استلام النقل رقم :id.',
         'transfer_cancelled' => 'تم إلغاء النقل رقم :id.',
+    ],
+    'validation' => [
+        'usage_quantity_required' => 'أدخل كمية مستخدمة أو كمية مهدورة أو كلاهما.',
     ],
 ];

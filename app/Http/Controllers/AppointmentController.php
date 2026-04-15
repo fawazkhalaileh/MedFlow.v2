@@ -7,6 +7,7 @@ use App\Models\AppointmentReason;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Patient;
+use App\Models\PatientPackage;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -122,7 +123,15 @@ class AppointmentController extends Controller
             ? Branch::where('status', 'active')->orderBy('name')->get()
             : Branch::where('id', $branchId)->get();
 
-        return view('appointments.create', compact('prePatient', 'services', 'staff', 'reasons', 'branches', 'branchId'));
+        $patientPackages = PatientPackage::query()
+            ->with(['patient', 'package'])
+            ->where('company_id', $user->company_id)
+            ->when($branchId, fn($query) => $query->where('branch_id', $branchId))
+            ->where('status', PatientPackage::STATUS_ACTIVE)
+            ->orderByDesc('purchased_at')
+            ->get();
+
+        return view('appointments.create', compact('prePatient', 'services', 'staff', 'reasons', 'branches', 'branchId', 'patientPackages'));
     }
 
     // -----------------------------------------------------------------------
@@ -140,6 +149,7 @@ class AppointmentController extends Controller
             'scheduled_time'    => 'required',
             'duration_minutes'  => 'nullable|integer|min:5|max:480',
             'assigned_staff_id' => 'nullable|exists:users,id',
+            'patient_package_id' => 'nullable|exists:patient_packages,id',
             'appointment_type'  => 'nullable|in:booked,walk_in',
             'reason_id'         => 'nullable|exists:appointment_reasons,id',
             'reason_notes'      => 'nullable|string|max:500',
@@ -151,16 +161,44 @@ class AppointmentController extends Controller
             $data['scheduled_date'] . ' ' . $data['scheduled_time']
         );
 
+        if ($scopedBranchId = $user->scopedBranchId()) {
+            abort_unless((int) $data['branch_id'] === (int) $scopedBranchId, 404);
+        }
+
         // Auto-fill duration from service if not specified
         $service  = Service::find($data['service_id']);
         $duration = $data['duration_minutes'] ?? $service->duration_minutes ?? 60;
 
         $company = Company::first();
 
+        Patient::query()
+            ->where('company_id', $company->id)
+            ->where('branch_id', $data['branch_id'])
+            ->findOrFail((int) $data['patient_id']);
+
+        $patientPackage = null;
+
+        if (!empty($data['patient_package_id'])) {
+            $patientPackage = PatientPackage::query()
+                ->where('company_id', $company->id)
+                ->where('branch_id', $data['branch_id'])
+                ->findOrFail((int) $data['patient_package_id']);
+
+            if ($patientPackage->patient_id !== (int) $data['patient_id']
+                || $patientPackage->package?->service_id !== (int) $data['service_id']
+                || !$patientPackage->isUsable()
+            ) {
+                return back()
+                    ->withErrors(['patient_package_id' => 'Selected patient package must be active and match the patient, service, and branch.'])
+                    ->withInput();
+            }
+        }
+
         $appointment = Appointment::create([
             'company_id'        => $company->id,
             'branch_id'         => $data['branch_id'],
             'patient_id'        => $data['patient_id'],
+            'patient_package_id'=> $patientPackage?->id,
             'service_id'        => $data['service_id'],
             'assigned_staff_id' => $data['assigned_staff_id'] ?? null,
             'booked_by'         => $user->id,

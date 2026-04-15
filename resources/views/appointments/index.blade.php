@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Appointments - MedFlow CRM')
-@section('breadcrumb', 'Appointments')
+@section('title', __('Appointments') . ' - MedFlow CRM')
+@section('breadcrumb', __('Appointments'))
 
 @section('content')
 <div class="page-header animate-in">
@@ -24,7 +24,7 @@
   <select name="status" class="filter-select" onchange="this.form.submit()">
     <option value="">{{ __('All Statuses') }}</option>
     @foreach($statuses as $s)
-    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
+    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ __(\Illuminate\Support\Str::headline($s)) }}</option>
     @endforeach
   </select>
   @if(request()->anyFilled(['branch','status']) || request('date') !== today()->format('Y-m-d'))
@@ -75,7 +75,7 @@
             {{ \Carbon\Carbon::parse($appt->scheduled_at)->format('h:i A') }}
           </td>
           <td>
-            <div style="font-weight:500;">{{ $appt->patient?->full_name ?? 'Unknown' }}</div>
+            <div style="font-weight:500;">{{ $appt->patient?->full_name ?? __('Unknown') }}</div>
             <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $appt->patient?->phone }}</div>
           </td>
           <td style="color:var(--text-secondary);font-size:.84rem;">{{ $appt->service?->name ?? '--' }}</td>
@@ -99,7 +99,7 @@
                 'rescheduled' => 'badge-yellow',
               ][$appt->status] ?? 'badge-gray';
             @endphp
-            <span class="badge {{ $sc }}">{{ ucfirst(str_replace('_',' ',$appt->status)) }}</span>
+            <span class="badge {{ $sc }}">{{ __(\Illuminate\Support\Str::headline($appt->status)) }}</span>
           </td>
         </tr>
         @empty
@@ -120,7 +120,7 @@
   @if($appointments->hasPages())
   <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:.82rem;color:var(--text-secondary);">
-      {{ __('Showing') }} {{ $appointments->firstItem() }}–{{ $appointments->lastItem() }} {{ __('of') }} {{ $appointments->total() }}
+      {{ __('Showing') }} {{ $appointments->firstItem() }}&ndash;{{ $appointments->lastItem() }} {{ __('of') }} {{ $appointments->total() }}
     </div>
     <div style="display:flex;gap:6px;">
       @if($appointments->onFirstPage())

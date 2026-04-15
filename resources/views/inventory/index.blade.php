@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('inventory_ui.workspace_title').' - MedFlow CRM')
 @section('breadcrumb', __('inventory_ui.workspace_title'))
@@ -12,6 +12,7 @@
   $transferStatuses = BranchTransfer::statuses();
   $user = auth()->user();
   $isAdminInventoryView = $scopedBranchId === null;
+  $formatQuantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
 @endphp
 
 <div class="page-header animate-in">
@@ -92,7 +93,7 @@
                 <div style="font-size:.73rem;color:var(--text-tertiary);">{{ $inventory->inventoryItem?->sku ?: __('inventory_ui.labels.no_sku') }}</div>
               </td>
               <td>
-                <span class="badge badge-red">{{ $inventory->current_stock }} {{ $inventory->inventoryItem?->unit }}</span>
+                <span class="badge badge-red">{{ $formatQuantity($inventory->current_stock) }} {{ $inventory->inventoryItem?->unit }}</span>
               </td>
               <td>{{ $inventory->low_stock_threshold }}</td>
               <td>{{ $inventory->nearest_expiry ? Carbon::parse($inventory->nearest_expiry)->format('d M Y') : __('inventory_ui.labels.no_dated_batches') }}</td>
@@ -142,13 +143,13 @@
               <td>{{ $inventory->branch?->name }}</td>
               <td>
                 <div style="font-weight:600;">{{ $inventory->inventoryItem?->name }}</div>
-                <div style="font-size:.73rem;color:var(--text-tertiary);">{{ $inventory->inventoryItem?->sku ?: __('inventory_ui.labels.no_sku') }} · {{ $inventory->inventoryItem?->unit }}</div>
+                <div style="font-size:.73rem;color:var(--text-tertiary);">{{ $inventory->inventoryItem?->sku ?: __('inventory_ui.labels.no_sku') }} &middot; {{ $inventory->inventoryItem?->unit }}</div>
               </td>
               <td>
                 <div style="font-weight:600;color:{{ $inventory->low_stock ? 'var(--danger)' : 'var(--text-primary)' }};">
-                  {{ $inventory->current_stock }} {{ $inventory->inventoryItem?->unit }}
+                  {{ $formatQuantity($inventory->current_stock) }} {{ $inventory->inventoryItem?->unit }}
                 </div>
-                <div style="font-size:.73rem;color:var(--text-tertiary);">{{ __('inventory_ui.states.available_quantity') }} · {{ $inventory->low_stock_threshold }}</div>
+                <div style="font-size:.73rem;color:var(--text-tertiary);">{{ __('inventory_ui.states.available_quantity') }} &middot; {{ $inventory->low_stock_threshold }}</div>
               </td>
               <td>
                 @forelse($inventory->batches->take(3) as $batch)
@@ -157,7 +158,7 @@
                   $batchNearExpiry = $batch->expires_on && !$batchExpired && $batch->expires_on->diffInDays(now()) <= 30;
                 @endphp
                 <div style="font-size:.75rem;color:var(--text-secondary);margin-bottom:6px;">
-                  <span class="badge badge-gray" style="margin-right:4px;">{{ $batch->quantity_remaining }}</span>
+                  <span class="badge badge-gray" style="margin-right:4px;">{{ $formatQuantity($batch->quantity_remaining) }}</span>
                   {{ $batch->batch_number ?: __('inventory_ui.labels.unnumbered_batch') }}
                   @if($batchExpired)
                   <span class="badge badge-red" style="margin-left:4px;">{{ __('inventory_ui.states.expired') }}</span>
@@ -226,16 +227,16 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div>
               <div style="font-weight:600;font-size:.85rem;">{{ $batch->branchInventory?->inventoryItem?->name }}</div>
-              <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $batch->branchInventory?->branch?->name }} · {{ $batch->batch_number ?: __('inventory_ui.labels.unnumbered_batch') }}</div>
+              <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $batch->branchInventory?->branch?->name }} &middot; {{ $batch->batch_number ?: __('inventory_ui.labels.unnumbered_batch') }}</div>
             </div>
-            <span class="badge {{ $expired ? 'badge-red' : ($nearExpiry ? 'badge-yellow' : 'badge-gray') }}">{{ $batch->quantity_remaining }}</span>
+            <span class="badge {{ $expired ? 'badge-red' : ($nearExpiry ? 'badge-yellow' : 'badge-gray') }}">{{ $formatQuantity($batch->quantity_remaining) }}</span>
           </div>
           <div style="font-size:.75rem;color:var(--text-secondary);margin-top:6px;">
             {{ __('inventory_ui.forms.expiry_date') }} {{ $batch->expires_on?->format('d M Y') }}
             @if($expired)
-            · {{ __('inventory_ui.states.expired') }}
+            &middot; {{ __('inventory_ui.states.expired') }}
             @elseif($nearExpiry)
-            · {{ __('inventory_ui.states.near_expiry') }}
+            &middot; {{ __('inventory_ui.states.near_expiry') }}
             @endif
           </div>
         </div>
@@ -264,7 +265,7 @@
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
             <div>
               <div style="font-weight:600;font-size:.85rem;">{{ $transfer->inventoryItem?->name }}</div>
-              <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $transfer->sourceBranch?->name }} → {{ $transfer->destinationBranch?->name }}</div>
+              <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $transfer->sourceBranch?->name }} &rarr; {{ $transfer->destinationBranch?->name }}</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
               <span class="badge badge-blue">{{ $transfer->quantity }}</span>
@@ -274,11 +275,11 @@
             </div>
           </div>
           <div style="font-size:.75rem;color:var(--text-secondary);margin-top:6px;">
-            {{ __('inventory_ui.transfers.'.$transfer->transfer_type) }} ·
-            {{ $transfer->transferred_at?->format('d M, h:i A') }} ·
+            {{ __('inventory_ui.transfers.'.$transfer->transfer_type) }} &middot;
+            {{ $transfer->transferred_at?->format('d M, h:i A') }} &middot;
             {{ $transfer->transferredBy?->full_name }}
             @if($transfer->internal_unit_price !== null)
-            · {{ __('inventory_ui.transfers.internal_price') }} {{ number_format((float) $transfer->internal_unit_price, 2) }}
+            &middot; {{ __('inventory_ui.transfers.internal_price') }} {{ number_format((float) $transfer->internal_unit_price, 2) }}
             @endif
           </div>
           @if($transfer->notes)
@@ -330,11 +331,19 @@
       <div style="padding:10px 0;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;gap:14px;">
         <div>
           <div style="font-weight:600;font-size:.84rem;">{{ $movement->inventoryItem?->name }}</div>
-          <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $movement->branch?->name }} · {{ __('inventory_ui.movements.'.$movement->movement_type) }}</div>
+          <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $movement->branch?->name }} &middot; {{ __('inventory_ui.movements.'.$movement->movement_type) }}</div>
+          @if($movement->patient)
+          <div style="font-size:.74rem;color:var(--text-secondary);margin-top:2px;">{{ __('inventory_ui.labels.patient') }}: {{ $movement->patient->full_name }}</div>
+          @elseif($movement->movement_type === \App\Models\InventoryMovement::TYPE_WASTE)
+          <div style="font-size:.74rem;color:var(--text-secondary);margin-top:2px;">{{ __('inventory_ui.labels.waste_entry') }}</div>
+          @endif
+          @if($movement->notes)
+          <div style="font-size:.74rem;color:var(--text-tertiary);margin-top:2px;">{{ $movement->notes }}</div>
+          @endif
         </div>
         <div style="text-align:right;">
           <div style="font-weight:600;color:{{ $movement->quantity_change < 0 ? 'var(--danger)' : 'var(--success)' }};">
-            {{ $movement->quantity_change > 0 ? '+' : '' }}{{ $movement->quantity_change }}
+            {{ $movement->quantity_change > 0 ? '+' : '' }}{{ $formatQuantity($movement->quantity_change) }}
           </div>
           <div style="font-size:.74rem;color:var(--text-tertiary);">{{ $movement->occurred_at?->format('d M, h:i A') }}</div>
         </div>
@@ -385,10 +394,10 @@
         <select name="inventory_item_id" class="form-select" required>
           <option value="">{{ __('inventory_ui.forms.select_item') }}</option>
           @foreach($inventoryItems as $item)
-          <option value="{{ $item->id }}" {{ old('inventory_item_id') == $item->id ? 'selected' : '' }}>{{ $item->name }}{{ $item->sku ? ' · '.$item->sku : '' }}</option>
+          <option value="{{ $item->id }}" {{ old('inventory_item_id') == $item->id ? 'selected' : '' }}>{{ $item->name }}{{ $item->sku ? ' &middot; '.$item->sku : '' }}</option>
           @endforeach
         </select>
-        <input type="number" min="1" step="1" name="quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity') }}" value="{{ old('quantity') }}" required>
+        <input type="number" min="0.01" step="0.01" name="quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity') }}" value="{{ old('quantity') }}" required>
         <input type="text" name="batch_number" class="form-input" placeholder="{{ __('inventory_ui.forms.batch_number_optional') }}" value="{{ old('batch_number') }}">
         <div style="display:grid;gap:6px;">
           <label for="inventory-expires-on" style="font-size:.78rem;font-weight:600;color:var(--text-secondary);">{{ __('inventory_ui.forms.expiry_date') }}</label>
@@ -422,13 +431,23 @@
           <option value="">{{ __('inventory_ui.forms.select_branch_item') }}</option>
           @foreach($branchInventories as $inventory)
           <option value="{{ $inventory->id }}" {{ old('branch_inventory_id') == $inventory->id ? 'selected' : '' }}>
-            {{ $inventory->branch?->name }} · {{ $inventory->inventoryItem?->name }} ({{ $inventory->current_stock }} {{ $inventory->inventoryItem?->unit }})
+            {{ $inventory->branch?->name }} &middot; {{ $inventory->inventoryItem?->name }} ({{ $formatQuantity($inventory->current_stock) }} {{ $inventory->inventoryItem?->unit }})
           </option>
           @endforeach
         </select>
-        <input type="number" min="1" step="1" name="quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity_used') }}" value="{{ old('quantity') }}" required>
+        <select name="patient_id" class="form-select">
+          <option value="">{{ __('inventory_ui.forms.patient_optional') }}</option>
+          @foreach($patients as $patient)
+          <option value="{{ $patient->id }}" {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
+            {{ $patient->full_name }}{{ !$scopedBranchId ? ' &middot; '.$patient->branch?->name : '' }}
+          </option>
+          @endforeach
+        </select>
+        <input type="number" min="0" step="0.01" name="used_quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity_used_on_patient') }}" value="{{ old('used_quantity', old('quantity')) }}">
+        <input type="number" min="0" step="0.01" name="wasted_quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity_wasted') }}" value="{{ old('wasted_quantity') }}">
+        <div style="font-size:.75rem;color:var(--text-tertiary);">{{ __('inventory_ui.labels.usage_split_hint') }}</div>
         <textarea name="notes" class="form-textarea" placeholder="{{ __('inventory_ui.labels.usage_notes') }}">{{ old('notes') }}</textarea>
-        <button type="submit" class="btn btn-primary btn-sm" style="justify-content:center;">{{ __('inventory_ui.forms.deduct_stock') }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="justify-content:center;">{{ __('inventory_ui.forms.record_usage') }}</button>
       </form>
       @endif
     </div>
@@ -450,7 +469,7 @@
           <option value="">{{ __('inventory_ui.forms.select_branch_item') }}</option>
           @foreach($branchInventories as $inventory)
           <option value="{{ $inventory->id }}" {{ old('branch_inventory_id') == $inventory->id ? 'selected' : '' }}>
-            {{ $inventory->branch?->name }} · {{ $inventory->inventoryItem?->name }} ({{ $inventory->current_stock }} {{ $inventory->inventoryItem?->unit }})
+            {{ $inventory->branch?->name }} &middot; {{ $inventory->inventoryItem?->name }} ({{ $formatQuantity($inventory->current_stock) }} {{ $inventory->inventoryItem?->unit }})
           </option>
           @endforeach
         </select>
@@ -469,7 +488,7 @@
           </option>
           @endforeach
         </select>
-        <input type="number" min="1" step="1" name="quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity_to_transfer') }}" value="{{ old('quantity') }}" required>
+        <input type="number" min="0.01" step="0.01" name="quantity" class="form-input" placeholder="{{ __('inventory_ui.forms.quantity_to_transfer') }}" value="{{ old('quantity') }}" required>
         <input type="number" min="0" step="0.01" name="internal_unit_price" class="form-input" placeholder="{{ __('inventory_ui.forms.internal_price_optional') }}" value="{{ old('internal_unit_price') }}">
         <textarea name="notes" class="form-textarea" placeholder="{{ __('inventory_ui.labels.transfer_notes') }}">{{ old('notes') }}</textarea>
         <button type="submit" class="btn btn-primary btn-sm" style="justify-content:center;">{{ __('inventory_ui.forms.create_transfer') }}</button>
@@ -479,3 +498,4 @@
   </div>
 </div>
 @endsection
+

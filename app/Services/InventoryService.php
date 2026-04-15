@@ -9,6 +9,7 @@ use App\Models\BranchTransfer;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class InventoryService
         User $user,
         InventoryItem $inventoryItem,
         Branch $branch,
-        int $quantity,
+        float $quantity,
         ?string $batchNumber,
         ?string $expiresOn,
         string $receivedOn,
@@ -47,12 +48,12 @@ class InventoryService
                 ],
                 [
                     'company_id' => $inventoryItem->company_id,
-                    'low_stock_threshold' => max(0, (int) ($lowStockThreshold ?? 5)),
+                    'low_stock_threshold' => max(0, (float) ($lowStockThreshold ?? 5)),
                 ]
             );
 
             if ($lowStockThreshold !== null && $branchInventory->low_stock_threshold !== $lowStockThreshold) {
-                $branchInventory->update(['low_stock_threshold' => max(0, $lowStockThreshold)]);
+                $branchInventory->update(['low_stock_threshold' => max(0, (float) $lowStockThreshold)]);
             }
 
             $batch = InventoryBatch::create([
@@ -108,12 +109,14 @@ class InventoryService
     public function deductStock(
         User $user,
         BranchInventory $branchInventory,
-        int $quantity,
+        float $quantity,
         string $movementType = InventoryMovement::TYPE_USAGE,
         ?string $notes = null,
-        ?BranchTransfer $branchTransfer = null
+        ?BranchTransfer $branchTransfer = null,
+        ?Patient $patient = null,
+        array $meta = []
     ): Collection {
-        return DB::transaction(function () use ($user, $branchInventory, $quantity, $movementType, $notes, $branchTransfer) {
+        return DB::transaction(function () use ($user, $branchInventory, $quantity, $movementType, $notes, $branchTransfer, $patient, $meta) {
             $availableBatches = $branchInventory->batches()
                 ->available()
                 ->orderByRaw('case when expires_on is null then 1 else 0 end')
@@ -123,7 +126,7 @@ class InventoryService
                 ->lockForUpdate()
                 ->get();
 
-            $availableQuantity = (int) $availableBatches->sum('quantity_remaining');
+            $availableQuantity = (float) $availableBatches->sum('quantity_remaining');
 
             if ($availableQuantity < $quantity) {
                 throw ValidationException::withMessages([
@@ -139,8 +142,8 @@ class InventoryService
                     break;
                 }
 
-                $take = min($remainingToDeduct, (int) $batch->quantity_remaining);
-                $before = (int) $batch->quantity_remaining;
+                $take = min($remainingToDeduct, (float) $batch->quantity_remaining);
+                $before = (float) $batch->quantity_remaining;
                 $after = $before - $take;
 
                 $batch->update([
@@ -154,6 +157,7 @@ class InventoryService
                     'branch_inventory_id' => $branchInventory->id,
                     'inventory_batch_id' => $batch->id,
                     'branch_transfer_id' => $branchTransfer?->id,
+                    'patient_id' => $patient?->id,
                     'movement_type' => $movementType,
                     'quantity_change' => $take * -1,
                     'quantity_before' => $before,
@@ -161,12 +165,12 @@ class InventoryService
                     'occurred_at' => now(),
                     'performed_by' => $user->id,
                     'notes' => $notes,
-                    'meta' => [
+                    'meta' => array_merge([
                         'batch_number' => $batch->batch_number,
                         'expires_on' => $batch->expires_on?->toDateString(),
                         'received_on' => $batch->received_on?->toDateString(),
                         'unit_cost' => $batch->unit_cost,
-                    ],
+                    ], $meta),
                 ]);
 
                 $deductions->push([
@@ -188,6 +192,20 @@ class InventoryService
                     [
                         'branch_inventory_id' => $branchInventory->id,
                         'quantity_used' => $quantity,
+                        'patient_id' => $patient?->id,
+                    ]
+                );
+            }
+
+            if ($movementType === InventoryMovement::TYPE_WASTE) {
+                ActivityLog::record(
+                    'inventory_wasted',
+                    $branchInventory,
+                    "Recorded {$quantity} {$branchInventory->inventoryItem->unit} of {$branchInventory->inventoryItem->name} as waste.",
+                    [],
+                    [
+                        'branch_inventory_id' => $branchInventory->id,
+                        'quantity_wasted' => $quantity,
                     ]
                 );
             }
@@ -196,11 +214,69 @@ class InventoryService
         });
     }
 
+    public function recordUsage(
+        User $user,
+        BranchInventory $branchInventory,
+        float $usedQuantity,
+        float $wastedQuantity = 0,
+        ?Patient $patient = null,
+        ?string $notes = null
+    ): Collection {
+        if ($usedQuantity <= 0 && $wastedQuantity <= 0) {
+            throw ValidationException::withMessages([
+                'used_quantity' => 'Enter a used quantity, a wasted quantity, or both.',
+            ]);
+        }
+
+        if ($patient && $usedQuantity <= 0) {
+            throw ValidationException::withMessages([
+                'patient_id' => 'Choose a patient only when stock is being used on that patient.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($user, $branchInventory, $usedQuantity, $wastedQuantity, $patient, $notes) {
+            $movements = collect();
+
+            if ($usedQuantity > 0) {
+                $movements = $movements->concat($this->deductStock(
+                    $user,
+                    $branchInventory,
+                    $usedQuantity,
+                    InventoryMovement::TYPE_USAGE,
+                    $notes,
+                    null,
+                    $patient,
+                    [
+                        'usage_scope' => 'patient',
+                        'patient_name' => $patient?->full_name,
+                    ]
+                ));
+            }
+
+            if ($wastedQuantity > 0) {
+                $movements = $movements->concat($this->deductStock(
+                    $user,
+                    $branchInventory,
+                    $wastedQuantity,
+                    InventoryMovement::TYPE_WASTE,
+                    $notes,
+                    null,
+                    null,
+                    [
+                        'usage_scope' => 'waste',
+                    ]
+                ));
+            }
+
+            return $movements;
+        });
+    }
+
     public function createTransfer(
         User $user,
         BranchInventory $sourceInventory,
         Branch $destinationBranch,
-        int $quantity,
+        float $quantity,
         string $transferType,
         ?string $internalUnitPrice = null,
         ?string $notes = null

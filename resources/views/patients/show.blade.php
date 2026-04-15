@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', $patient->full_name . ' - MedFlow CRM')
-@section('breadcrumb', 'Patients / ' . $patient->full_name)
+@section('breadcrumb', __('Patients') . ' / ' . $patient->full_name)
 
 @section('content')
 <div class="page-header animate-in">
@@ -13,25 +13,25 @@
       <h1 class="page-title" style="font-size:1.5rem;">{{ $patient->full_name }}</h1>
       <p class="page-subtitle">
         <span style="font-family:monospace;color:var(--accent);">{{ $patient->patient_code }}</span>
-        &bull; {{ $patient->branch?->name ?? 'No branch' }}
+        &bull; {{ $patient->branch?->name ?? __('No branch') }}
         @if($patient->status === 'vip') &bull; <span class="badge badge-purple">{{ __('VIP') }}</span> @endif
-        @if(!$patient->consent_given) &bull; <span class="badge badge-red">Consent Pending</span> @endif
+        @if(!$patient->consent_given) &bull; <span class="badge badge-red">{{ __('Consent Pending') }}</span> @endif
       </p>
     </div>
   </div>
   <div class="header-actions">
-    <a href="{{ route('ai.page') }}?patient_id={{ $patient->id }}" class="btn btn-secondary" title="Open AI with this patient loaded"
+    <a href="{{ route('ai.page') }}?patient_id={{ $patient->id }}" class="btn btn-secondary" title="{{ __('Open AI with this patient loaded') }}"
       style="border-color:rgba(124,58,237,.2);color:#7c3aed;background:linear-gradient(135deg,rgba(37,99,235,.05),rgba(124,58,237,.05));">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-      Ask AI
+      {{ __('Ask AI') }}
     </a>
     <a href="{{ route('patients.edit', $patient) }}" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Edit Patient
+      {{ __('Edit Patient') }}
     </a>
     <a href="{{ route('patients.index') }}" class="btn btn-secondary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
+      {{ __('Back') }}
     </a>
   </div>
 </div>
@@ -44,15 +44,15 @@
     {{-- Appointments --}}
     <div class="card" style="padding:0;">
       <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-        <div class="card-title">Recent Appointments</div>
-        <span class="badge badge-gray">{{ $patient->appointments->count() }} shown</span>
+        <div class="card-title">{{ __('Recent Appointments') }}</div>
+        <span class="badge badge-gray">{{ $patient->appointments->count() }} {{ __('shown') }}</span>
       </div>
       @if($patient->appointments->isEmpty())
-      <div class="empty-state" style="padding:32px;"><p>No appointments yet</p></div>
+      <div class="empty-state" style="padding:32px;"><p>{{ __('No appointments yet') }}</p></div>
       @else
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Date & Time</th><th>Service</th><th>Staff</th><th>{{ __('Status') }}</th></tr></thead>
+          <thead><tr><th>{{ __('Date & Time') }}</th><th>{{ __('Service') }}</th><th>{{ __('Staff') }}</th><th>{{ __('Status') }}</th></tr></thead>
           <tbody>
             @foreach($patient->appointments as $appt)
             <tr>
@@ -61,7 +61,7 @@
               <td style="font-size:.83rem;color:var(--text-secondary);">{{ $appt->assignedStaff?->first_name ?? '--' }}</td>
               <td>
                 @php $sc = ['scheduled'=>'badge-blue','confirmed'=>'badge-cyan','completed'=>'badge-green','cancelled'=>'badge-red','no_show'=>'badge-gray'][$appt->status] ?? 'badge-gray'; @endphp
-                <span class="badge {{ $sc }}">{{ ucfirst(str_replace('_',' ',$appt->status)) }}</span>
+                <span class="badge {{ $sc }}">{{ __(\Illuminate\Support\Str::headline($appt->status)) }}</span>
               </td>
             </tr>
             @endforeach
@@ -75,13 +75,13 @@
     @if($patient->treatmentPlans->isNotEmpty())
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Treatment Plans</div>
+        <div class="card-title">{{ __('Treatment Plans') }}</div>
       </div>
       @foreach($patient->treatmentPlans as $plan)
       <div style="padding:12px 0;border-bottom:1px solid var(--border-light);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-weight:500;font-size:.9rem;">{{ $plan->service?->name ?? $plan->name }}</div>
-          <span class="badge {{ $plan->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($plan->status) }}</span>
+          <span class="badge {{ $plan->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ __(\Illuminate\Support\Str::headline($plan->status)) }}</span>
         </div>
         <div style="margin-bottom:6px;">
           <div style="height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;">
@@ -89,7 +89,7 @@
           </div>
         </div>
         <div style="display:flex;gap:16px;font-size:.78rem;color:var(--text-tertiary);">
-          <span>{{ $plan->completed_sessions }} / {{ $plan->total_sessions }} sessions</span>
+          <span>{{ $plan->completed_sessions }} / {{ $plan->total_sessions }} {{ __('sessions') }}</span>
           @if($plan->total_price)<span>AED {{ number_format($plan->total_price) }}</span>@endif
         </div>
       </div>
@@ -372,16 +372,16 @@
     {{-- Clinical Flags --}}
     <div class="card" id="clinical-flags-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin:0;">Clinical Flags</div>
+        <div class="card-title" style="margin:0;">{{ __('Clinical Flags') }}</div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('add-flag-form').classList.toggle('hidden')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Flag
+          {{ __('Add Flag') }}
         </button>
       </div>
 
       {{-- Assigned Flags --}}
       @if($patient->clinicalFlags->isEmpty())
-        <p style="color:var(--text-tertiary);font-size:.83rem;margin-bottom:12px;">No clinical flags assigned yet.</p>
+        <p style="color:var(--text-tertiary);font-size:.83rem;margin-bottom:12px;">{{ __('No clinical flags assigned yet.') }}</p>
       @else
         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">
           @foreach($patient->clinicalFlags as $flag)
@@ -395,7 +395,7 @@
             @endif
             <form method="POST" action="{{ route('patient-flags.remove', [$patient, $flag]) }}" style="display:inline;margin-left:2px;">
               @csrf @method('DELETE')
-              <button type="submit" title="Remove flag" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;color:{{ $flag->color }};opacity:.7;line-height:1;"
+              <button type="submit" title="{{ __('Remove flag') }}" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;color:{{ $flag->color }};opacity:.7;line-height:1;"
                 onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.7">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -410,7 +410,7 @@
         <form method="POST" action="{{ route('patient-flags.assign', $patient) }}">
           @csrf
           <div style="margin-bottom:10px;">
-            <label style="font-size:.74rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Select Flag</label>
+            <label style="font-size:.74rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Select Flag') }}</label>
             <select name="flag_id" id="flag-select" class="filter-select" style="width:100%;"
               onchange="handleFlagSelect(this)">
               <option value="">— choose a flag —</option>
@@ -434,7 +434,7 @@
             </select>
           </div>
           <div id="flag-detail-wrap" class="hidden" style="margin-bottom:10px;">
-            <label style="font-size:.74rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">Detail</label>
+            <label style="font-size:.74rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Detail') }}</label>
             <input type="text" name="detail" id="flag-detail-input" maxlength="200"
               style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.83rem;font-family:inherit;background:var(--bg-secondary);"
               placeholder="e.g. Penicillin">
@@ -465,43 +465,43 @@
         </div>
         @if($patient->email)
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Email</span>
+          <span style="color:var(--text-secondary);">{{ __('Email') }}</span>
           <span>{{ $patient->email }}</span>
         </div>
         @endif
         <div style="display:flex;justify-content:space-between;">
           <span style="color:var(--text-secondary);">{{ __('Gender') }}</span>
-          <span>{{ ucfirst($patient->gender ?? '--') }}</span>
+          <span>{{ $patient->gender ? __(\Illuminate\Support\Str::headline($patient->gender)) : '--' }}</span>
         </div>
         @if($patient->date_of_birth)
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Age</span>
-          <span>{{ $patient->age }} years</span>
+          <span style="color:var(--text-secondary);">{{ __('Age') }}</span>
+          <span>{{ $patient->age }} {{ __('years') }}</span>
         </div>
         @endif
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Nationality</span>
+          <span style="color:var(--text-secondary);">{{ __('Nationality') }}</span>
           <span>{{ $patient->nationality ?? '--' }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Source</span>
-          <span>{{ ucfirst(str_replace('_',' ',$patient->source ?? '--')) }}</span>
+          <span style="color:var(--text-secondary);">{{ __('Source') }}</span>
+          <span>{{ $patient->source ? __(\Illuminate\Support\Str::headline($patient->source)) : '--' }}</span>
         </div>
         <div style="border-top:1px solid var(--border);padding-top:9px;display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Consent</span>
+          <span style="color:var(--text-secondary);">{{ __('Consent') }}</span>
           @if($patient->consent_given)
-            <span class="badge badge-green">Given</span>
+            <span class="badge badge-green">{{ __('Given') }}</span>
           @else
-            <span class="badge badge-red">Pending</span>
+            <span class="badge badge-red">{{ __('Pending') }}</span>
           @endif
         </div>
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Registered</span>
+          <span style="color:var(--text-secondary);">{{ __('Registered') }}</span>
           <span>{{ $patient->created_at->format('d M Y') }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-secondary);">Last Visit</span>
-          <span>{{ $patient->last_visit_at?->format('d M Y') ?? 'Never' }}</span>
+          <span style="color:var(--text-secondary);">{{ __('Last Visit') }}</span>
+          <span>{{ $patient->last_visit_at?->format('d M Y') ?? __('Never') }}</span>
         </div>
       </div>
     </div>
@@ -509,33 +509,33 @@
     {{-- Medical Info --}}
     @if($patient->medicalInfo)
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">Medical & Clinical</div>
+      <div class="card-title" style="margin-bottom:12px;">{{ __('Medical & Clinical') }}</div>
       @if($patient->medicalInfo->skin_type)
       <div style="margin-bottom:10px;">
-        <div style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:3px;">Skin Type (Fitzpatrick)</div>
-        <span class="badge badge-cyan">Type {{ $patient->medicalInfo->skin_type }}</span>
+        <div style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:3px;">{{ __('Skin Type (Fitzpatrick)') }}</div>
+        <span class="badge badge-cyan">{{ __('Type') }} {{ $patient->medicalInfo->skin_type }}</span>
         @if($patient->medicalInfo->skin_tone)
-        <span class="badge badge-gray" style="margin-left:4px;">{{ ucfirst($patient->medicalInfo->skin_tone) }}</span>
+        <span class="badge badge-gray" style="margin-left:4px;">{{ __(\Illuminate\Support\Str::headline($patient->medicalInfo->skin_tone)) }}</span>
         @endif
       </div>
       @endif
       @if($patient->medicalInfo->allergies)
       <div style="margin-bottom:8px;">
-        <div style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:3px;">Allergies</div>
+        <div style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:3px;">{{ __('Allergies') }}</div>
         <div style="font-size:.84rem;">{{ $patient->medicalInfo->allergies }}</div>
       </div>
       @endif
       @if($patient->medicalInfo->contraindications)
       <div style="margin-bottom:8px;padding:8px;background:var(--danger-light);border-radius:var(--radius-sm);border:1px solid #fca5a5;">
-        <div style="font-size:.75rem;color:var(--danger);font-weight:600;margin-bottom:3px;">Contraindications</div>
+        <div style="font-size:.75rem;color:var(--danger);font-weight:600;margin-bottom:3px;">{{ __('Contraindications') }}</div>
         <div style="font-size:.82rem;color:#991b1b;">{{ $patient->medicalInfo->contraindications }}</div>
       </div>
       @endif
       @if($patient->medicalInfo->is_pregnant || $patient->medicalInfo->has_pacemaker || $patient->medicalInfo->has_metal_implants)
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;">
-        @if($patient->medicalInfo->is_pregnant)  <span class="badge badge-red">Pregnant</span> @endif
-        @if($patient->medicalInfo->has_pacemaker) <span class="badge badge-red">Pacemaker</span> @endif
-        @if($patient->medicalInfo->has_metal_implants) <span class="badge badge-yellow">Metal Implants</span> @endif
+        @if($patient->medicalInfo->is_pregnant)  <span class="badge badge-red">{{ __('Pregnant') }}</span> @endif
+        @if($patient->medicalInfo->has_pacemaker) <span class="badge badge-red">{{ __('Pacemaker') }}</span> @endif
+        @if($patient->medicalInfo->has_metal_implants) <span class="badge badge-yellow">{{ __('Metal Implants') }}</span> @endif
       </div>
       @endif
     </div>
@@ -545,7 +545,7 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div class="card-title" style="margin:0;">Follow-ups</div>
+          <div class="card-title" style="margin:0;">{{ __('Follow-ups') }}</div>
           @if($patient->followUps->isNotEmpty())
           <span style="font-size:.73rem;background:var(--bg-tertiary);color:var(--text-tertiary);padding:2px 8px;border-radius:10px;font-weight:600;">{{ $patient->followUps->count() }}</span>
           @endif
@@ -563,7 +563,7 @@
           <input type="hidden" name="patient_id" value="{{ $patient->id }}">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             <div>
-              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Type</label>
+              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Type') }}</label>
               <select name="type" class="filter-select" style="width:100%;font-size:.84rem;" required>
                 <option value="call">📞 Call</option>
                 <option value="appointment">📅 Appointment</option>
@@ -572,7 +572,7 @@
               </select>
             </div>
             <div>
-              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">Due Date</label>
+              <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);display:block;margin-bottom:4px;">{{ __('Due Date') }}</label>
               <input type="date" name="due_date" required value="{{ today()->addDay()->format('Y-m-d') }}"
                 style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:var(--bg-secondary);">
             </div>
@@ -594,7 +594,7 @@
       </div>
 
       @if($patient->followUps->isEmpty())
-        <p style="color:var(--text-tertiary);font-size:.83rem;text-align:center;padding:12px 0;">No follow-ups scheduled.</p>
+        <p style="color:var(--text-tertiary);font-size:.83rem;text-align:center;padding:12px 0;">{{ __('No follow-ups scheduled.') }}</p>
       @else
       @foreach($patient->followUps as $fu)
       @php $fuOverdue = $fu->due_date->lt(today()) && $fu->status === 'pending'; @endphp

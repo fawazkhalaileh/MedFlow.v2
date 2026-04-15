@@ -13,6 +13,7 @@ use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ClinicalFlagController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionReceiptController;
@@ -178,6 +179,34 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventory', [InventoryController::class, 'index'])
         ->name('inventory.index')
         ->middleware('role:finance,branch_manager,system_admin');
+
+    Route::get('/packages', [PackageController::class, 'index'])
+        ->name('packages.index')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::post('/packages', [PackageController::class, 'store'])
+        ->name('packages.store')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::post('/packages/purchases', [PackageController::class, 'storePurchase'])
+        ->name('packages.purchases.store')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::get('/packages/{package}/edit', [PackageController::class, 'edit'])
+        ->name('packages.edit')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::put('/packages/{package}', [PackageController::class, 'update'])
+        ->name('packages.update')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::post('/packages/{package}/freeze', [PackageController::class, 'freeze'])
+        ->name('packages.freeze')
+        ->middleware('role:branch_manager,system_admin');
+
+    Route::post('/packages/{package}/unfreeze', [PackageController::class, 'unfreeze'])
+        ->name('packages.unfreeze')
+        ->middleware('role:branch_manager,system_admin');
 
     Route::post('/inventory/items', [InventoryController::class, 'storeItem'])
         ->name('inventory.items.store')

@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Patient;
 use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,13 @@ class InventoryController extends Controller
             ->orderBy('name')
             ->get();
 
+        $patients = Patient::query()
+            ->where('company_id', $company->id)
+            ->when($selectedBranchId, fn($query) => $query->where('branch_id', $selectedBranchId))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
         $lowStockAlerts = $branchInventories
             ->filter(fn(BranchInventory $inventory) => $inventory->low_stock)
             ->sortBy(fn(BranchInventory $inventory) => $inventory->current_stock)
@@ -96,7 +104,7 @@ class InventoryController extends Controller
             ->get();
 
         $recentMovements = InventoryMovement::query()
-            ->with(['branch', 'inventoryItem', 'performedBy'])
+            ->with(['branch', 'inventoryItem', 'performedBy', 'patient'])
             ->where('company_id', $company->id)
             ->when($selectedBranchId, fn($query) => $query->where('branch_id', $selectedBranchId))
             ->latest('occurred_at')
@@ -106,6 +114,7 @@ class InventoryController extends Controller
         return view('inventory.index', [
             'branchInventories' => $branchInventories,
             'inventoryItems' => $inventoryItems,
+            'patients' => $patients,
             'branches' => $branches,
             'destinationBranches' => $branches,
             'selectedBranchId' => $selectedBranchId,
@@ -164,7 +173,7 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'inventory_item_id' => ['required', 'integer', 'exists:inventory_items,id'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'numeric', 'min:0.01'],
             'batch_number' => ['nullable', 'string', 'max:80'],
             'expires_on' => ['nullable', 'date'],
             'received_on' => ['nullable', 'date'],
@@ -183,7 +192,7 @@ class InventoryController extends Controller
             $user,
             $inventoryItem,
             $branch,
-            (int) $validated['quantity'],
+            (float) $validated['quantity'],
             $validated['batch_number'] ?? null,
             $validated['expires_on'] ?? null,
             $validated['received_on'] ?? now()->toDateString(),
@@ -208,25 +217,51 @@ class InventoryController extends Controller
 
         $validated = $request->validate([
             'branch_inventory_id' => ['required', 'integer', 'exists:branch_inventories,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['nullable', 'numeric', 'min:0.01'],
+            'used_quantity' => ['nullable', 'numeric', 'min:0'],
+            'wasted_quantity' => ['nullable', 'numeric', 'min:0'],
+            'patient_id' => ['nullable', 'integer', 'exists:patients,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $branchInventory = $this->resolveBranchInventory($user, (int) $validated['branch_inventory_id']);
         $branchInventory->loadMissing('inventoryItem', 'branch');
 
-        $this->inventoryService->deductStock(
+        $usedQuantity = isset($validated['used_quantity'])
+            ? (float) $validated['used_quantity']
+            : (isset($validated['quantity']) ? (float) $validated['quantity'] : 0.0);
+        $wastedQuantity = isset($validated['wasted_quantity']) ? (float) $validated['wasted_quantity'] : 0.0;
+
+        if ($usedQuantity <= 0 && $wastedQuantity <= 0) {
+            return back()
+                ->withErrors(['used_quantity' => __('inventory_ui.validation.usage_quantity_required')])
+                ->withInput();
+        }
+
+        $patient = null;
+
+        if (!empty($validated['patient_id'])) {
+            $patient = Patient::query()
+                ->where('company_id', $user->company_id)
+                ->where('branch_id', $branchInventory->branch_id)
+                ->findOrFail((int) $validated['patient_id']);
+        }
+
+        $this->inventoryService->recordUsage(
             $user,
             $branchInventory,
-            (int) $validated['quantity'],
-            InventoryMovement::TYPE_USAGE,
+            $usedQuantity,
+            $wastedQuantity,
+            $patient,
             $validated['notes'] ?? null
         );
 
         return redirect()
             ->route('inventory.index', $this->inventoryRedirectParams($user, $branchInventory->branch))
             ->with('success', __('inventory_ui.messages.usage_recorded', [
-                'quantity' => $validated['quantity'],
+                'used_quantity' => $this->formatQuantity($usedQuantity),
+                'wasted_quantity' => $this->formatQuantity($wastedQuantity),
+                'patient' => $patient?->full_name ?: __('inventory_ui.labels.no_patient'),
                 'unit' => $branchInventory->inventoryItem->unit,
                 'name' => $branchInventory->inventoryItem->name,
             ]));
@@ -240,7 +275,7 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'branch_inventory_id' => ['required', 'integer', 'exists:branch_inventories,id'],
             'destination_branch_id' => ['required', 'integer', 'exists:branches,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'numeric', 'min:0.01'],
             'transfer_type' => ['required', Rule::in(BranchTransfer::transferTypes())],
             'internal_unit_price' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -257,7 +292,7 @@ class InventoryController extends Controller
             $user,
             $sourceInventory,
             $destinationBranch,
-            (int) $validated['quantity'],
+            (float) $validated['quantity'],
             $validated['transfer_type'],
             isset($validated['internal_unit_price']) ? (string) $validated['internal_unit_price'] : null,
             $validated['notes'] ?? null
@@ -381,5 +416,14 @@ class InventoryController extends Controller
     private function inventoryRedirectParams($user, Branch $branch): array
     {
         return $user->scopedBranchId() ? [] : ['branch' => $branch->id];
+    }
+
+    private function formatQuantity(float $quantity): string
+    {
+        if ($quantity <= 0) {
+            return '0';
+        }
+
+        return rtrim(rtrim(number_format($quantity, 2, '.', ''), '0'), '.');
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -169,6 +170,49 @@ class InventoryManagementTest extends TestCase
             'inventory_batch_id' => $laterBatch->id,
             'movement_type' => InventoryMovement::TYPE_USAGE,
             'quantity_change' => -1,
+        ]);
+    }
+
+    public function test_usage_can_be_split_between_patient_consumption_and_waste(): void
+    {
+        [$company, $branchOne, , $branchUser] = $this->makeInventoryUsers();
+
+        $item = InventoryItem::create([
+            'company_id' => $company->id,
+            'name' => 'Botox Vial',
+            'sku' => 'BTX-001',
+            'unit' => 'vial',
+        ]);
+
+        $patient = $this->makePatient($company, $branchOne, 'Lina', 'Haddad');
+        $branchInventory = $this->makeInventoryWithBatch($company, $branchOne, $item, 1.0, 0.5, '2026-08-01', 'BTX-V1');
+
+        $response = $this->actingAs($branchUser)->post(route('inventory.usage.store'), [
+            'branch_inventory_id' => $branchInventory->id,
+            'patient_id' => $patient->id,
+            'used_quantity' => '0.50',
+            'wasted_quantity' => '0.50',
+            'notes' => 'Half used during treatment, half discarded.',
+        ]);
+
+        $response->assertRedirect(route('inventory.index'));
+
+        $batch = $branchInventory->batches()->firstOrFail()->fresh();
+
+        $this->assertSame(0, $batch->quantity_remaining);
+        $this->assertDatabaseHas('inventory_movements', [
+            'branch_id' => $branchOne->id,
+            'inventory_item_id' => $item->id,
+            'patient_id' => $patient->id,
+            'movement_type' => InventoryMovement::TYPE_USAGE,
+            'quantity_change' => '-0.50',
+        ]);
+        $this->assertDatabaseHas('inventory_movements', [
+            'branch_id' => $branchOne->id,
+            'inventory_item_id' => $item->id,
+            'patient_id' => null,
+            'movement_type' => InventoryMovement::TYPE_WASTE,
+            'quantity_change' => '-0.50',
         ]);
     }
 
@@ -401,8 +445,8 @@ class InventoryManagementTest extends TestCase
         Company $company,
         Branch $branch,
         InventoryItem $item,
-        int $quantity,
-        int $lowStockThreshold,
+        float $quantity,
+        float $lowStockThreshold,
         string $expiresOn,
         ?string $batchNumber = 'BATCH-001'
     ): BranchInventory {
@@ -425,4 +469,24 @@ class InventoryManagementTest extends TestCase
 
         return $branchInventory;
     }
+
+    private function makePatient(Company $company, Branch $branch, string $firstName, string $lastName): Patient
+    {
+        return Patient::create([
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => strtolower($firstName).'.'.strtolower($lastName).'@test.com',
+            'phone' => '0770000000',
+            'date_of_birth' => '1995-01-01',
+            'gender' => 'female',
+            'source' => 'instagram',
+            'status' => 'active',
+            'registration_date' => now()->toDateString(),
+            'consent_given' => true,
+            'consent_given_at' => now(),
+        ]);
+    }
 }
+

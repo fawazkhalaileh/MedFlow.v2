@@ -110,6 +110,21 @@ class User extends Authenticatable
         return $this->hasMany(BranchTransfer::class, 'transferred_by');
     }
 
+    public function createdPackages(): HasMany
+    {
+        return $this->hasMany(Package::class, 'created_by');
+    }
+
+    public function purchasedPackages(): HasMany
+    {
+        return $this->hasMany(PatientPackage::class, 'purchased_by');
+    }
+
+    public function packageUsages(): HasMany
+    {
+        return $this->hasMany(PackageUsage::class, 'used_by');
+    }
+
     // --- Permission helpers ---
 
     public function hasRole(string $roleName, ?int $branchId = null): bool

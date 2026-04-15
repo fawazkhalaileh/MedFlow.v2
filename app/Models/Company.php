@@ -51,6 +51,21 @@ class Company extends Model
         return $this->hasMany(BranchInventory::class);
     }
 
+    public function packages(): HasMany
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function patientPackages(): HasMany
+    {
+        return $this->hasMany(PatientPackage::class);
+    }
+
+    public function packageUsages(): HasMany
+    {
+        return $this->hasMany(PackageUsage::class);
+    }
+
     public function activeBranches(): HasMany
     {
         return $this->branches()->where('status', 'active');
