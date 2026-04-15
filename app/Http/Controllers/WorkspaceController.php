@@ -310,6 +310,21 @@ class WorkspaceController extends Controller
         ));
     }
 
+    // Room device name update (branch_manager / system_admin only)
+    public function updateRoomDevice(\Illuminate\Http\Request $request, Room $room)
+    {
+        $request->validate(['device_name' => 'nullable|string|max:100']);
+
+        $user = Auth::user();
+        if ($user->employee_type !== 'system_admin' && $room->branch_id !== $user->primary_branch_id) {
+            abort(403);
+        }
+
+        $room->update(['device_name' => $request->device_name ?: null]);
+
+        return back()->with('success', 'Device name updated.');
+    }
+
     // Appointment status quick-update (used by all role pages)
     public function updateAppointmentStatus(\Illuminate\Http\Request $request, Appointment $appointment)
     {
