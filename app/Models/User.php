@@ -52,6 +52,16 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'created_by');
+    }
+
+    public function uploadedAttachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class, 'uploaded_by');
+    }
+
     public function primaryBranch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'primary_branch_id');

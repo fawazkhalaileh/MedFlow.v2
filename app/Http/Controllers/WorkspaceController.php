@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\ActivityLog;
 use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\FollowUp;
@@ -337,6 +338,7 @@ class WorkspaceController extends Controller
             'completed'      => 'completed_at',
         ];
 
+        $oldStatus = $appointment->status;
         $appointment->status = $request->status;
 
         if (isset($timestamps[$request->status]) && $timestamps[$request->status]) {
@@ -344,6 +346,14 @@ class WorkspaceController extends Controller
         }
 
         $appointment->save();
+
+        ActivityLog::record(
+            'appointment_status_updated',
+            $appointment,
+            "Appointment status changed from {$oldStatus} to {$request->status}.",
+            ['status' => $oldStatus],
+            ['status' => $request->status]
+        );
 
         if ($request->status === Appointment::STATUS_COMPLETED && $appointment->patient_package_id) {
             app(PackageService::class)->recordAppointmentUsage(Auth::user(), $appointment);

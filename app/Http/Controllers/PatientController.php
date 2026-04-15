@@ -6,13 +6,19 @@ use App\Models\Branch;
 use App\Models\ClinicalFlag;
 use App\Models\Company;
 use App\Models\Patient;
+use App\Models\PatientAttachment;
 use App\Models\PatientMedicalInfo;
 use App\Models\User;
+use App\Services\PatientHistoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PatientController extends Controller
 {
+    public function __construct(private readonly PatientHistoryService $patientHistoryService)
+    {
+    }
+
     /**
      * JSON search endpoint — used by appointment booking autocomplete.
      */
@@ -140,6 +146,8 @@ class PatientController extends Controller
 
     public function show(Patient $patient)
     {
+        $this->patientHistoryService->assertCanView(Auth::user(), $patient);
+
         $patient->load([
             'branch', 'assignedStaff', 'medicalInfo',
             'clinicalFlags',
@@ -147,11 +155,13 @@ class PatientController extends Controller
             'appointments' => fn($q) => $q->with(['service', 'assignedStaff'])->latest('scheduled_at')->limit(10),
             'notes'        => fn($q) => $q->with('createdBy')->latest()->limit(30),
             'followUps'    => fn($q) => $q->where('status', 'pending')->orderBy('due_date')->limit(15),
+            'attachments'  => fn($q) => $q->with('uploadedBy')->latest()->limit(12),
         ]);
 
         $allFlags = ClinicalFlag::where('is_active', true)->orderBy('sort_order')->get();
+        $historyTimeline = $this->patientHistoryService->timeline(Auth::user(), $patient)->take(40);
 
-        return view('patients.show', compact('patient', 'allFlags'));
+        return view('patients.show', compact('patient', 'allFlags', 'historyTimeline'));
     }
 
     public function edit(Patient $patient)
@@ -213,6 +223,40 @@ class PatientController extends Controller
         $patient->delete();
         return redirect()->route('patients.index')
             ->with('success', "Patient '{$name}' has been archived.");
+    }
+
+    public function storeAttachment(Request $request, Patient $patient)
+    {
+        $this->patientHistoryService->assertCanView(Auth::user(), $patient);
+
+        $validated = $request->validate([
+            'attachment' => ['required', 'file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf'],
+            'title' => ['nullable', 'string', 'max:160'],
+            'attachment_type' => ['nullable', 'string', 'max:40'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'is_private' => ['nullable', 'boolean'],
+        ]);
+
+        $file = $validated['attachment'];
+        $path = $file->store('patient-attachments/' . $patient->id, 'public');
+
+        PatientAttachment::create([
+            'company_id' => $patient->company_id,
+            'branch_id' => $patient->branch_id,
+            'patient_id' => $patient->id,
+            'attachment_type' => $validated['attachment_type']
+                ?? (str_starts_with((string) $file->getMimeType(), 'image/') ? 'image' : 'document'),
+            'title' => $validated['title'] ?? null,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'mime_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
+            'is_private' => $request->boolean('is_private'),
+            'notes' => $validated['notes'] ?? null,
+            'uploaded_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('patients.show', $patient)->with('success', 'Attachment uploaded successfully.');
     }
 
     private function saveMedicalInfo(Request $request, Patient $patient): void

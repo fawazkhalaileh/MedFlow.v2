@@ -92,6 +92,16 @@ class Branch extends Model
         return $this->hasMany(PatientPackage::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function patientAttachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class);
+    }
+
     public function packageUsages(): HasMany
     {
         return $this->hasMany(PackageUsage::class);

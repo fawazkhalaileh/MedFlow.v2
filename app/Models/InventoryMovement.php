@@ -21,6 +21,9 @@ class InventoryMovement extends Model
         'inventory_batch_id',
         'branch_transfer_id',
         'patient_id',
+        'appointment_id',
+        'treatment_session_id',
+        'service_id',
         'movement_type',
         'quantity_change',
         'quantity_before',
@@ -69,6 +72,21 @@ class InventoryMovement extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
+    }
+
+    public function treatmentSession(): BelongsTo
+    {
+        return $this->belongsTo(TreatmentSession::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function performedBy(): BelongsTo

@@ -100,6 +100,11 @@ class Appointment extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class);
+    }
+
     public function packageUsage(): HasOne
     {
         return $this->hasOne(PackageUsage::class);

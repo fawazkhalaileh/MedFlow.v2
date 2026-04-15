@@ -127,6 +127,11 @@ class Patient extends Model
         return $this->hasMany(FollowUp::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class);
+    }
+
     public function clinicalFlags(): BelongsToMany
     {
         return $this->belongsToMany(ClinicalFlag::class, 'patient_clinical_flags', 'patient_id', 'flag_id')
