@@ -48,7 +48,7 @@ class DemoDataSeeder extends Seeder
                     'medical_history' => 'No significant medical history',
                     'contraindications' => null,
                 ],
-                'plan' => ['service' => $lhrService, 'name' => 'Full Legs LHR - 6 Sessions', 'sessions' => 6, 'completed' => 3, 'price' => 4500],
+                'plan' => ['service' => $lhrService, 'name' => 'Full Legs LHR - 6 Sessions', 'sessions' => 6, 'completed' => 3, 'price' => 4500, 'paid' => 2500],
             ],
             [
                 'first_name' => 'Maha', 'last_name' => 'Nasser',
@@ -62,7 +62,7 @@ class DemoDataSeeder extends Seeder
                     'medical_history' => 'Hypothyroidism - on medication',
                     'contraindications' => 'Active acne on treatment area - proceed with caution',
                 ],
-                'plan' => ['service' => $faceService, 'name' => 'Full Face LHR - 8 Sessions', 'sessions' => 8, 'completed' => 1, 'price' => 3200],
+                'plan' => ['service' => $faceService, 'name' => 'Full Face LHR - 8 Sessions', 'sessions' => 8, 'completed' => 1, 'price' => 3200, 'paid' => 1200],
             ],
             [
                 'first_name' => 'Amira', 'last_name' => 'Saleh',
@@ -76,7 +76,7 @@ class DemoDataSeeder extends Seeder
                     'medical_history' => 'None',
                     'contraindications' => null,
                 ],
-                'plan' => ['service' => $bodyService, 'name' => 'Abdomen Contouring - 4 Sessions', 'sessions' => 4, 'completed' => 4, 'price' => 5000],
+                'plan' => ['service' => $bodyService, 'name' => 'Abdomen Contouring - 4 Sessions', 'sessions' => 4, 'completed' => 4, 'price' => 5000, 'paid' => 5000],
             ],
             [
                 'first_name' => 'Reem', 'last_name' => 'Al Farsi',
@@ -100,7 +100,7 @@ class DemoDataSeeder extends Seeder
                     'contraindications' => 'Diabetic - confirm glucose levels before sessions',
                     'has_metal_implants' => true,
                 ],
-                'plan' => ['service' => $lhrService, 'name' => 'Full Legs LHR - 6 Sessions', 'sessions' => 6, 'completed' => 6, 'price' => 4500],
+                'plan' => ['service' => $lhrService, 'name' => 'Full Legs LHR - 6 Sessions', 'sessions' => 6, 'completed' => 6, 'price' => 4500, 'paid' => 4500],
             ],
         ];
 
@@ -136,7 +136,7 @@ class DemoDataSeeder extends Seeder
                     'completed_sessions' => $planData['completed'],
                     'status'             => $planData['completed'] >= $planData['sessions'] ? 'completed' : 'active',
                     'total_price'        => $planData['price'],
-                    'amount_paid'        => $planData['price'],
+                    'amount_paid'        => $planData['paid'] ?? $planData['price'],
                     'start_date'         => now()->subMonths(4)->format('Y-m-d'),
                     'treatment_areas'    => ['full_legs'],
                     'created_by'         => $secretary->id,

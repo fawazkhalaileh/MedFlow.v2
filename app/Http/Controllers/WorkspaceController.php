@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\FollowUp;
 use App\Models\Patient;
 use App\Models\Room;
+use App\Models\Transaction;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 use Carbon\Carbon;
@@ -219,34 +221,93 @@ class WorkspaceController extends Controller
     public function finance()
     {
         $user     = Auth::user();
-        $branchId = $user->primary_branch_id ?? null;
+        $branchId = $user->scopedBranchId();
         $company  = Company::first();
         $today    = today();
 
-        $paymentPending = Appointment::with(['patient', 'service'])
+        $paymentPending = Appointment::with(['patient', 'service', 'treatmentPlan'])
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->where('status', 'completed')
+            ->whereNotNull('treatment_plan_id')
+            ->whereHas('treatmentPlan', function ($query) {
+                $query->whereNotNull('total_price')
+                    ->whereColumn('amount_paid', '<', 'total_price');
+            })
             ->whereDate('completed_at', '>=', $today->copy()->subDays(7))
             ->orderBy('completed_at', 'desc')
             ->limit(30)
             ->get();
 
+        $outstandingPlans = TreatmentPlan::with(['patient', 'service'])
+            ->where('company_id', $company->id)
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->whereNotNull('total_price')
+            ->whereColumn('amount_paid', '<', 'total_price')
+            ->orderByRaw('(total_price - amount_paid) DESC')
+            ->limit(12)
+            ->get();
+
+        $outstandingPlansCount = TreatmentPlan::query()
+            ->where('company_id', $company->id)
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->whereNotNull('total_price')
+            ->whereColumn('amount_paid', '<', 'total_price')
+            ->count();
+
         $plansNearingEnd = TreatmentPlan::with(['patient', 'service'])
             ->where('company_id', $company->id)
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
             ->where('status', 'active')
             ->whereRaw('completed_sessions >= total_sessions - 1')
             ->limit(15)
             ->get();
 
+        $activeRegister = CashRegisterSession::with(['openedBy', 'closedBy'])
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->open()
+            ->latest('opened_at')
+            ->first();
+
+        if ($activeRegister) {
+            $activeRegister->refreshTotals();
+        }
+
+        $todayTransactions = Transaction::query()
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->whereDate('received_at', $today)
+            ->get();
+
+        $recentTransactions = Transaction::with(['patient', 'treatmentPlan.service', 'receivedBy'])
+            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->latest('received_at')
+            ->limit(10)
+            ->get();
+
+        $dailyCashFlow = [
+            'payments_total'      => round((float) $todayTransactions->sum('amount'), 2),
+            'cash_sales_total'    => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'cash_received_total' => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount_received'), 2),
+            'change_total'        => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('change_returned'), 2),
+            'non_cash_total'      => round((float) $todayTransactions->where('payment_method', '!=', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'transactions_count'  => $todayTransactions->count(),
+        ];
+
         $stats = [
-            'payment_pending' => $paymentPending->count(),
+            'payment_pending' => $outstandingPlansCount,
             'plans_ending'    => $plansNearingEnd->count(),
             'completed_today' => Appointment::when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->whereDate('completed_at', $today)->where('status', 'completed')->count(),
         ];
 
-        return view('workspaces.finance', compact('paymentPending', 'plansNearingEnd', 'stats'));
+        return view('workspaces.finance', compact(
+            'paymentPending',
+            'outstandingPlans',
+            'plansNearingEnd',
+            'activeRegister',
+            'dailyCashFlow',
+            'recentTransactions',
+            'stats'
+        ));
     }
 
     // Appointment status quick-update (used by all role pages)
