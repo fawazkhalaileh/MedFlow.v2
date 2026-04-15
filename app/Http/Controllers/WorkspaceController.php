@@ -7,10 +7,12 @@ use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\FollowUp;
 use App\Models\Patient;
+use App\Models\Room;
 use App\Models\Transaction;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 use App\Services\PackageService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class WorkspaceController extends Controller
@@ -53,7 +55,61 @@ class WorkspaceController extends Controller
             'my_followups'   => $myFollowUps->count(),
         ];
 
-        return view('workspaces.front-desk', compact('queue', 'needsConfirmation', 'myFollowUps', 'stats'));
+        // ── Scheduling grid data ───────────────────────────────────────────────
+        $rooms = Room::where('branch_id', $branchId)->where('is_active', true)->orderBy('id')->get();
+
+        // Half-hour slots: 09:00 → 20:30
+        $slots = [];
+        for ($h = 9; $h < 21; $h++) {
+            $slots[] = sprintf('%02d:00', $h);
+            $slots[] = sprintf('%02d:30', $h);
+        }
+
+        // Pre-populate grid: [room_id][slot] = []
+        $grid = [];
+        foreach ($rooms as $room) {
+            $grid[$room->id] = array_fill_keys($slots, []);
+        }
+
+        $unassigned = [];
+        foreach ($queue as $appt) {
+            if (! $appt->room_id) {
+                $unassigned[] = $appt;
+                continue;
+            }
+            $dt      = Carbon::parse($appt->scheduled_at);
+            $snapMin = $dt->minute < 30 ? '00' : '30';
+            $slotKey = sprintf('%02d:%02d', $dt->hour, $snapMin);
+
+            if (isset($grid[$appt->room_id][$slotKey])) {
+                $grid[$appt->room_id][$slotKey][] = $appt;
+            }
+        }
+
+        // Staff color palette — assign deterministically as new staff appear
+        $staffPalette = [
+            ['border' => '#2563eb', 'bg' => '#eff6ff'],
+            ['border' => '#059669', 'bg' => '#ecfdf5'],
+            ['border' => '#7c3aed', 'bg' => '#f5f3ff'],
+            ['border' => '#d97706', 'bg' => '#fffbeb'],
+            ['border' => '#db2777', 'bg' => '#fdf2f8'],
+            ['border' => '#0891b2', 'bg' => '#f0f9ff'],
+            ['border' => '#16a34a', 'bg' => '#f0fdf4'],
+            ['border' => '#4338ca', 'bg' => '#eef2ff'],
+        ];
+        $staffColorMap = [];
+        $palIdx        = 0;
+        foreach ($queue as $appt) {
+            if ($appt->assigned_staff_id && ! isset($staffColorMap[$appt->assigned_staff_id])) {
+                $staffColorMap[$appt->assigned_staff_id] = $staffPalette[$palIdx % 8];
+                $palIdx++;
+            }
+        }
+
+        return view('workspaces.front-desk', compact(
+            'queue', 'needsConfirmation', 'myFollowUps', 'stats',
+            'rooms', 'slots', 'grid', 'unassigned', 'staffPalette', 'staffColorMap'
+        ));
     }
 
     // Technician: My Queue
@@ -253,6 +309,21 @@ class WorkspaceController extends Controller
             'recentTransactions',
             'stats'
         ));
+    }
+
+    // Room device name update (branch_manager / system_admin only)
+    public function updateRoomDevice(\Illuminate\Http\Request $request, Room $room)
+    {
+        $request->validate(['device_name' => 'nullable|string|max:100']);
+
+        $user = Auth::user();
+        if ($user->employee_type !== 'system_admin' && $room->branch_id !== $user->primary_branch_id) {
+            abort(403);
+        }
+
+        $room->update(['device_name' => $request->device_name ?: null]);
+
+        return back()->with('success', 'Device name updated.');
     }
 
     // Appointment status quick-update (used by all role pages)

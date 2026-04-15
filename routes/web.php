@@ -96,6 +96,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/appointments',       [AppointmentController::class, 'store'])->name('appointments.store');
     });
 
+    // Room device name update — managers and admins only
+    Route::patch(
+        '/rooms/{room}/device-name',
+        [WorkspaceController::class, 'updateRoomDevice']
+    )->name('rooms.update-device-name')->middleware('role:branch_manager,system_admin');
+
     // Appointment status update — all clinical staff (technician moves cards, secretary checks in, etc.)
     Route::patch(
         '/appointments/{appointment}/status',

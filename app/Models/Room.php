@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Room extends Model
 {
-    protected $fillable = ['branch_id', 'name', 'description', 'is_active'];
+    protected $fillable = ['branch_id', 'name', 'device_name', 'description', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 
