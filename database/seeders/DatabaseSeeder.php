@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,           // 3. Staff accounts (5 employees)
             ServiceSeeder::class,         // 4. Services + categories + appointment reasons
             DemoDataSeeder::class,        // 5. Customers + plans + sessions + notes
+            ScheduleGridSeeder::class,    // 6. Today's scheduling grid (rooms + doctor + appointments)
         ]);
     }
 }
