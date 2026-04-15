@@ -47,6 +47,7 @@ class BranchTransfer extends Model
         'sent_at' => 'datetime',
         'received_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'quantity' => 'decimal:2',
         'internal_unit_price' => 'decimal:2',
         'internal_total' => 'decimal:2',
     ];

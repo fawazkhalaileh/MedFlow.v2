@@ -87,6 +87,21 @@ class Patient extends Model
         return $this->hasMany(TreatmentPlan::class);
     }
 
+    public function patientPackages(): HasMany
+    {
+        return $this->hasMany(PatientPackage::class);
+    }
+
+    public function packageUsages(): HasMany
+    {
+        return $this->hasMany(PackageUsage::class);
+    }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

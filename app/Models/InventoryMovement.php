@@ -9,6 +9,7 @@ class InventoryMovement extends Model
 {
     public const TYPE_STOCK_IN = 'stock_in';
     public const TYPE_USAGE = 'usage';
+    public const TYPE_WASTE = 'waste';
     public const TYPE_TRANSFER_OUT = 'transfer_out';
     public const TYPE_TRANSFER_IN = 'transfer_in';
 
@@ -19,6 +20,7 @@ class InventoryMovement extends Model
         'branch_inventory_id',
         'inventory_batch_id',
         'branch_transfer_id',
+        'patient_id',
         'movement_type',
         'quantity_change',
         'quantity_before',
@@ -62,6 +64,11 @@ class InventoryMovement extends Model
     public function branchTransfer(): BelongsTo
     {
         return $this->belongsTo(BranchTransfer::class);
+    }
+
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
     }
 
     public function performedBy(): BelongsTo

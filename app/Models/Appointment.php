@@ -15,7 +15,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'company_id', 'branch_id', 'patient_id', 'treatment_plan_id',
-        'service_id', 'room_id', 'reason_id', 'assigned_staff_id', 'booked_by',
+        'patient_package_id', 'service_id', 'room_id', 'reason_id', 'assigned_staff_id', 'booked_by',
         'appointment_type', 'scheduled_at', 'duration_minutes', 'status',
         'session_number', 'reason_notes', 'outcome_notes', 'cancellation_reason',
         'rescheduled_from', 'reminder_sent', 'reminder_sent_at',
@@ -60,6 +60,11 @@ class Appointment extends Model
         return $this->belongsTo(TreatmentPlan::class);
     }
 
+    public function patientPackage(): BelongsTo
+    {
+        return $this->belongsTo(PatientPackage::class);
+    }
+
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
@@ -93,6 +98,11 @@ class Appointment extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function packageUsage(): HasOne
+    {
+        return $this->hasOne(PackageUsage::class);
     }
 
     public function rescheduledFrom(): BelongsTo

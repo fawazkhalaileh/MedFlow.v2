@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Appointment Kanban - MedFlow CRM')
-@section('breadcrumb', 'Appointments / Kanban')
+@section('title', __('Appointment Kanban') . ' - MedFlow CRM')
+@section('breadcrumb', __('Appointments') . ' / ' . __('Kanban'))
 
 @section('content')
 
@@ -17,18 +17,18 @@
     <p class="page-subtitle">{{ $today->format('l, d F Y') }} &bull; {{ __('Live status board') }}</p>
   </div>
   <div class="header-actions">
-    <span class="badge badge-blue"   style="padding:5px 12px;">{{ $stats['total'] }} total</span>
-    <span class="badge badge-purple" style="padding:5px 12px;">{{ $stats['in_clinic'] }} in clinic</span>
-    <span class="badge badge-green"  style="padding:5px 12px;">{{ $stats['completed'] }} done</span>
+    <span class="badge badge-blue"   style="padding:5px 12px;">{{ $stats['total'] }} {{ __('total') }}</span>
+    <span class="badge badge-purple" style="padding:5px 12px;">{{ $stats['in_clinic'] }} {{ __('in clinic') }}</span>
+    <span class="badge badge-green"  style="padding:5px 12px;">{{ $stats['completed'] }} {{ __('done') }}</span>
     @if(Auth::user()->isRole('secretary','branch_manager') || Auth::user()->isSuperAdmin())
     <a href="{{ route('appointments.create') }}" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New Appointment
+      {{ __('New Appointment') }}
     </a>
     @endif
     <button onclick="location.reload()" class="btn btn-secondary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      Refresh
+      {{ __('Refresh') }}
     </button>
   </div>
 </div>
@@ -52,7 +52,7 @@
     {{-- Empty state --}}
     @if($col['items']->isEmpty())
     <div style="border:2px dashed var(--border);border-radius:var(--radius-md);padding:18px 10px;text-align:center;color:var(--text-tertiary);font-size:.76rem;min-height:80px;display:flex;align-items:center;justify-content:center;">
-      None
+      {{ __('None') }}
     </div>
     @endif
 
@@ -85,7 +85,7 @@
       {{-- Wait time alert --}}
       @if($waitMins > 20)
       <div style="background:{{ $waitMins > 30 ? 'var(--danger-light)' : 'var(--warning-light)' }};color:{{ $waitMins > 30 ? 'var(--danger)' : 'var(--warning)' }};font-size:.68rem;font-weight:600;padding:3px 6px;border-radius:4px;margin-bottom:6px;">
-        Waiting {{ $waitMins }}m
+        {{ __('Waiting') }} {{ $waitMins }}m
       </div>
       @endif
 
@@ -99,10 +99,10 @@
       {{-- Patient name + tags --}}
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:5px;">
         <div style="font-weight:600;font-size:.83rem;line-height:1.2;">
-          {{ $appt->patient?->full_name ?? 'Unknown' }}
+          {{ $appt->patient?->full_name ?? __('Unknown') }}
         </div>
         @if($isNew)
-        <span style="font-size:.62rem;background:#dbeafe;color:var(--accent);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;">New</span>
+        <span style="font-size:.62rem;background:#dbeafe;color:var(--accent);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;">{{ __('New') }}</span>
         @endif
       </div>
 
@@ -131,7 +131,7 @@
         <div style="height:3px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden;">
           <div style="height:100%;width:{{ $appt->treatmentPlan->progress_percent }}%;background:var(--accent);border-radius:2px;"></div>
         </div>
-        <div style="font-size:.66rem;color:var(--text-tertiary);margin-top:2px;">Session {{ $appt->treatmentPlan->completed_sessions + 1 }}/{{ $appt->treatmentPlan->total_sessions }}</div>
+        <div style="font-size:.66rem;color:var(--text-tertiary);margin-top:2px;">{{ __('Session') }} {{ $appt->treatmentPlan->completed_sessions + 1 }}/{{ $appt->treatmentPlan->total_sessions }}</div>
       </div>
       @endif
 
@@ -143,7 +143,7 @@
           @csrf @method('PATCH')
           <input type="hidden" name="status" value="{{ $nextStatus }}">
           <button type="submit" class="btn btn-primary btn-sm" style="font-size:.68rem;padding:3px 7px;width:100%;">
-            Advance
+            {{ __('Advance') }}
           </button>
         </form>
         @endif

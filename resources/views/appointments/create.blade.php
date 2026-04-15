@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
-@section('title', 'Book Appointment - MedFlow CRM')
-@section('breadcrumb', 'Appointments / New Booking')
+@section('title', __('Book Appointment') . ' - MedFlow CRM')
+@section('breadcrumb', __('Appointments') . ' / ' . __('New Booking'))
 
 @section('content')
 <div class="page-header animate-in">
@@ -11,13 +11,13 @@
   </div>
   <a href="{{ route('front-desk') }}" class="btn btn-secondary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to Front Desk
+    {{ __('Back to Front Desk') }}
   </a>
 </div>
 
 @if($errors->any())
 <div style="background:var(--danger-light);border:1px solid #fca5a5;border-radius:var(--radius-md);padding:12px 16px;margin-bottom:18px;color:#991b1b;">
-  <strong>Please fix the following:</strong>
+  <strong>{{ __('Please fix the following:') }}</strong>
   <ul style="margin-top:6px;padding-left:18px;">
     @foreach($errors->all() as $error)
     <li style="font-size:.84rem;">{{ $error }}</li>
@@ -37,7 +37,7 @@
     {{-- PATIENT SEARCH --}}
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Patient</div>
+        <div class="card-title">{{ __('Patient') }}</div>
         <a href="{{ route('patients.create') }}" class="btn btn-ghost btn-sm" style="font-size:.78rem;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {{ __('Register New Patient') }}
@@ -60,7 +60,7 @@
             </div>
           </div>
         </div>
-        <button type="button" onclick="clearPatient()" class="btn btn-ghost btn-sm" style="font-size:.75rem;color:var(--danger);">Change</button>
+        <button type="button" onclick="clearPatient()" class="btn btn-ghost btn-sm" style="font-size:.75rem;color:var(--danger);">{{ __('Change') }}</button>
       </div>
 
       {{-- Search input --}}
@@ -68,7 +68,7 @@
         <div class="filter-search-wrap" style="max-width:100%;margin-bottom:0;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="patient-search-input" class="filter-search" style="width:100%;"
-            placeholder="Search by name, phone, email or patient code..."
+            placeholder="{{ __('Search by name, phone, email or patient code...') }}"
             autocomplete="off">
         </div>
         <div id="patient-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);z-index:50;max-height:280px;overflow-y:auto;margin-top:4px;"></div>
@@ -84,7 +84,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
         <div class="form-group" style="grid-column:span 2;">
-          <label class="form-label">Service <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">{{ __('Service') }} <span style="color:var(--danger)">*</span></label>
           <select name="service_id" id="service_id" class="form-input" required onchange="fillDuration()">
             <option value="">{{ __('-- Select Service --') }}</option>
             @foreach($services as $svc)
@@ -101,14 +101,14 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Date <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">{{ __('Date') }} <span style="color:var(--danger)">*</span></label>
           <input type="date" name="scheduled_date" class="form-input"
             value="{{ old('scheduled_date', today()->format('Y-m-d')) }}"
             min="{{ today()->format('Y-m-d') }}" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Time <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">{{ __('Time') }} <span style="color:var(--danger)">*</span></label>
           <input type="time" name="scheduled_time" class="form-input"
             value="{{ old('scheduled_time', '09:00') }}" required>
         </div>
@@ -127,8 +127,21 @@
           </select>
         </div>
 
+        <div class="form-group" style="grid-column:span 2;">
+          <label class="form-label">{{ __('Patient Package') }}</label>
+          <select name="patient_package_id" class="form-input">
+            <option value="">{{ __('No package attached') }}</option>
+            @foreach($patientPackages as $patientPackage)
+            <option value="{{ $patientPackage->id }}" {{ old('patient_package_id') == $patientPackage->id ? 'selected' : '' }}>
+              {{ $patientPackage->patient?->full_name }} &middot; {{ $patientPackage->package?->name }} &middot; {{ $patientPackage->remaining_sessions }} remaining
+            </option>
+            @endforeach
+          </select>
+          <div style="margin-top:6px;font-size:.75rem;color:var(--text-tertiary);">{{ __('Sessions are deducted only when the appointment is completed.') }}</div>
+        </div>
+
         <div class="form-group">
-          <label class="form-label">Status</label>
+          <label class="form-label">{{ __('Status') }}</label>
           <select name="status" class="form-input">
             <option value="scheduled" {{ old('status','scheduled') === 'scheduled' ? 'selected' : '' }}>{{ __('Scheduled') }}</option>
             <option value="confirmed" {{ old('status') === 'confirmed' ? 'selected' : '' }}>{{ __('Confirmed') }}</option>
@@ -167,7 +180,7 @@
 
     {{-- BRANCH --}}
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">Branch</div>
+      <div class="card-title" style="margin-bottom:12px;">{{ __('Branch') }}</div>
       @if($branches->count() === 1)
         <input type="hidden" name="branch_id" value="{{ $branches->first()->id }}">
         <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm);">
@@ -188,11 +201,11 @@
     <div class="card">
       <div class="card-title" style="margin-bottom:12px;">{{ __('Assign Technician') }}</div>
       <select name="assigned_staff_id" class="form-input">
-        <option value="">-- Assign Later --</option>
+        <option value="">{{ __('-- Assign Later --') }}</option>
         @foreach($staff as $s)
         <option value="{{ $s->id }}" {{ old('assigned_staff_id') == $s->id ? 'selected' : '' }}>
           {{ $s->first_name }} {{ $s->last_name }}
-          <span style="color:var(--text-tertiary);">({{ ucfirst($s->employee_type) }})</span>
+          <span style="color:var(--text-tertiary);">({{ __(\Illuminate\Support\Str::headline($s->employee_type)) }})</span>
         </option>
         @endforeach
       </select>
@@ -209,7 +222,7 @@
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span>{{ __('Confirmation needed') }}</span>
-          <span style="font-weight:500;">Yes</span>
+          <span style="font-weight:500;">{{ __('Yes') }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span>{{ __('Booked by') }}</span>
@@ -318,3 +331,4 @@ function fillDuration() {
 </script>
 @endpush
 @endsection
+

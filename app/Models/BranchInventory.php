@@ -17,6 +17,7 @@ class BranchInventory extends Model
     ];
 
     protected $casts = [
+        'low_stock_threshold' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -60,18 +61,18 @@ class BranchInventory extends Model
         return $query->where('branch_id', $branchId);
     }
 
-    public function getCurrentStockAttribute(): int
+    public function getCurrentStockAttribute(): int|float
     {
-        if ($this->relationLoaded('batches')) {
-            return (int) $this->batches->sum('quantity_remaining');
-        }
+        $currentStock = $this->relationLoaded('batches')
+            ? (float) $this->batches->sum(fn(InventoryBatch $batch) => (float) $batch->quantity_remaining)
+            : (float) $this->batches()->sum('quantity_remaining');
 
-        return (int) $this->batches()->sum('quantity_remaining');
+        return $this->normalizeQuantity($currentStock);
     }
 
     public function getLowStockAttribute(): bool
     {
-        return $this->current_stock <= (int) $this->low_stock_threshold;
+        return (float) $this->current_stock <= (float) $this->low_stock_threshold;
     }
 
     public function getNearestExpiryAttribute(): ?string
@@ -93,5 +94,14 @@ class BranchInventory extends Model
         }
 
         return $batch?->expires_on?->toDateString();
+    }
+
+    private function normalizeQuantity(float $quantity): int|float
+    {
+        $rounded = round($quantity, 2);
+
+        return fmod($rounded, 1.0) === 0.0
+            ? (int) $rounded
+            : $rounded;
     }
 }

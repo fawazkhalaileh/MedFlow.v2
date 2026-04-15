@@ -48,4 +48,14 @@ class Service extends Model
     {
         return $this->hasMany(TreatmentPlan::class);
     }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function packageUsages(): HasMany
+    {
+        return $this->hasMany(PackageUsage::class);
+    }
 }

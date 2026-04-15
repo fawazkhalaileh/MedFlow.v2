@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'New Patient - MedFlow CRM')
-@section('breadcrumb', 'Patients / New Patient')
+@section('title', __('New Patient') . ' - MedFlow CRM')
+@section('breadcrumb', __('Patients') . ' / ' . __('New Patient'))
 
 @section('content')
 <div class="page-header animate-in">
@@ -116,7 +116,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">{{ __('Relationship') }}</label>
-      <input type="text" name="emergency_contact_relation" class="form-input" placeholder="e.g. Spouse, Parent" value="{{ old('emergency_contact_relation') }}">
+      <input type="text" name="emergency_contact_relation" class="form-input" placeholder="{{ __('e.g. Spouse, Parent') }}" value="{{ old('emergency_contact_relation') }}">
     </div>
   </div>
 </div>
@@ -124,12 +124,12 @@
 {{-- CLINIC DETAILS --}}
 <div class="card animate-in" style="animation-delay:.10s;margin-bottom:18px;">
   <div class="card-header">
-    <div class="card-title">Clinic Details</div>
+    <div class="card-title">{{ __('Clinic Details') }}</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-top:4px;">
 
     <div class="form-group">
-      <label class="form-label">Branch <span style="color:var(--danger)">*</span></label>
+      <label class="form-label">{{ __('Branch') }} <span style="color:var(--danger)">*</span></label>
       <select name="branch_id" class="form-input" required>
         <option value="">{{ __('-- Select Branch --') }}</option>
         @foreach($branches as $b)
@@ -139,50 +139,50 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Assigned Staff</label>
+      <label class="form-label">{{ __('Assigned Staff') }}</label>
       <select name="assigned_staff_id" class="form-input">
-        <option value="">-- None --</option>
+        <option value="">{{ __('-- None --') }}</option>
         @foreach($staff as $s)
         <option value="{{ $s->id }}" {{ old('assigned_staff_id') == $s->id ? 'selected' : '' }}>
-          {{ $s->first_name }} {{ $s->last_name }} ({{ ucfirst($s->employee_type) }})
+          {{ $s->first_name }} {{ $s->last_name }} ({{ __(\Illuminate\Support\Str::headline($s->employee_type)) }})
         </option>
         @endforeach
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Patient Status <span style="color:var(--danger)">*</span></label>
+      <label class="form-label">{{ __('Patient Status') }} <span style="color:var(--danger)">*</span></label>
       <select name="status" class="form-input" required>
         <option value="active"      {{ old('status','active') === 'active'      ? 'selected' : '' }}>{{ __('Active') }}</option>
         <option value="inactive"    {{ old('status') === 'inactive'    ? 'selected' : '' }}>{{ __('Inactive') }}</option>
         <option value="vip"         {{ old('status') === 'vip'         ? 'selected' : '' }}>{{ __('VIP') }}</option>
-        <option value="blacklisted" {{ old('status') === 'blacklisted' ? 'selected' : '' }}>Blacklisted</option>
+        <option value="blacklisted" {{ old('status') === 'blacklisted' ? 'selected' : '' }}>{{ __('Blacklisted') }}</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Lead Source</label>
+      <label class="form-label">{{ __('Lead Source') }}</label>
       <select name="source" class="form-input">
-        <option value="">-- Select --</option>
+        <option value="">{{ __('-- Select --') }}</option>
         @foreach(['instagram','facebook','tiktok','google','referral','walk_in','website','whatsapp','other'] as $src)
-        <option value="{{ $src }}" {{ old('source') === $src ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$src)) }}</option>
+        <option value="{{ $src }}" {{ old('source') === $src ? 'selected' : '' }}>{{ __(\Illuminate\Support\Str::headline($src)) }}</option>
         @endforeach
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Referral Name / Detail</label>
+      <label class="form-label">{{ __('Referral Name / Detail') }}</label>
       <input type="text" name="referral_source" class="form-input" value="{{ old('referral_source') }}">
     </div>
 
     <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:26px;">
       <input type="checkbox" name="consent_given" value="1" id="consent" {{ old('consent_given') ? 'checked' : '' }} style="width:16px;height:16px;">
-      <label for="consent" class="form-label" style="margin:0;cursor:pointer;">Consent Given</label>
+      <label for="consent" class="form-label" style="margin:0;cursor:pointer;">{{ __('Consent Given') }}</label>
     </div>
 
   </div>
   <div class="form-group" style="margin-top:10px;">
-    <label class="form-label">Internal Notes</label>
+    <label class="form-label">{{ __('Internal Notes') }}</label>
     <textarea name="internal_notes" rows="2" class="form-input" style="resize:vertical;">{{ old('internal_notes') }}</textarea>
   </div>
 </div>
@@ -190,43 +190,43 @@
 {{-- MEDICAL INFO (optional) --}}
 <div class="card animate-in" style="animation-delay:.12s;margin-bottom:18px;">
   <div class="card-header">
-    <div class="card-title">Medical &amp; Clinical Info</div>
-    <span style="font-size:.78rem;color:var(--text-tertiary);">Optional — can be added later</span>
+    <div class="card-title">{{ __('Medical & Clinical Info') }}</div>
+    <span style="font-size:.78rem;color:var(--text-tertiary);">{{ __('Optional — can be added later') }}</span>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-top:4px;">
 
     <div class="form-group">
-      <label class="form-label">Height (cm)</label>
+      <label class="form-label">{{ __('Height (cm)') }}</label>
       <input type="number" name="height_cm" class="form-input" step="0.1" value="{{ old('height_cm') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Weight (kg)</label>
+      <label class="form-label">{{ __('Weight (kg)') }}</label>
       <input type="number" name="weight_kg" class="form-input" step="0.1" value="{{ old('weight_kg') }}">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Skin Type (Fitzpatrick I–VI)</label>
+      <label class="form-label">{{ __('Skin Type (Fitzpatrick I-VI)') }}</label>
       <select name="skin_type" class="form-input">
-        <option value="">-- Select --</option>
+        <option value="">{{ __('-- Select --') }}</option>
         @foreach(['I','II','III','IV','V','VI'] as $st)
-        <option value="{{ $st }}" {{ old('skin_type') === $st ? 'selected' : '' }}>Type {{ $st }}</option>
+        <option value="{{ $st }}" {{ old('skin_type') === $st ? 'selected' : '' }}>{{ __('Type') }} {{ $st }}</option>
         @endforeach
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Skin Tone</label>
+      <label class="form-label">{{ __('Skin Tone') }}</label>
       <select name="skin_tone" class="form-input">
-        <option value="">-- Select --</option>
+        <option value="">{{ __('-- Select --') }}</option>
         @foreach(['fair','medium','olive','dark','very_dark'] as $tone)
-        <option value="{{ $tone }}" {{ old('skin_tone') === $tone ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$tone)) }}</option>
+        <option value="{{ $tone }}" {{ old('skin_tone') === $tone ? 'selected' : '' }}>{{ __(\Illuminate\Support\Str::headline($tone)) }}</option>
         @endforeach
       </select>
     </div>
 
     <div class="form-group" style="grid-column:span 2;">
-      <label class="form-label">Known Allergies</label>
+      <label class="form-label">{{ __('Known Allergies') }}</label>
       <textarea name="allergies" rows="2" class="form-input" style="resize:vertical;">{{ old('allergies') }}</textarea>
     </div>
 
@@ -236,12 +236,12 @@
     </div>
 
     <div class="form-group" style="grid-column:span 2;">
-      <label class="form-label">Current Medications</label>
+      <label class="form-label">{{ __('Current Medications') }}</label>
       <textarea name="current_medications" rows="2" class="form-input" style="resize:vertical;">{{ old('current_medications') }}</textarea>
     </div>
 
     <div class="form-group" style="grid-column:span 2;">
-      <label class="form-label">Medical History / Other Conditions</label>
+      <label class="form-label">{{ __('Medical History / Other Conditions') }}</label>
       <textarea name="medical_history" rows="2" class="form-input" style="resize:vertical;">{{ old('medical_history') }}</textarea>
     </div>
 
@@ -251,36 +251,36 @@
   <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:20px;">
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;">
       <input type="checkbox" name="is_pregnant" value="1" {{ old('is_pregnant') ? 'checked' : '' }} style="width:16px;height:16px;">
-      <span style="color:var(--danger);font-weight:500;">Pregnant</span>
+      <span style="color:var(--danger);font-weight:500;">{{ __('Pregnant') }}</span>
     </label>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;">
       <input type="checkbox" name="has_pacemaker" value="1" {{ old('has_pacemaker') ? 'checked' : '' }} style="width:16px;height:16px;">
-      <span style="color:var(--danger);font-weight:500;">Pacemaker</span>
+      <span style="color:var(--danger);font-weight:500;">{{ __('Pacemaker') }}</span>
     </label>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;">
       <input type="checkbox" name="has_metal_implants" value="1" {{ old('has_metal_implants') ? 'checked' : '' }} style="width:16px;height:16px;">
-      <span style="color:var(--warning);font-weight:500;">Metal Implants</span>
+      <span style="color:var(--warning);font-weight:500;">{{ __('Metal Implants') }}</span>
     </label>
   </div>
 
   {{-- Insurance --}}
   <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;">
-    <div style="font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Insurance (Optional)</div>
+    <div style="font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">{{ __('Insurance (Optional)') }}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
       <div class="form-group">
-        <label class="form-label">Insurance Provider</label>
+        <label class="form-label">{{ __('Insurance Provider') }}</label>
         <input type="text" name="insurance_provider" class="form-input" value="{{ old('insurance_provider') }}">
       </div>
       <div class="form-group">
-        <label class="form-label">Policy / Member Number</label>
+        <label class="form-label">{{ __('Policy / Member Number') }}</label>
         <input type="text" name="insurance_number" class="form-input" value="{{ old('insurance_number') }}">
       </div>
       <div class="form-group">
-        <label class="form-label">Plan Name</label>
+        <label class="form-label">{{ __('Plan Name') }}</label>
         <input type="text" name="insurance_plan" class="form-input" value="{{ old('insurance_plan') }}">
       </div>
       <div class="form-group">
-        <label class="form-label">Expiry Date</label>
+        <label class="form-label">{{ __('Expiry Date') }}</label>
         <input type="date" name="insurance_expiry" class="form-input" value="{{ old('insurance_expiry') }}">
       </div>
     </div>
@@ -292,7 +292,7 @@
   <a href="{{ route('patients.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
   <button type="submit" class="btn btn-primary">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Register Patient
+    {{ __('Register Patient') }}
   </button>
 </div>
 

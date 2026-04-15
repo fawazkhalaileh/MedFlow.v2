@@ -82,6 +82,21 @@ class Branch extends Model
         return $this->hasMany(BranchTransfer::class, 'destination_branch_id');
     }
 
+    public function packages(): HasMany
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function patientPackages(): HasMany
+    {
+        return $this->hasMany(PatientPackage::class);
+    }
+
+    public function packageUsages(): HasMany
+    {
+        return $this->hasMany(PackageUsage::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
