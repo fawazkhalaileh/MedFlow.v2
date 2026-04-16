@@ -69,6 +69,11 @@ class PatientPackage extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class);
+    }
+
     public function getRemainingSessionsAttribute(): int
     {
         return max(0, (int) $this->sessions_purchased - (int) $this->sessions_used);

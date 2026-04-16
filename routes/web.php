@@ -15,6 +15,7 @@ use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionReceiptController;
 use App\Http\Controllers\WorkspaceController;
@@ -89,6 +90,9 @@ Route::middleware('auth')->group(function () {
     // Appointments index + kanban (read for all clinical)
     Route::get('/appointments',        [AppointmentController::class, 'index'])->name('appointments.index')->middleware($clinical);
     Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])->name('appointments.kanban')->middleware($clinical);
+    Route::post('/patients/{patient}/attachments', [PatientController::class, 'storeAttachment'])
+        ->name('patients.attachments.store')
+        ->middleware($clinical . ',system_admin');
 
     // Appointment booking — secretary and branch_manager only
     Route::middleware('role:secretary,branch_manager')->group(function () {
@@ -255,4 +259,62 @@ Route::middleware('auth')->group(function () {
     Route::post('/finance/register/{session}/close', [CashRegisterController::class, 'close'])
         ->name('finance.register.close')
         ->middleware('role:finance,branch_manager');
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])
+            ->name('index')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/accounting', [ReportController::class, 'accounting'])
+            ->name('accounting')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/accounting/expenses', [ReportController::class, 'storeExpense'])
+            ->name('accounting.expenses.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::get('/accounting/export/{format}', [ReportController::class, 'exportAccounting'])
+            ->name('accounting.export')
+            ->middleware('role:finance,branch_manager,system_admin');
+
+        Route::get('/patients', [ReportController::class, 'patients'])
+            ->name('patients')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/patients/export/{format}', [ReportController::class, 'exportPatients'])
+            ->name('patients.export')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/patients/{patient}/history', [ReportController::class, 'patientHistory'])
+            ->name('patients.history')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/patients/{patient}/history/export/{format}', [ReportController::class, 'exportPatientHistory'])
+            ->name('patients.history.export')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
+
+        Route::get('/inventory', [ReportController::class, 'inventory'])
+            ->name('inventory')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::get('/inventory/export/{format}', [ReportController::class, 'exportInventory'])
+            ->name('inventory.export')
+            ->middleware('role:finance,branch_manager,system_admin');
+
+        Route::get('/technician-performance', [ReportController::class, 'technicianPerformance'])
+            ->name('technician-performance')
+            ->middleware('role:technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/technician-performance/export/{format}', [ReportController::class, 'exportTechnicianPerformance'])
+            ->name('technician-performance.export')
+            ->middleware('role:technician,doctor,nurse,branch_manager,finance,system_admin');
+
+        Route::get('/commissions', [ReportController::class, 'commissions'])
+            ->name('commissions')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/profiles', [ReportController::class, 'storeCompensationProfile'])
+            ->name('commissions.profiles.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/rules', [ReportController::class, 'storeCommissionRule'])
+            ->name('commissions.rules.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/snapshots', [ReportController::class, 'createCompensationSnapshots'])
+            ->name('commissions.snapshots.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::get('/commissions/export/{format}', [ReportController::class, 'exportCommissions'])
+            ->name('commissions.export')
+            ->middleware('role:finance,branch_manager,system_admin');
+    });
 });

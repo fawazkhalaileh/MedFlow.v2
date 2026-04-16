@@ -52,6 +52,16 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'created_by');
+    }
+
+    public function uploadedAttachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class, 'uploaded_by');
+    }
+
     public function primaryBranch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'primary_branch_id');
@@ -123,6 +133,31 @@ class User extends Authenticatable
     public function packageUsages(): HasMany
     {
         return $this->hasMany(PackageUsage::class, 'used_by');
+    }
+
+    public function treatmentSessions(): HasMany
+    {
+        return $this->hasMany(TreatmentSession::class, 'technician_id');
+    }
+
+    public function compensationProfiles(): HasMany
+    {
+        return $this->hasMany(EmployeeCompensationProfile::class, 'employee_id');
+    }
+
+    public function commissionRules(): HasMany
+    {
+        return $this->hasMany(EmployeeCommissionRule::class, 'employee_id');
+    }
+
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class, 'employee_id');
+    }
+
+    public function compensationSnapshots(): HasMany
+    {
+        return $this->hasMany(CompensationSnapshot::class, 'employee_id');
     }
 
     // --- Permission helpers ---

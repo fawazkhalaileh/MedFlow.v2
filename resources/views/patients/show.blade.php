@@ -97,6 +97,47 @@
     </div>
     @endif
 
+    @include('patients.partials.history-timeline', ['timeline' => $historyTimeline, 'patient' => $patient])
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Attachments</div>
+          <div class="card-subtitle">Upload before/after images or supporting documents for the patient timeline.</div>
+        </div>
+      </div>
+      <form method="POST" action="{{ route('patients.attachments.store', $patient) }}" enctype="multipart/form-data" class="form-row" style="margin-bottom:14px;">
+        @csrf
+        <input type="file" name="attachment" class="form-input" required>
+        <input type="text" name="title" class="form-input" placeholder="Attachment title">
+        <input type="text" name="attachment_type" class="form-input" placeholder="image, before_after, document">
+        <input type="text" name="notes" class="form-input" placeholder="Notes">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;">
+          <input type="checkbox" name="is_private" value="1">
+          <span>Private attachment</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Upload Attachment</button>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>File</th><th>Uploaded</th></tr></thead>
+          <tbody>
+            @forelse($patient->attachments as $attachment)
+            <tr>
+              <td>{{ $attachment->title ?: '--' }}</td>
+              <td>{{ $attachment->attachment_type }}</td>
+              <td><a href="{{ asset('storage/' . $attachment->file_path) }}" target="_blank">{{ $attachment->file_name }}</a></td>
+              <td>{{ $attachment->created_at?->format('d M Y, h:i A') }}</td>
+            </tr>
+            @empty
+            <tr><td colspan="4" style="color:var(--text-tertiary);">No attachments yet.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     {{-- Notes --}}
     @php
       $me         = Auth::user();

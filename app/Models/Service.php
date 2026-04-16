@@ -58,4 +58,14 @@ class Service extends Model
     {
         return $this->hasMany(PackageUsage::class);
     }
+
+    public function commissionRules(): HasMany
+    {
+        return $this->hasMany(EmployeeCommissionRule::class);
+    }
+
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class);
+    }
 }

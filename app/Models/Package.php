@@ -80,6 +80,11 @@ class Package extends Model
         return $this->hasMany(PatientPackage::class);
     }
 
+    public function commissionRules(): HasMany
+    {
+        return $this->hasMany(EmployeeCommissionRule::class);
+    }
+
     public static function statuses(): array
     {
         return [

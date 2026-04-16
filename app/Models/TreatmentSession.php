@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class TreatmentSession extends Model
@@ -11,9 +12,9 @@ class TreatmentSession extends Model
     protected $fillable = [
         'appointment_id', 'treatment_plan_id', 'patient_id', 'branch_id',
         'service_id', 'technician_id', 'session_number', 'started_at', 'ended_at',
-        'duration_minutes', 'status', 'device_used', 'laser_settings',
+        'duration_minutes', 'shots_count', 'status', 'device_used', 'laser_settings',
         'treatment_areas', 'observations_before', 'observations_after',
-        'skin_reaction', 'outcome', 'next_session_notes',
+        'skin_reaction', 'outcome', 'next_session_notes', 'recommendations',
         'follow_up_required', 'created_by',
     ];
 
@@ -58,6 +59,16 @@ class TreatmentSession extends Model
     public function notes(): MorphMany
     {
         return $this->morphMany(Note::class, 'notable');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PatientAttachment::class);
+    }
+
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class);
     }
 
     public function getDurationAttribute(): ?int

@@ -4,25 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PackageUsage extends Model
+class PatientAttachment extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'company_id',
         'branch_id',
-        'patient_package_id',
         'patient_id',
-        'service_id',
         'appointment_id',
-        'sessions_consumed',
-        'used_at',
-        'used_by',
+        'treatment_session_id',
+        'attachment_type',
+        'title',
+        'file_name',
+        'file_path',
+        'mime_type',
+        'file_size',
+        'is_private',
         'notes',
+        'uploaded_by',
     ];
 
     protected $casts = [
-        'used_at' => 'datetime',
+        'is_private' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -35,19 +41,9 @@ class PackageUsage extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function patientPackage(): BelongsTo
-    {
-        return $this->belongsTo(PatientPackage::class);
-    }
-
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
-    }
-
-    public function service(): BelongsTo
-    {
-        return $this->belongsTo(Service::class);
     }
 
     public function appointment(): BelongsTo
@@ -55,13 +51,13 @@ class PackageUsage extends Model
         return $this->belongsTo(Appointment::class);
     }
 
-    public function usedBy(): BelongsTo
+    public function treatmentSession(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'used_by');
+        return $this->belongsTo(TreatmentSession::class);
     }
 
-    public function workAttributions(): HasMany
+    public function uploadedBy(): BelongsTo
     {
-        return $this->hasMany(WorkAttribution::class);
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }
