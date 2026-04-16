@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PackageUsage extends Model
 {
@@ -57,5 +58,10 @@ class PackageUsage extends Model
     public function usedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'used_by');
+    }
+
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class);
     }
 }

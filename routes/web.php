@@ -261,6 +261,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:finance,branch_manager');
 
     Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])
+            ->name('index')
+            ->middleware('role:secretary,technician,doctor,nurse,branch_manager,finance,system_admin');
         Route::get('/accounting', [ReportController::class, 'accounting'])
             ->name('accounting')
             ->middleware('role:finance,branch_manager,system_admin');
@@ -289,6 +292,29 @@ Route::middleware('auth')->group(function () {
             ->middleware('role:finance,branch_manager,system_admin');
         Route::get('/inventory/export/{format}', [ReportController::class, 'exportInventory'])
             ->name('inventory.export')
+            ->middleware('role:finance,branch_manager,system_admin');
+
+        Route::get('/technician-performance', [ReportController::class, 'technicianPerformance'])
+            ->name('technician-performance')
+            ->middleware('role:technician,doctor,nurse,branch_manager,finance,system_admin');
+        Route::get('/technician-performance/export/{format}', [ReportController::class, 'exportTechnicianPerformance'])
+            ->name('technician-performance.export')
+            ->middleware('role:technician,doctor,nurse,branch_manager,finance,system_admin');
+
+        Route::get('/commissions', [ReportController::class, 'commissions'])
+            ->name('commissions')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/profiles', [ReportController::class, 'storeCompensationProfile'])
+            ->name('commissions.profiles.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/rules', [ReportController::class, 'storeCommissionRule'])
+            ->name('commissions.rules.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::post('/commissions/snapshots', [ReportController::class, 'createCompensationSnapshots'])
+            ->name('commissions.snapshots.store')
+            ->middleware('role:finance,branch_manager,system_admin');
+        Route::get('/commissions/export/{format}', [ReportController::class, 'exportCommissions'])
+            ->name('commissions.export')
             ->middleware('role:finance,branch_manager,system_admin');
     });
 });

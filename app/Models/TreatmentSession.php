@@ -66,6 +66,11 @@ class TreatmentSession extends Model
         return $this->hasMany(PatientAttachment::class);
     }
 
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class);
+    }
+
     public function getDurationAttribute(): ?int
     {
         if ($this->started_at && $this->ended_at) {

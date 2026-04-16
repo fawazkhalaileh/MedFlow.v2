@@ -135,6 +135,31 @@ class User extends Authenticatable
         return $this->hasMany(PackageUsage::class, 'used_by');
     }
 
+    public function treatmentSessions(): HasMany
+    {
+        return $this->hasMany(TreatmentSession::class, 'technician_id');
+    }
+
+    public function compensationProfiles(): HasMany
+    {
+        return $this->hasMany(EmployeeCompensationProfile::class, 'employee_id');
+    }
+
+    public function commissionRules(): HasMany
+    {
+        return $this->hasMany(EmployeeCommissionRule::class, 'employee_id');
+    }
+
+    public function workAttributions(): HasMany
+    {
+        return $this->hasMany(WorkAttribution::class, 'employee_id');
+    }
+
+    public function compensationSnapshots(): HasMany
+    {
+        return $this->hasMany(CompensationSnapshot::class, 'employee_id');
+    }
+
     // --- Permission helpers ---
 
     public function hasRole(string $roleName, ?int $branchId = null): bool
