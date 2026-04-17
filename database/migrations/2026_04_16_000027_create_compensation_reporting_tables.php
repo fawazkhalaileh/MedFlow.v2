@@ -24,8 +24,8 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['company_id', 'employee_id', 'is_active']);
-            $table->index(['branch_id', 'effective_from', 'effective_to']);
+            $table->index(['company_id', 'employee_id', 'is_active'], 'ecp_company_emp_active_idx');
+            $table->index(['branch_id', 'effective_from', 'effective_to'], 'ecp_branch_effective_idx');
         });
 
         if (! Schema::hasTable('employee_commission_rules'))
@@ -50,8 +50,8 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['company_id', 'source_type', 'is_active']);
-            $table->index(['employee_id', 'branch_id', 'priority']);
+            $table->index(['company_id', 'source_type', 'is_active'], 'ecr_company_source_active_idx');
+            $table->index(['employee_id', 'branch_id', 'priority'], 'ecr_emp_branch_priority_idx');
         });
 
         if (! Schema::hasTable('work_attributions'))
@@ -78,8 +78,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['employee_id', 'attributable_type', 'attributable_id', 'source_type'], 'work_attribution_unique');
-            $table->index(['company_id', 'branch_id', 'occurred_at']);
-            $table->index(['employee_id', 'source_type', 'occurred_at']);
+            $table->index(['company_id', 'branch_id', 'occurred_at'], 'wa_company_branch_occurred_idx');
+            $table->index(['employee_id', 'source_type', 'occurred_at'], 'wa_emp_source_occurred_idx');
         });
 
         if (! Schema::hasTable('compensation_snapshots'))
@@ -99,8 +99,8 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['company_id', 'branch_id', 'period_start', 'period_end']);
-            $table->index(['employee_id', 'period_start', 'period_end']);
+            $table->index(['company_id', 'branch_id', 'period_start', 'period_end'], 'cs_company_branch_period_idx');
+            $table->index(['employee_id', 'period_start', 'period_end'], 'cs_emp_period_idx');
         });
     }
 
