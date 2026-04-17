@@ -8,6 +8,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\AppointmentVisitController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\ClinicalFlagController;
@@ -87,9 +88,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('patients', PatientController::class)
         ->middleware($clinical);
 
-    // Appointments index + kanban (read for all clinical)
-    Route::get('/appointments',        [AppointmentController::class, 'index'])->name('appointments.index')->middleware($clinical);
-    Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])->name('appointments.kanban')->middleware($clinical);
+    // Appointments index + kanban
+    Route::get('/appointments', [AppointmentController::class, 'index'])
+        ->name('appointments.index')
+        ->middleware('role:secretary,branch_manager,finance,system_admin');
+    Route::get('/appointments/kanban', [AppointmentController::class, 'kanban'])
+        ->name('appointments.kanban')
+        ->middleware('role:branch_manager,system_admin');
     Route::post('/patients/{patient}/attachments', [PatientController::class, 'storeAttachment'])
         ->name('patients.attachments.store')
         ->middleware($clinical . ',system_admin');
@@ -98,6 +103,20 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:secretary,branch_manager')->group(function () {
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointments',       [AppointmentController::class, 'store'])->name('appointments.store');
+        Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
+        Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    });
+
+    Route::middleware('role:doctor,nurse,branch_manager,system_admin')->group(function () {
+        Route::get('/appointments/{appointment}/doctor-visit', [AppointmentVisitController::class, 'doctorShow'])->name('appointments.doctor.show');
+        Route::patch('/appointments/{appointment}/doctor-visit/start', [AppointmentVisitController::class, 'doctorStart'])->name('appointments.doctor.start');
+        Route::patch('/appointments/{appointment}/doctor-visit/complete', [AppointmentVisitController::class, 'doctorComplete'])->name('appointments.doctor.complete');
+    });
+
+    Route::middleware('role:technician,branch_manager,system_admin')->group(function () {
+        Route::get('/appointments/{appointment}/technician-visit', [AppointmentVisitController::class, 'technicianShow'])->name('appointments.technician.show');
+        Route::patch('/appointments/{appointment}/technician-visit/start', [AppointmentVisitController::class, 'technicianStart'])->name('appointments.technician.start');
+        Route::patch('/appointments/{appointment}/technician-visit/complete', [AppointmentVisitController::class, 'technicianComplete'])->name('appointments.technician.complete');
     });
 
     // Room device name update — managers and admins only
@@ -105,12 +124,16 @@ Route::middleware('auth')->group(function () {
         '/rooms/{room}/device-name',
         [WorkspaceController::class, 'updateRoomDevice']
     )->name('rooms.update-device-name')->middleware('role:branch_manager,system_admin');
+    Route::post(
+        '/rooms',
+        [WorkspaceController::class, 'storeRoom']
+    )->name('rooms.store')->middleware('role:branch_manager,system_admin');
 
-    // Appointment status update — all clinical staff (technician moves cards, secretary checks in, etc.)
+    // Appointment status update — transition service enforces role-specific moves
     Route::patch(
         '/appointments/{appointment}/status',
         [WorkspaceController::class, 'updateAppointmentStatus']
-    )->name('appointments.status')->middleware($clinical);
+    )->name('appointments.status')->middleware('role:secretary,technician,doctor,nurse,branch_manager,system_admin');
 
     Route::patch(
         '/appointments/{appointment}/checkin',
@@ -167,15 +190,17 @@ Route::middleware('auth')->group(function () {
     // -------------------------------------------------------------------
     Route::get('/front-desk',   [WorkspaceController::class, 'frontDesk'])->name('front-desk')
         ->middleware('role:secretary,branch_manager');
+    Route::get('/front-desk/export-pdf', [WorkspaceController::class, 'exportSchedulePdf'])->name('front-desk.export-pdf')
+        ->middleware('role:branch_manager,system_admin');
 
     Route::get('/my-queue',     [WorkspaceController::class, 'myQueue'])->name('my-queue')
-        ->middleware('role:technician,doctor,nurse,branch_manager');
+        ->middleware('role:technician,branch_manager,system_admin');
 
     Route::get('/operations',   [WorkspaceController::class, 'operations'])->name('operations')
         ->middleware('role:branch_manager');
 
     Route::get('/review-queue', [WorkspaceController::class, 'reviewQueue'])->name('review-queue')
-        ->middleware('role:doctor,nurse,branch_manager');
+        ->middleware('role:doctor,nurse,branch_manager,system_admin');
 
     Route::get('/finance',      [WorkspaceController::class, 'finance'])->name('finance')
         ->middleware('role:finance,branch_manager');
@@ -248,9 +273,21 @@ Route::middleware('auth')->group(function () {
         ->name('finance.transactions.store')
         ->middleware('role:finance,branch_manager');
 
+    Route::get('/appointments/{appointment}/checkout', [TransactionController::class, 'frontDeskCheckout'])
+        ->name('appointments.checkout')
+        ->middleware('role:secretary,branch_manager,system_admin');
+
+    Route::get('/front-desk/checkouts', [TransactionController::class, 'frontDeskCheckoutIndex'])
+        ->name('appointments.checkout.index')
+        ->middleware('role:secretary,branch_manager,system_admin');
+
+    Route::post('/appointments/{appointment}/checkout', [TransactionController::class, 'storeFrontDeskCheckout'])
+        ->name('appointments.checkout.store')
+        ->middleware('role:secretary,branch_manager,system_admin');
+
     Route::get('/finance/transactions/{transaction}/receipt', [TransactionReceiptController::class, 'show'])
         ->name('finance.transactions.receipt')
-        ->middleware('role:finance,branch_manager');
+        ->middleware('role:secretary,finance,branch_manager,system_admin');
 
     Route::post('/finance/register/open', [CashRegisterController::class, 'open'])
         ->name('finance.register.open')

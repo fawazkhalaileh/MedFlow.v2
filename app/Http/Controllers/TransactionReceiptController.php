@@ -19,6 +19,7 @@ class TransactionReceiptController extends Controller
                 'branch',
                 'company',
                 'patient',
+                'appointment.service',
                 'treatmentPlan.service',
                 'receivedBy',
                 'cashRegisterSession',
@@ -37,10 +38,19 @@ class TransactionReceiptController extends Controller
             ?: $transaction->company?->currency
             ?: 'JOD';
 
+        $chargeableItems = collect();
+        if ($transaction->appointment) {
+            $chargeableItems = \App\Models\Service::query()
+                ->whereIn('id', collect($transaction->appointment->chargeable_service_ids ?: [$transaction->appointment->service_id])->filter()->values())
+                ->orderBy('name')
+                ->get();
+        }
+
         $pdf = Pdf::loadView('finance.receipt-pdf', [
             'transaction' => $transaction,
             'brandingName' => $brandingName,
             'currency' => $currency,
+            'chargeableItems' => $chargeableItems,
         ])->setPaper('a4');
 
         return $pdf->stream($transaction->receiptFilename());

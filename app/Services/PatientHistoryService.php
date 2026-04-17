@@ -42,12 +42,22 @@ class PatientHistoryService
                 'title' => 'Appointment',
                 'summary' => trim(($appointment->service?->name ?? 'Service') . ' - ' . $appointment->status),
                 'details' => [
+                    'visit_type' => $appointment->visit_type,
                     'status' => $appointment->status,
                     'service' => $appointment->service?->name,
+                    'chargeable_items' => $appointment->chargeable_service_ids,
                     'staff' => $appointment->assignedStaff?->full_name,
+                    'chief_complaint' => $appointment->chief_complaint,
+                    'clinical_notes' => $appointment->clinical_notes,
+                    'assessment' => $appointment->assessment,
+                    'doctor_visit_outcome' => $appointment->doctor_visit_outcome,
+                    'what_was_done' => $appointment->treatment_summary,
+                    'recommendations' => $appointment->doctor_recommendations,
+                    'checkout_summary' => $appointment->checkout_summary,
+                    'front_desk_note' => $appointment->front_desk_note,
                     'duration' => $appointment->duration_minutes,
                 ],
-                'author' => $appointment->bookedBy?->full_name,
+                'author' => $appointment->assignedStaff?->full_name ?? $appointment->bookedBy?->full_name,
             ]);
         }
 
@@ -96,6 +106,7 @@ class PatientHistoryService
                         'after_condition' => $session->observations_after,
                         'outcome' => $session->outcome,
                         'recommendations' => $session->recommendations,
+                        'next_session_notes' => $session->next_session_notes,
                         'technician_notes' => $session->notes->where('note_type', 'technician')->pluck('content')->values(),
                         'doctor_notes' => $session->notes->where('note_type', 'clinical')->pluck('content')->values(),
                     ],

@@ -180,7 +180,7 @@
                 <td style="color:var(--text-secondary);font-size:.83rem;">{{ $appt->service?->name ?? '--' }}</td>
                 <td style="color:var(--text-secondary);font-size:.83rem;">{{ $appt->assignedStaff?->first_name ?? '--' }}</td>
                 <td>
-                  @php $cls = ['scheduled'=>'badge-blue','confirmed'=>'badge-cyan','arrived'=>'badge-yellow','in_progress'=>'badge-purple','completed'=>'badge-green','cancelled'=>'badge-red','no_show'=>'badge-gray'][$appt->status] ?? 'badge-gray'; @endphp
+                  @php $cls = ['booked'=>'badge-blue','arrived'=>'badge-yellow','waiting_doctor'=>'badge-yellow','waiting_technician'=>'badge-purple','in_doctor_visit'=>'badge-blue','in_technician_visit'=>'badge-blue','completed_waiting_checkout'=>'badge-green','checked_out'=>'badge-green','cancelled'=>'badge-red','no_show'=>'badge-gray'][$appt->status] ?? 'badge-gray'; @endphp
                   <span class="badge {{ $cls }}">{{ ucfirst(str_replace('_',' ',$appt->status)) }}</span>
                 </td>
               </tr>

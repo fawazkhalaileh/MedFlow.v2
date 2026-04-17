@@ -223,6 +223,15 @@
             {{ $activeRegister->opened_at?->format('d M Y, h:i A') }} {{ __('finance_ui.by') }} {{ $activeRegister->openedBy?->full_name }}
           </div>
         </div>
+        <div style="grid-column:1 / -1;">
+          <div style="font-size:.72rem;color:var(--text-tertiary);margin-bottom:4px;">{{ __('finance_ui.cash_handlers_today') }}</div>
+          <div style="font-weight:500;color:var(--text-primary);">
+            {{ $activeRegister->openedBy?->full_name ?? __('finance_ui.system') }}
+            @if($activeRegister->closedBy)
+              / {{ $activeRegister->closedBy?->full_name }}
+            @endif
+          </div>
+        </div>
       </div>
 
       <form method="POST" action="{{ route('finance.register.close', $activeRegister->id) }}" style="display:grid;gap:8px;">
@@ -242,7 +251,7 @@
           name="closing_notes"
           value="{{ old('closing_notes') }}"
           class="form-input"
-          placeholder="{{ __('finance_ui.closing_notes') }}"
+          placeholder="{{ __('finance_ui.closing_notes_with_variance') }}"
         >
         <button type="submit" class="btn btn-primary btn-sm" style="justify-content:center;">
           {{ __('finance_ui.close_register') }}
@@ -276,6 +285,56 @@
         </button>
       </form>
       @endif
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">{{ __('finance_ui.register_activity_today') }}</div>
+        <span class="badge badge-gray">{{ $todayRegisterSessions->count() }}</span>
+      </div>
+      @forelse($todayRegisterSessions as $session)
+      <div style="padding:10px 0;border-bottom:1px solid var(--border-light);display:grid;gap:5px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+          <div style="font-size:.84rem;font-weight:600;">
+            {{ $session->openedBy?->full_name ?? __('finance_ui.system') }}
+            @if($session->closedBy)
+              → {{ $session->closedBy?->full_name }}
+            @endif
+          </div>
+          <span class="badge {{ $session->status === \App\Models\CashRegisterSession::STATUS_OPEN ? 'badge-green' : ((float) $session->variance === 0.0 ? 'badge-gray' : ((float) $session->variance > 0 ? 'badge-yellow' : 'badge-red')) }}">
+            @if($session->status === \App\Models\CashRegisterSession::STATUS_OPEN)
+              {{ __('finance_ui.register_open') }}
+            @elseif((float) $session->variance === 0.0)
+              {{ __('finance_ui.balanced') }}
+            @elseif((float) $session->variance > 0)
+              +{{ number_format((float) $session->variance, 2) }}
+            @else
+              {{ number_format((float) $session->variance, 2) }}
+            @endif
+          </span>
+        </div>
+        <div style="font-size:.74rem;color:var(--text-tertiary);">
+          {{ __('finance_ui.opening_balance') }}: JOD {{ number_format((float) $session->opening_balance, 2) }}
+          @if(!is_null($session->closing_balance))
+            • {{ __('finance_ui.closing_balance') }}: JOD {{ number_format((float) $session->closing_balance, 2) }}
+          @endif
+          • {{ __('finance_ui.expected_closing_balance') }}: JOD {{ number_format((float) $session->expected_closing_balance, 2) }}
+        </div>
+        <div style="font-size:.72rem;color:var(--text-tertiary);">
+          {{ $session->opened_at?->format('d M, h:i A') }}
+          @if($session->closed_at)
+            • {{ $session->closed_at->format('d M, h:i A') }}
+          @endif
+        </div>
+        @if($session->notes || $session->closing_notes)
+        <div style="font-size:.72rem;color:var(--text-secondary);">
+          {{ $session->notes ?: $session->closing_notes }}
+        </div>
+        @endif
+      </div>
+      @empty
+      <p style="color:var(--text-tertiary);font-size:.83rem;padding:8px 0;">{{ __('finance_ui.no_register_activity_today') }}</p>
+      @endforelse
     </div>
 
     <div class="card">

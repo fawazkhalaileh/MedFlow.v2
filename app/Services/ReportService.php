@@ -166,7 +166,7 @@ class ReportService
                 return [
                     'patient' => $patient?->full_name ?? 'Unknown',
                     'patient_id' => $patient?->id,
-                    'visits' => $rows->where('status', Appointment::STATUS_COMPLETED)->count(),
+                    'visits' => $rows->whereIn('status', Appointment::completedStatuses())->count(),
                     'scheduled' => $rows->count(),
                 ];
             })
@@ -176,7 +176,7 @@ class ReportService
         $noShowMetrics = [
             'cancelled' => $appointments->where('status', Appointment::STATUS_CANCELLED)->count(),
             'no_show' => $appointments->where('status', Appointment::STATUS_NO_SHOW)->count(),
-            'completed' => $appointments->where('status', Appointment::STATUS_COMPLETED)->count(),
+            'completed' => $appointments->whereIn('status', Appointment::completedStatuses())->count(),
         ];
 
         $packageConsumption = $patients
@@ -201,7 +201,16 @@ class ReportService
             ->filter(function (Patient $patient) {
                 return !$patient->appointments
                     ->where('scheduled_at', '>=', now())
-                    ->whereIn('status', [Appointment::STATUS_SCHEDULED, Appointment::STATUS_CONFIRMED, Appointment::STATUS_ARRIVED, Appointment::STATUS_IN_PROGRESS])
+                    ->whereIn('status', array_merge(
+                        Appointment::bookedStatuses(),
+                        [
+                            Appointment::STATUS_ARRIVED,
+                            Appointment::STATUS_WAITING_DOCTOR,
+                            Appointment::STATUS_WAITING_TECHNICIAN,
+                            Appointment::STATUS_IN_DOCTOR_VISIT,
+                            Appointment::STATUS_IN_TECHNICIAN_VISIT,
+                        ]
+                    ))
                     ->count();
             })
             ->values();
@@ -212,7 +221,7 @@ class ReportService
                 'patient' => $patient->full_name,
                 'patient_id' => $patient->id,
                 'spend' => round((float) $patient->transactions->sum('amount') + (float) $patient->patientPackages->sum('final_price'), 2),
-                'visits' => $patient->appointments->where('status', Appointment::STATUS_COMPLETED)->count(),
+                'visits' => $patient->appointments->whereIn('status', Appointment::completedStatuses())->count(),
             ])
             ->sortByDesc('spend')
             ->take(10)
@@ -233,7 +242,7 @@ class ReportService
             'filters' => $this->filterMeta($user, $filters, $startDate, $endDate, $branchId),
             'stats' => [
                 'patients_in_scope' => $patients->count(),
-                'completed_visits' => $appointments->where('status', Appointment::STATUS_COMPLETED)->count(),
+                'completed_visits' => $appointments->whereIn('status', Appointment::completedStatuses())->count(),
                 'cancelled_or_no_show' => $noShowMetrics['cancelled'] + $noShowMetrics['no_show'],
                 'overdue_follow_ups' => $overdueFollowUp->count(),
             ],
