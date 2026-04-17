@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('employee_compensation_profiles'))
         Schema::create('employee_compensation_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['branch_id', 'effective_from', 'effective_to']);
         });
 
+        if (! Schema::hasTable('employee_commission_rules'))
         Schema::create('employee_commission_rules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
@@ -52,6 +54,7 @@ return new class extends Migration
             $table->index(['employee_id', 'branch_id', 'priority']);
         });
 
+        if (! Schema::hasTable('work_attributions'))
         Schema::create('work_attributions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
@@ -79,6 +82,7 @@ return new class extends Migration
             $table->index(['employee_id', 'source_type', 'occurred_at']);
         });
 
+        if (! Schema::hasTable('compensation_snapshots'))
         Schema::create('compensation_snapshots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
