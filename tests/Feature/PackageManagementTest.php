@@ -19,7 +19,7 @@ class PackageManagementTest extends TestCase
 
     public function test_manager_can_create_package_master_in_own_branch(): void
     {
-        [$company, $branch, , $manager, $patient, $service] = $this->makePackageFixtures();
+        [$company, $branch, , $manager, $patient, $service, $technician] = $this->makePackageFixtures();
 
         $response = $this->actingAs($manager)->post(route('packages.store'), [
             'service_id' => $service->id,
@@ -77,7 +77,7 @@ class PackageManagementTest extends TestCase
 
     public function test_branch_manager_cannot_manage_another_branch_package(): void
     {
-        [$company, $branchOne, $branchTwo, $managerOne, $patientOne, $service] = $this->makePackageFixtures();
+        [$company, $branchOne, $branchTwo, $managerOne, $patientOne, $service, $technician] = $this->makePackageFixtures();
         $patientTwo = $this->makePatient($company, $branchTwo, 'Other', 'Branch');
 
         $package = $this->createPackage($branchTwo, $service, $managerOne, [
@@ -100,6 +100,8 @@ class PackageManagementTest extends TestCase
             'patient_package_id' => $purchase->id,
             'scheduled_date' => today()->toDateString(),
             'scheduled_time' => '10:00',
+            'visit_type' => Appointment::VISIT_TYPE_TECHNICIAN,
+            'assigned_staff_id' => $technician->id,
         ])->assertNotFound();
     }
 
@@ -168,7 +170,7 @@ class PackageManagementTest extends TestCase
 
     public function test_frozen_package_cannot_be_used_on_completed_appointment(): void
     {
-        [$company, $branch, , $manager, $patient, $service] = $this->makePackageFixtures();
+        [$company, $branch, , $manager, $patient, $service, $technician] = $this->makePackageFixtures();
 
         $package = $this->createPackage($branch, $service, $manager);
         $purchase = $this->createPatientPackage($branch, $package, $patient, $manager);
@@ -188,7 +190,7 @@ class PackageManagementTest extends TestCase
 
     public function test_appointment_booking_can_attach_active_patient_package_without_deducting_on_booking(): void
     {
-        [$company, $branch, , $manager, $patient, $service] = $this->makePackageFixtures();
+        [$company, $branch, , $manager, $patient, $service, $technician] = $this->makePackageFixtures();
 
         $package = $this->createPackage($branch, $service, $manager);
         $purchase = $this->createPatientPackage($branch, $package, $patient, $manager);
@@ -200,7 +202,8 @@ class PackageManagementTest extends TestCase
             'patient_package_id' => $purchase->id,
             'scheduled_date' => today()->addDay()->toDateString(),
             'scheduled_time' => '11:00',
-            'status' => Appointment::STATUS_SCHEDULED,
+            'visit_type' => Appointment::VISIT_TYPE_TECHNICIAN,
+            'assigned_staff_id' => $technician->id,
         ]);
 
         $response->assertRedirect(route('appointments.index'));
@@ -284,6 +287,15 @@ class PackageManagementTest extends TestCase
             'last_name' => 'Manager',
         ]);
 
+        $technician = User::factory()->create([
+            'company_id' => $company->id,
+            'employee_type' => 'technician',
+            'role' => 'technician',
+            'primary_branch_id' => $branchOne->id,
+            'first_name' => 'Laser',
+            'last_name' => 'Tech',
+        ]);
+
         $patient = $this->makePatient($company, $branchOne, 'Sara', 'Ali');
 
         $service = Service::create([
@@ -294,7 +306,7 @@ class PackageManagementTest extends TestCase
             'is_active' => true,
         ]);
 
-        return [$company, $branchOne, $branchTwo, $manager, $patient, $service];
+        return [$company, $branchOne, $branchTwo, $manager, $patient, $service, $technician];
     }
 
     private function makePatient(Company $company, Branch $branch, string $firstName, string $lastName): Patient
@@ -357,8 +369,10 @@ class PackageManagementTest extends TestCase
             'patient_id' => $patient->id,
             'patient_package_id' => $purchase->id,
             'service_id' => $service->id,
+            'assigned_staff_id' => $manager->id,
             'booked_by' => $manager->id,
             'appointment_type' => 'treatment',
+            'visit_type' => Appointment::VISIT_TYPE_TECHNICIAN,
             'scheduled_at' => now()->subDay(),
             'duration_minutes' => 30,
             'status' => Appointment::STATUS_SCHEDULED,

@@ -159,7 +159,9 @@
             <tbody>
                 <tr>
                     <td>{{ $transaction->patient?->full_name }}</td>
-                    <td>{{ $transaction->treatmentPlan?->service?->name ?? $transaction->treatmentPlan?->name ?? __('finance_ui.plan_payment') }}</td>
+                    <td>
+                        {{ $chargeableItems->pluck('name')->implode(', ') ?: ($transaction->appointment?->service?->name ?? $transaction->treatmentPlan?->service?->name ?? $transaction->treatmentPlan?->name ?? __('finance_ui.plan_payment')) }}
+                    </td>
                     <td>{{ $currency }} {{ number_format((float) $transaction->amount, 2) }}</td>
                     <td>{{ $currency }} {{ number_format((float) $transaction->amount_received, 2) }}</td>
                 </tr>

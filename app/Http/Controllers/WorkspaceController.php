@@ -3,27 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
-use App\Models\ActivityLog;
 use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\FollowUp;
 use App\Models\Patient;
 use App\Models\Room;
+use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\TreatmentPlan;
 use App\Models\User;
+use App\Services\AppointmentStatusTransitionService;
 use App\Services\PackageService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class WorkspaceController extends Controller
 {
-    // Secretary / Receptionist: Front Desk
+    public function __construct(
+        private readonly AppointmentStatusTransitionService $transitionService,
+        private readonly PackageService $packageService,
+    ) {
+    }
+
     public function frontDesk()
     {
-        $user     = Auth::user();
+        $user = Auth::user();
         $branchId = $user->primary_branch_id;
-        $today    = today();
+        $today = today();
 
         $queue = Appointment::with(['patient', 'service', 'assignedStaff', 'room'])
             ->where('branch_id', $branchId)
@@ -34,7 +42,7 @@ class WorkspaceController extends Controller
         $needsConfirmation = Appointment::with(['patient', 'service'])
             ->where('branch_id', $branchId)
             ->whereBetween('scheduled_at', [now(), now()->addHours(48)])
-            ->where('status', 'booked')
+            ->whereIn('status', Appointment::bookedStatuses())
             ->orderBy('scheduled_at')
             ->limit(15)
             ->get();
@@ -47,47 +55,71 @@ class WorkspaceController extends Controller
             ->limit(10)
             ->get();
 
+        $checkoutReady = Appointment::with(['patient', 'service', 'assignedStaff'])
+            ->where('branch_id', $branchId)
+            ->whereDate('scheduled_at', $today)
+            ->where('status', Appointment::STATUS_COMPLETED_WAITING_CHECKOUT)
+            ->orderByDesc('completed_at')
+            ->limit(10)
+            ->get();
+
+        $chargeableServiceMap = Service::query()
+            ->whereIn('id', $checkoutReady->pluck('chargeable_service_ids')->flatten()->filter()->unique()->values())
+            ->pluck('name', 'id');
+
+        $checkoutReady->transform(function (Appointment $appointment) use ($chargeableServiceMap) {
+            $appointment->chargeable_service_names = collect($appointment->chargeable_service_ids ?? [])
+                ->map(fn ($id) => $chargeableServiceMap[$id] ?? null)
+                ->filter()
+                ->values();
+
+            return $appointment;
+        });
+
         $stats = [
-            'total_today'    => $queue->count(),
-            'arrived'        => $queue->whereIn('status', ['arrived', 'checked_in', 'intake_complete', 'assigned', 'in_room', 'in_treatment'])->count(),
-            'completed'      => $queue->where('status', 'completed')->count(),
-            'no_show'        => $queue->where('status', 'no_show')->count(),
-            'pending_confirm'=> $needsConfirmation->count(),
-            'my_followups'   => $myFollowUps->count(),
+            'total_today' => $queue->count(),
+            'arrived' => $queue->whereIn('status', [
+                Appointment::STATUS_ARRIVED,
+                Appointment::STATUS_WAITING_DOCTOR,
+                Appointment::STATUS_WAITING_TECHNICIAN,
+                Appointment::STATUS_IN_DOCTOR_VISIT,
+                Appointment::STATUS_IN_TECHNICIAN_VISIT,
+            ])->count(),
+            'completed' => $queue->whereIn('status', Appointment::completedStatuses())->count(),
+            'no_show' => $queue->where('status', Appointment::STATUS_NO_SHOW)->count(),
+            'pending_confirm' => $needsConfirmation->count(),
+            'my_followups' => $myFollowUps->count(),
         ];
 
-        // ── Scheduling grid data ───────────────────────────────────────────────
         $rooms = Room::where('branch_id', $branchId)->where('is_active', true)->orderBy('id')->get();
 
-        // Half-hour slots: 09:00 → 20:30
         $slots = [];
-        for ($h = 9; $h < 21; $h++) {
+        for ($h = 7; $h < 22; $h++) {
             $slots[] = sprintf('%02d:00', $h);
             $slots[] = sprintf('%02d:30', $h);
         }
 
-        // Pre-populate grid: [room_id][slot] = []
         $grid = [];
         foreach ($rooms as $room) {
             $grid[$room->id] = array_fill_keys($slots, []);
         }
 
         $unassigned = [];
-        foreach ($queue as $appt) {
-            if (! $appt->room_id) {
-                $unassigned[] = $appt;
+        foreach ($queue as $appointment) {
+            if (!$appointment->room_id) {
+                $unassigned[] = $appointment;
                 continue;
             }
-            $dt      = Carbon::parse($appt->scheduled_at);
+
+            $dt = Carbon::parse($appointment->scheduled_at);
             $snapMin = $dt->minute < 30 ? '00' : '30';
             $slotKey = sprintf('%02d:%02d', $dt->hour, $snapMin);
 
-            if (isset($grid[$appt->room_id][$slotKey])) {
-                $grid[$appt->room_id][$slotKey][] = $appt;
+            if (isset($grid[$appointment->room_id][$slotKey])) {
+                $grid[$appointment->room_id][$slotKey][] = $appointment;
             }
         }
 
-        // Staff color palette — assign deterministically as new staff appear
         $staffPalette = [
             ['border' => '#2563eb', 'bg' => '#eff6ff'],
             ['border' => '#059669', 'bg' => '#ecfdf5'],
@@ -99,137 +131,175 @@ class WorkspaceController extends Controller
             ['border' => '#4338ca', 'bg' => '#eef2ff'],
         ];
         $staffColorMap = [];
-        $palIdx        = 0;
-        foreach ($queue as $appt) {
-            if ($appt->assigned_staff_id && ! isset($staffColorMap[$appt->assigned_staff_id])) {
-                $staffColorMap[$appt->assigned_staff_id] = $staffPalette[$palIdx % 8];
+        $palIdx = 0;
+        foreach ($queue as $appointment) {
+            if ($appointment->assigned_staff_id && !isset($staffColorMap[$appointment->assigned_staff_id])) {
+                $staffColorMap[$appointment->assigned_staff_id] = $staffPalette[$palIdx % 8];
                 $palIdx++;
             }
         }
 
         return view('workspaces.front-desk', compact(
-            'queue', 'needsConfirmation', 'myFollowUps', 'stats',
-            'rooms', 'slots', 'grid', 'unassigned', 'staffPalette', 'staffColorMap'
+            'queue',
+            'needsConfirmation',
+            'myFollowUps',
+            'checkoutReady',
+            'stats',
+            'rooms',
+            'slots',
+            'grid',
+            'unassigned',
+            'staffPalette',
+            'staffColorMap'
         ));
     }
 
-    // Technician: My Queue
     public function myQueue()
     {
-        $user     = Auth::user();
-        $branchId = $user->primary_branch_id;
-        $today    = today();
+        $user = Auth::user();
+        abort_unless($user->isRole('technician', 'branch_manager') || $user->isSuperAdmin(), 403);
 
-        $myAppointments = Appointment::with(['patient', 'service', 'room', 'treatmentPlan'])
-            ->where('branch_id', $branchId)
-            ->where('assigned_staff_id', $user->id)
-            ->whereDate('scheduled_at', $today)
+        $appointments = Appointment::with(['patient', 'service', 'room', 'session'])
+            ->where('branch_id', $user->primary_branch_id)
+            ->where('visit_type', Appointment::VISIT_TYPE_TECHNICIAN)
+            ->when(!$user->isRole('branch_manager') && !$user->isSuperAdmin(), fn ($query) => $query->where('assigned_staff_id', $user->id))
+            ->whereDate('scheduled_at', today())
             ->orderBy('scheduled_at')
             ->get();
 
-        // Group by Kanban column
-        $waiting    = $myAppointments->whereIn('status', ['assigned', 'checked_in', 'intake_complete']);
-        $inPrep     = $myAppointments->where('status', 'in_room');
-        $inSession  = $myAppointments->where('status', 'in_treatment');
-        $done       = $myAppointments->whereIn('status', ['completed', 'follow_up_needed']);
+        $waiting = $appointments->where('status', Appointment::STATUS_WAITING_TECHNICIAN);
+        $active = $appointments->where('status', Appointment::STATUS_IN_TECHNICIAN_VISIT);
+        $done = $appointments->whereIn('status', Appointment::completedStatuses());
 
         $stats = [
-            'total'     => $myAppointments->count(),
-            'done'      => $done->count(),
-            'remaining' => $myAppointments->whereNotIn('status', ['completed', 'cancelled', 'no_show', 'follow_up_needed'])->count(),
+            'total' => $appointments->count(),
+            'waiting' => $waiting->count(),
+            'active' => $active->count(),
+            'done' => $done->count(),
         ];
 
-        return view('workspaces.my-queue', compact('myAppointments', 'waiting', 'inPrep', 'inSession', 'done', 'stats'));
+        return view('workspaces.my-queue', compact('appointments', 'waiting', 'active', 'done', 'stats'));
     }
 
-    // Branch Manager: Operations Board
     public function operations()
     {
-        $user     = Auth::user();
+        $user = Auth::user();
         $branchId = $user->primary_branch_id;
-        $today    = today();
 
         $allAppointments = Appointment::with(['patient', 'service', 'assignedStaff', 'room'])
             ->where('branch_id', $branchId)
-            ->whereDate('scheduled_at', $today)
+            ->whereDate('scheduled_at', today())
             ->orderBy('scheduled_at')
             ->get();
 
-        // Status pipeline groups
         $pipeline = [
-            'booked'           => $allAppointments->whereIn('status', ['booked', 'scheduled']),
-            'confirmed'        => $allAppointments->where('status', 'confirmed'),
-            'arrived'          => $allAppointments->whereIn('status', ['arrived', 'checked_in', 'intake_complete']),
-            'in_progress'      => $allAppointments->whereIn('status', ['assigned', 'in_room', 'in_treatment']),
-            'review_needed'    => $allAppointments->where('status', 'review_needed'),
-            'completed'        => $allAppointments->where('status', 'completed'),
-            'follow_up_needed' => $allAppointments->where('status', 'follow_up_needed'),
-            'no_show'          => $allAppointments->where('status', 'no_show'),
+            'front_desk' => $allAppointments->whereIn('status', array_merge(Appointment::bookedStatuses(), [
+                Appointment::STATUS_ARRIVED,
+                Appointment::STATUS_WAITING_DOCTOR,
+                Appointment::STATUS_WAITING_TECHNICIAN,
+            ])),
+            'doctor' => $allAppointments->whereIn('status', [
+                Appointment::STATUS_WAITING_DOCTOR,
+                Appointment::STATUS_IN_DOCTOR_VISIT,
+            ]),
+            'technician' => $allAppointments->whereIn('status', [
+                Appointment::STATUS_WAITING_TECHNICIAN,
+                Appointment::STATUS_IN_TECHNICIAN_VISIT,
+            ]),
+            'checkout' => $allAppointments->where('status', Appointment::STATUS_COMPLETED_WAITING_CHECKOUT),
+            'done' => $allAppointments->whereIn('status', Appointment::completedStatuses()),
         ];
 
         $staff = User::where('primary_branch_id', $branchId)
             ->where('employment_status', 'active')
             ->whereIn('employee_type', ['technician', 'doctor', 'nurse'])
             ->get()
-            ->map(function ($s) use ($allAppointments) {
-                $s->today_count   = $allAppointments->where('assigned_staff_id', $s->id)->count();
-                $s->active_count  = $allAppointments->where('assigned_staff_id', $s->id)
-                    ->whereIn('status', ['in_room', 'in_treatment'])->count();
-                return $s;
+            ->map(function (User $staff) use ($allAppointments) {
+                $staff->today_count = $allAppointments->where('assigned_staff_id', $staff->id)->count();
+                $staff->active_count = $allAppointments->where('assigned_staff_id', $staff->id)
+                    ->whereIn('status', [Appointment::STATUS_IN_DOCTOR_VISIT, Appointment::STATUS_IN_TECHNICIAN_VISIT])
+                    ->count();
+                return $staff;
             });
 
-        $alerts = $this->buildAlerts($allAppointments, $branchId);
-
+        $alerts = $this->buildAlerts($allAppointments);
         $stats = [
-            'total'     => $allAppointments->count(),
-            'completed' => $allAppointments->where('status', 'completed')->count(),
-            'in_clinic' => $allAppointments->whereIn('status', ['arrived','checked_in','intake_complete','assigned','in_room','in_treatment'])->count(),
-            'no_shows'  => $allAppointments->where('status', 'no_show')->count(),
+            'total' => $allAppointments->count(),
+            'completed' => $allAppointments->whereIn('status', Appointment::completedStatuses())->count(),
+            'in_clinic' => $allAppointments->whereIn('status', [
+                Appointment::STATUS_ARRIVED,
+                Appointment::STATUS_WAITING_DOCTOR,
+                Appointment::STATUS_WAITING_TECHNICIAN,
+                Appointment::STATUS_IN_DOCTOR_VISIT,
+                Appointment::STATUS_IN_TECHNICIAN_VISIT,
+                Appointment::STATUS_COMPLETED_WAITING_CHECKOUT,
+            ])->count(),
+            'no_shows' => $allAppointments->where('status', Appointment::STATUS_NO_SHOW)->count(),
         ];
 
         return view('workspaces.operations', compact('pipeline', 'staff', 'alerts', 'stats'));
     }
 
-    // Doctor: Review Queue
     public function reviewQueue()
     {
-        $user     = Auth::user();
-        $branchId = $user->primary_branch_id;
+        $user = Auth::user();
+        abort_unless($user->isRole('doctor', 'nurse', 'branch_manager') || $user->isSuperAdmin(), 403);
 
-        $escalations = Appointment::with(['patient', 'service', 'assignedStaff'])
-            ->where('branch_id', $branchId)
-            ->where('status', 'review_needed')
-            ->orderBy('updated_at')
-            ->get();
+        $today = today();
 
-        $consentPending = Patient::with('branch')
-            ->where('branch_id', $branchId)
-            ->where('consent_given', false)
-            ->whereHas('appointments', fn($q) => $q->where('status', 'confirmed')->whereDate('scheduled_at', '>=', today()))
-            ->limit(10)
-            ->get();
-
-        $todayConsultations = Appointment::with(['patient', 'service'])
-            ->where('branch_id', $branchId)
-            ->where('assigned_staff_id', $user->id)
-            ->whereDate('scheduled_at', today())
+        $appointments = Appointment::with(['patient.medicalInfo', 'service', 'room'])
+            ->where('branch_id', $user->primary_branch_id)
+            ->where('visit_type', Appointment::VISIT_TYPE_DOCTOR)
+            ->when(!$user->isRole('branch_manager') && !$user->isSuperAdmin(), fn ($query) => $query->where('assigned_staff_id', $user->id))
+            ->where(function ($query) use ($today) {
+                $query
+                    ->whereDate('scheduled_at', '>=', $today)
+                    ->orWhere(function ($statusQuery) use ($today) {
+                        $statusQuery
+                            ->whereDate('scheduled_at', $today)
+                            ->whereIn('status', array_merge(
+                                [Appointment::STATUS_IN_DOCTOR_VISIT],
+                                Appointment::completedStatuses()
+                            ));
+                    });
+            })
             ->orderBy('scheduled_at')
             ->get();
 
-        return view('workspaces.review-queue', compact('escalations', 'consentPending', 'todayConsultations'));
+        $waiting = $appointments->whereIn('status', array_merge(
+            Appointment::bookedStatuses(),
+            [Appointment::STATUS_WAITING_DOCTOR]
+        ));
+        $active = $appointments->where('status', Appointment::STATUS_IN_DOCTOR_VISIT);
+        $done = $appointments->whereIn('status', Appointment::completedStatuses());
+
+        $consentPending = Patient::with('branch')
+            ->where('branch_id', $user->primary_branch_id)
+            ->where('consent_given', false)
+            ->whereHas('appointments', function ($query) {
+                $query
+                    ->where('visit_type', Appointment::VISIT_TYPE_DOCTOR)
+                    ->whereIn('status', array_merge(Appointment::bookedStatuses(), [
+                        Appointment::STATUS_ARRIVED,
+                        Appointment::STATUS_WAITING_DOCTOR,
+                    ]))
+                    ->whereDate('scheduled_at', '>=', today());
+            })
+            ->limit(10)
+            ->get();
+
+        return view('workspaces.review-queue', compact('appointments', 'waiting', 'active', 'done', 'consentPending'));
     }
 
-    // Finance Dashboard
     public function finance()
     {
-        $user     = Auth::user();
-        $branchId = $user->scopedBranchId();
-        $company  = Company::first();
-        $today    = today();
+        $branchId = Auth::user()->scopedBranchId();
+        $company = Company::first();
+        $today = today();
 
         $paymentPending = Appointment::with(['patient', 'service', 'treatmentPlan'])
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->where('status', 'completed')
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->whereIn('status', Appointment::completedStatuses())
             ->whereNotNull('treatment_plan_id')
             ->whereHas('treatmentPlan', function ($query) {
                 $query->whereNotNull('total_price')
@@ -242,7 +312,7 @@ class WorkspaceController extends Controller
 
         $outstandingPlans = TreatmentPlan::with(['patient', 'service'])
             ->where('company_id', $company->id)
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->whereNotNull('total_price')
             ->whereColumn('amount_paid', '<', 'total_price')
             ->orderByRaw('(total_price - amount_paid) DESC')
@@ -251,54 +321,67 @@ class WorkspaceController extends Controller
 
         $outstandingPlansCount = TreatmentPlan::query()
             ->where('company_id', $company->id)
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->whereNotNull('total_price')
             ->whereColumn('amount_paid', '<', 'total_price')
             ->count();
 
         $plansNearingEnd = TreatmentPlan::with(['patient', 'service'])
             ->where('company_id', $company->id)
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->where('status', 'active')
             ->whereRaw('completed_sessions >= total_sessions - 1')
             ->limit(15)
             ->get();
 
         $activeRegister = CashRegisterSession::with(['openedBy', 'closedBy'])
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->open()
             ->latest('opened_at')
             ->first();
+
+        $todayRegisterSessions = CashRegisterSession::with(['openedBy', 'closedBy'])
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
+            ->where(function ($query) use ($today) {
+                $query
+                    ->whereDate('opened_at', $today)
+                    ->orWhereDate('closed_at', $today);
+            })
+            ->latest('opened_at')
+            ->limit(5)
+            ->get();
 
         if ($activeRegister) {
             $activeRegister->refreshTotals();
         }
 
         $todayTransactions = Transaction::query()
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->whereDate('received_at', $today)
             ->get();
 
         $recentTransactions = Transaction::with(['patient', 'treatmentPlan.service', 'receivedBy'])
-            ->when($branchId, fn($q) => $q->forBranch($branchId))
+            ->when($branchId, fn ($query) => $query->forBranch($branchId))
             ->latest('received_at')
             ->limit(10)
             ->get();
 
         $dailyCashFlow = [
-            'payments_total'      => round((float) $todayTransactions->sum('amount'), 2),
-            'cash_sales_total'    => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'payments_total' => round((float) $todayTransactions->sum('amount'), 2),
+            'cash_sales_total' => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount'), 2),
             'cash_received_total' => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('amount_received'), 2),
-            'change_total'        => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('change_returned'), 2),
-            'non_cash_total'      => round((float) $todayTransactions->where('payment_method', '!=', Transaction::METHOD_CASH)->sum('amount'), 2),
-            'transactions_count'  => $todayTransactions->count(),
+            'change_total' => round((float) $todayTransactions->where('payment_method', Transaction::METHOD_CASH)->sum('change_returned'), 2),
+            'non_cash_total' => round((float) $todayTransactions->where('payment_method', '!=', Transaction::METHOD_CASH)->sum('amount'), 2),
+            'transactions_count' => $todayTransactions->count(),
         ];
 
         $stats = [
             'payment_pending' => $outstandingPlansCount,
-            'plans_ending'    => $plansNearingEnd->count(),
-            'completed_today' => Appointment::when($branchId, fn($q) => $q->where('branch_id', $branchId))
-                ->whereDate('completed_at', $today)->where('status', 'completed')->count(),
+            'plans_ending' => $plansNearingEnd->count(),
+            'completed_today' => Appointment::when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+                ->whereDate('completed_at', $today)
+                ->whereIn('status', Appointment::completedStatuses())
+                ->count(),
         ];
 
         return view('workspaces.finance', compact(
@@ -306,14 +389,14 @@ class WorkspaceController extends Controller
             'outstandingPlans',
             'plansNearingEnd',
             'activeRegister',
+            'todayRegisterSessions',
             'dailyCashFlow',
             'recentTransactions',
             'stats'
         ));
     }
 
-    // Room device name update (branch_manager / system_admin only)
-    public function updateRoomDevice(\Illuminate\Http\Request $request, Room $room)
+    public function updateRoomDevice(Request $request, Room $room)
     {
         $request->validate(['device_name' => 'nullable|string|max:100']);
 
@@ -327,63 +410,113 @@ class WorkspaceController extends Controller
         return back()->with('success', 'Device name updated.');
     }
 
-    // Appointment status quick-update (used by all role pages)
-    public function updateAppointmentStatus(\Illuminate\Http\Request $request, Appointment $appointment)
+    public function storeRoom(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'device_name' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $branchId = $user->primary_branch_id;
+
+        abort_unless($branchId, 403, 'No branch assigned.');
+
+        Room::create([
+            'branch_id' => $branchId,
+            'name' => $request->name,
+            'device_name' => $request->device_name ?: null,
+            'description' => $request->description ?: null,
+            'is_active' => true,
+        ]);
+
+        return back()->with('success', "Device \"{$request->name}\" added to the schedule grid.");
+    }
+
+    public function exportSchedulePdf(Request $request)
+    {
+        $user = Auth::user();
+        $branchId = $user->primary_branch_id;
+        $date = $request->input('date', today()->toDateString());
+        $dateObj = Carbon::parse($date);
+
+        $rooms = Room::where('branch_id', $branchId)->where('is_active', true)->orderBy('id')->get();
+
+        $queue = Appointment::with(['patient', 'service', 'assignedStaff', 'room'])
+            ->where('branch_id', $branchId)
+            ->whereDate('scheduled_at', $dateObj)
+            ->orderBy('scheduled_at')
+            ->get();
+
+        $slots = [];
+        for ($h = 7; $h < 22; $h++) {
+            $slots[] = sprintf('%02d:00', $h);
+            $slots[] = sprintf('%02d:30', $h);
+        }
+
+        $grid = [];
+        foreach ($rooms as $room) {
+            $grid[$room->id] = array_fill_keys($slots, []);
+        }
+
+        $unassigned = [];
+        foreach ($queue as $appointment) {
+            if (!$appointment->room_id) {
+                $unassigned[] = $appointment;
+                continue;
+            }
+
+            $dt = Carbon::parse($appointment->scheduled_at);
+            $snapMin = $dt->minute < 30 ? '00' : '30';
+            $slotKey = sprintf('%02d:%02d', $dt->hour, $snapMin);
+
+            if (isset($grid[$appointment->room_id][$slotKey])) {
+                $grid[$appointment->room_id][$slotKey][] = $appointment;
+            }
+        }
+
+        $pdf = Pdf::loadView('workspaces.front-desk-pdf', compact(
+            'rooms', 'slots', 'grid', 'unassigned', 'queue', 'dateObj', 'user'
+        ))->setPaper('a3', 'landscape');
+
+        return $pdf->download('schedule-' . $dateObj->format('Y-m-d') . '.pdf');
+    }
+
+    public function updateAppointmentStatus(Request $request, Appointment $appointment)
     {
         $request->validate(['status' => 'required|string']);
 
-        $timestamps = [
-            'arrived'        => 'arrived_at',
-            'in_treatment'   => null,
-            'completed'      => 'completed_at',
-        ];
+        $this->transitionService->transition($appointment, Auth::user(), $request->string('status')->toString());
 
-        $oldStatus = $appointment->status;
-        $appointment->status = $request->status;
-
-        if (isset($timestamps[$request->status]) && $timestamps[$request->status]) {
-            $appointment->{$timestamps[$request->status]} = now();
+        if ($request->string('status')->toString() === Appointment::STATUS_COMPLETED_WAITING_CHECKOUT && $appointment->patient_package_id) {
+            $this->packageService->recordAppointmentUsage(Auth::user(), $appointment->fresh());
         }
 
-        $appointment->save();
-
-        ActivityLog::record(
-            'appointment_status_updated',
-            $appointment,
-            "Appointment status changed from {$oldStatus} to {$request->status}.",
-            ['status' => $oldStatus],
-            ['status' => $request->status]
-        );
-
-        if ($request->status === Appointment::STATUS_COMPLETED && $appointment->patient_package_id) {
-            app(PackageService::class)->recordAppointmentUsage(Auth::user(), $appointment);
-        }
-
-        return back()->with('success', 'Status updated to ' . ucfirst(str_replace('_', ' ', $request->status)) . '.');
+        return back()->with('success', 'Appointment updated.');
     }
 
-    private function buildAlerts($appointments, $branchId): array
+    private function buildAlerts($appointments): array
     {
         $alerts = [];
 
-        // Patients waiting > 20 minutes past scheduled time
-        foreach ($appointments->whereIn('status', ['arrived', 'checked_in']) as $appt) {
-            $wait = now()->diffInMinutes(\Carbon\Carbon::parse($appt->scheduled_at));
+        foreach ($appointments->whereIn('status', [Appointment::STATUS_ARRIVED, Appointment::STATUS_WAITING_DOCTOR, Appointment::STATUS_WAITING_TECHNICIAN]) as $appointment) {
+            $wait = now()->diffInMinutes($appointment->scheduled_at, false) * -1;
+
             if ($wait > 20) {
                 $alerts[] = [
-                    'type'    => $wait > 30 ? 'red' : 'amber',
-                    'message' => "{$appt->patient?->full_name} has been waiting {$wait} minutes.",
-                    'action'  => 'Assign to staff/room',
+                    'type' => $wait > 30 ? 'red' : 'amber',
+                    'message' => "{$appointment->patient?->full_name} has been waiting {$wait} minutes.",
+                    'action' => $appointment->isDoctorVisit() ? 'Move to doctor' : 'Move to technician',
                 ];
             }
         }
 
-        // Appointments missing staff assignment
-        foreach ($appointments->whereIn('status', ['confirmed', 'arrived', 'checked_in'])->whereNull('assigned_staff_id') as $appt) {
+        foreach ($appointments->whereIn('status', Appointment::bookedStatuses())->whereNull('assigned_staff_id') as $appointment) {
             $alerts[] = [
-                'type'    => 'amber',
-                'message' => "{$appt->patient?->full_name} ({$appt->service?->name}) has no assigned technician.",
-                'action'  => 'Assign staff',
+                'type' => 'amber',
+                'message' => "{$appointment->patient?->full_name} does not have an assigned provider yet.",
+                'action' => 'Assign provider',
             ];
         }
 

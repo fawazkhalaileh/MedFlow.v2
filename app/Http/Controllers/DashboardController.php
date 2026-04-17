@@ -54,7 +54,7 @@ class DashboardController extends Controller
             'total_patients'     => Patient::where('company_id', $companyId)->count(),
             'active_patients'    => Patient::where('company_id', $companyId)->where('status', 'active')->count(),
             'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
-            'today_completed'    => Appointment::whereDate('scheduled_at', $today)->where('status', 'completed')->count(),
+            'today_completed'    => Appointment::whereDate('scheduled_at', $today)->whereIn('status', Appointment::completedStatuses())->count(),
             'active_plans'       => TreatmentPlan::where('company_id', $companyId)->where('status', 'active')->count(),
             'pending_followups'  => FollowUp::where('company_id', $companyId)->where('status', 'pending')->count(),
             'open_leads'         => Lead::where('company_id', $companyId)->whereIn('status', ['new', 'contacted'])->count(),
@@ -204,7 +204,7 @@ class DashboardController extends Controller
 
             $labels[]    = $date->format('d M');
             $total[]     = (clone $day)->count();
-            $completed[] = (clone $day)->where('status', 'completed')->count();
+            $completed[] = (clone $day)->whereIn('status', Appointment::completedStatuses())->count();
             $cancelled[] = (clone $day)->whereIn('status', ['cancelled', 'no_show'])->count();
         }
 

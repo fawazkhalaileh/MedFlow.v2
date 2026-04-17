@@ -47,12 +47,35 @@ class PatientController extends Controller
             ->limit(8)
             ->get(['id', 'first_name', 'last_name', 'phone', 'patient_code', 'status']);
 
+        $patientAppointments = collect();
+        if ($user->isRole('secretary', 'branch_manager') || $user->isSuperAdmin()) {
+            $patientAppointments = \App\Models\Appointment::query()
+                ->with(['service', 'assignedStaff'])
+                ->whereIn('patient_id', $patients->pluck('id'))
+                ->when($user->scopedBranchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                ->whereDate('scheduled_at', '>=', today()->subDays(1))
+                ->orderBy('scheduled_at')
+                ->get()
+                ->groupBy('patient_id');
+        }
+
         return response()->json($patients->map(fn($p) => [
             'id'           => $p->id,
             'full_name'    => $p->full_name,
             'phone'        => $p->phone,
             'patient_code' => $p->patient_code,
             'status'       => $p->status,
+            'appointments' => collect($patientAppointments->get($p->id, []))
+                ->take(4)
+                ->map(fn ($appointment) => [
+                    'id' => $appointment->id,
+                    'scheduled_at' => $appointment->scheduled_at?->format('d M, g:i A'),
+                    'service' => $appointment->service?->name,
+                    'staff' => $appointment->assignedStaff?->first_name,
+                    'status' => $appointment->status,
+                    'visit_type' => $appointment->visit_type,
+                ])
+                ->values(),
         ]));
     }
 

@@ -66,6 +66,7 @@
           <th>{{ __('Branch') }}</th>
           <th>{{ __('Duration') }}</th>
           <th>{{ __('Status') }}</th>
+          <th>{{ __('Actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -89,22 +90,31 @@
           <td>
             @php
               $sc = [
-                'scheduled'   => 'badge-blue',
-                'confirmed'   => 'badge-cyan',
+                'booked'      => 'badge-blue',
                 'arrived'     => 'badge-yellow',
-                'in_progress' => 'badge-purple',
-                'completed'   => 'badge-green',
+                'waiting_doctor' => 'badge-yellow',
+                'waiting_technician' => 'badge-purple',
+                'in_doctor_visit' => 'badge-blue',
+                'in_technician_visit' => 'badge-blue',
+                'completed_waiting_checkout' => 'badge-green',
+                'checked_out' => 'badge-green',
                 'cancelled'   => 'badge-red',
                 'no_show'     => 'badge-gray',
-                'rescheduled' => 'badge-yellow',
               ][$appt->status] ?? 'badge-gray';
             @endphp
             <span class="badge {{ $sc }}">{{ __(\Illuminate\Support\Str::headline($appt->status)) }}</span>
           </td>
+          <td>
+            @if(auth()->user()->isRole('secretary', 'branch_manager') || auth()->user()->isSuperAdmin())
+            <a href="{{ route('appointments.edit', $appt) }}" class="btn btn-secondary btn-sm">{{ __('Edit') }}</a>
+            @else
+            <span style="color:var(--text-tertiary);font-size:.78rem;">--</span>
+            @endif
+          </td>
         </tr>
         @empty
         <tr>
-          <td colspan="7">
+          <td colspan="8">
             <div class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <h3>{{ __('No appointments found') }}</h3>

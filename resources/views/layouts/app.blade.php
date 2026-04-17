@@ -497,10 +497,6 @@ tr:hover td { background: rgba(37,99,235,0.015); }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
           {{ __('New Appointment') }}
         </a>
-        <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          {{ __('Kanban Board') }}
-        </a>
       </div>
 
       <div class="sidebar-section">
@@ -569,7 +565,7 @@ tr:hover td { background: rgba(37,99,235,0.015); }
         </a>
         <a href="{{ route('review-queue') }}" class="sidebar-item {{ request()->routeIs('review-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
-          {{ __('Review Queue') }}
+          {{ __('Doctor Queue') }}
         </a>
         <a href="{{ route('finance') }}" class="sidebar-item {{ request()->routeIs('finance') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -614,12 +610,8 @@ tr:hover td { background: rgba(37,99,235,0.015); }
         <div class="sidebar-section-title">{{ __('My Work') }}</div>
         <a href="{{ route('my-queue') }}" class="sidebar-item {{ request()->routeIs('my-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          {{ __('My Queue') }}
+          {{ __('Technician Queue') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
-        </a>
-        <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          {{ __('Kanban View') }}
         </a>
       </div>
 
@@ -648,16 +640,8 @@ tr:hover td { background: rgba(37,99,235,0.015); }
         <div class="sidebar-section-title">{{ __('Clinical') }}</div>
         <a href="{{ route('review-queue') }}" class="sidebar-item {{ request()->routeIs('review-queue') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          {{ __('Review Queue') }}
-        </a>
-        <a href="{{ route('my-queue') }}" class="sidebar-item {{ request()->routeIs('my-queue') ? 'active' : '' }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg>
-          {{ __('My Consultations') }}
+          {{ __('Doctor Queue') }}
           <span class="sidebar-badge">{{ $apptToday }}</span>
-        </a>
-        <a href="{{ route('appointments.kanban') }}" class="sidebar-item {{ request()->routeIs('appointments.kanban') ? 'active' : '' }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="10"/></svg>
-          {{ __('Kanban') }}
         </a>
         <a href="{{ route('patients.index') }}" class="sidebar-item {{ request()->routeIs('patients.*') ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

@@ -60,7 +60,7 @@
               <td style="font-size:.83rem;color:var(--text-secondary);">{{ $appt->service?->name ?? '--' }}</td>
               <td style="font-size:.83rem;color:var(--text-secondary);">{{ $appt->assignedStaff?->first_name ?? '--' }}</td>
               <td>
-                @php $sc = ['scheduled'=>'badge-blue','confirmed'=>'badge-cyan','completed'=>'badge-green','cancelled'=>'badge-red','no_show'=>'badge-gray'][$appt->status] ?? 'badge-gray'; @endphp
+                @php $sc = ['booked'=>'badge-blue','arrived'=>'badge-yellow','waiting_doctor'=>'badge-yellow','waiting_technician'=>'badge-purple','in_doctor_visit'=>'badge-blue','in_technician_visit'=>'badge-blue','completed_waiting_checkout'=>'badge-green','checked_out'=>'badge-green','cancelled'=>'badge-red','no_show'=>'badge-gray'][$appt->status] ?? 'badge-gray'; @endphp
                 <span class="badge {{ $sc }}">{{ __(\Illuminate\Support\Str::headline($appt->status)) }}</span>
               </td>
             </tr>
